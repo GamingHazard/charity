@@ -31,10 +31,10 @@ export default function Programs() {
                 {/* Left: Text */}
                 <div className="w-full  lg:text-left space-y-6 lg:space-y-8">
                   <div className="space-y-3 lg:space-y-4">
-                    <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white text-balance leading-tight drop-shadow-lg">
+                    <h1  style={{fontFamily:'Quicksand'}} className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white text-balance leading-tight drop-shadow-lg">
                     Our News
                     </h1>
-                    <p className="text-lg sm:text-xl md:text-2xl text-white/90 max-w-3xl mx-auto lg:mx-0 text-balance drop-shadow-md">
+                    <p  style={{fontFamily:'Quicksand'}} className="text-lg sm:text-xl md:text-2xl text-white/90 max-w-3xl mx-auto lg:mx-0 text-balance drop-shadow-md">
                     Stay informed about our latest initiatives, success stories, and upcoming events as we continue to make a positive impact in communities around the world.
                     </p>
                   </div>
@@ -51,17 +51,17 @@ export default function Programs() {
           </section>
       <section className="flex-1 py-16 px-4 md:px-8 max-w-6xl mx-auto w-full">
         <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4 text-balance">
+          <h1  style={{fontFamily:'Quicksand'}} className="text-4xl md:text-5xl font-bold text-foreground mb-4 text-balance">
             Our Latest Programs and Impact
           </h1>
-          <p className="text-lg text-foreground/70 max-w-2xl mx-auto">
+          <p  style={{fontFamily:'Quicksand'}} className="text-lg text-foreground/70 max-w-2xl mx-auto">
             Discover how our programs are making a difference in the lives of those we serve, and learn about the tangible impact we are creating together.
           </p>
         </div>
 
         <div className="grid md:grid-cols-3 gap-8">
           {mockBlogs.map((post) => (
-            <Card key={post._id} className="  bg-card cursor-pointer p-0 h-auto border-border hover:shadow-lg transition-shadow">
+            <Card  style={{fontFamily:'Quicksand'}} key={post._id} className="  bg-card cursor-pointer p-0 h-auto border-border hover:shadow-lg transition-shadow">
               <img
                 src={`${post.image.url}`}
                 alt={post.title}

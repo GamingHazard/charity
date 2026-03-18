@@ -50,7 +50,7 @@ export default function Contact() {
         <div className="relative z-10   flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col text-right lg:flex-row items-center lg:items-start gap-8 lg:gap-12">
             {/* Left: Text */}
-            <div className="w-full  lg:text-right space-y-6 lg:space-y-8">
+            <div  style={{fontFamily:'Quicksand'}} className="w-full  lg:text-right space-y-6 lg:space-y-8">
               <div className="space-y-3 lg:space-y-4">
                 <h1 className="text-3xl text-center sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white text-balance leading-tight drop-shadow-lg">
                   Contact Us
@@ -68,7 +68,7 @@ export default function Contact() {
           </div>
         </div>
 
-        <div className="relative hidden sm:flex h-auto  gap-3 z-10 w-1/2 max-w-7xl mx-auto px-4 sm:px-0 lg:px-8">
+        <div  style={{fontFamily:'Quicksand'}} className="relative hidden sm:flex h-auto  gap-3 z-10 w-1/2 max-w-7xl mx-auto px-4 sm:px-0 lg:px-8">
           <div className="flex flex-col w-1/2   lg:flex-row items-center lg:items-start gap-8 lg:gap-12">
             {/* Left: Text */}
             <div className="w-full  lg:text-left space-y-6 lg:space-y-8">
@@ -87,10 +87,10 @@ export default function Contact() {
   mixBlendMode="screen"
                     className=" px-5  "
                   >
-                    <h3 className="text-2xl text-white text-center font-bold  mb-6">
+                    <h3  style={{fontFamily:'Quicksand'}} className="text-2xl text-white text-center font-bold  mb-6">
                       Our Contact Information
                     </h3>
-                    <div className="space-y-4">
+                    <div  style={{fontFamily:'Quicksand'}} className="space-y-4">
                       <div>
                         <h4 className="font-semibold text-white">Email</h4>
                         <p className="text-accent">
@@ -110,11 +110,25 @@ export default function Contact() {
                           <br />
                           New York, NY 10001
                         </p>
-                      </div>
+                    </div>
+                     <div>
+            <h4  style={{fontFamily:'Quicksand'}} className="font-semibold text-white mb-4">Follow Us</h4>
+            <div  style={{fontFamily:'Quicksand'}} className="flex gap-4">
+              <a href="#" className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-colors">
+                <span className="text-lg">f</span>
+              </a>
+              <a href="#" className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-colors">
+                <span className="text-lg">𝕏</span>
+              </a>
+              <a href="#" className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-colors">
+                <span className="text-lg">in</span>
+              </a>
+            </div>
+          </div>
 
                       <Button
                         variant={"ghost"}
-                        className=" border-2 border-border hover:bg-green-800 w-full hover:text-white text-green-700 px-8 text-lg cursor-pointer font-bold rounded-lg p-5 mt-5"
+                        className=" border-2 bg-white border-border hover:bg-green-800 w-full hover:text-white text-accent px-8 text-lg cursor-pointer font-bold rounded-lg p-5 mt-5"
                       >
                         <img src="/whats-app.png" className="w-10 h-10" /> Chat
                         with Us
@@ -142,10 +156,10 @@ export default function Contact() {
   mixBlendMode="screen"
                     className="px-4"
                 >
-                  <h2 className="text-2xl text-center font-bold text-white ">
+                  <h2  style={{fontFamily:'Quicksand'}} className="text-2xl text-center font-bold text-white ">
                     Send Us a Message
                   </h2>
-                   <form onSubmit={handleSubmit} className="space-y-4">
+                   <form  style={{fontFamily:'Quicksand'}} onSubmit={handleSubmit} className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-white mb-1">
                         Name
@@ -156,11 +170,11 @@ export default function Contact() {
                         value={formData.name}
                         onChange={handleChange}
                         required
-                        className="w-full bg-background border-border text-white"
+                        className="w-full bg-background border-border text-accent"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-white mb-1">
+                      <label className="block text-sm font-medium text-accent mb-1">
                         Email
                       </label>
                       <Input
@@ -169,11 +183,11 @@ export default function Contact() {
                         value={formData.email}
                         onChange={handleChange}
                         required
-                        className="w-full bg-background border-border text-white"
+                        className="w-full bg-background border-border text-accent"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-white mb-1">
+                      <label className="block text-sm font-medium text-accent mb-1">
                         Subject
                       </label>
                       <Input
@@ -222,9 +236,9 @@ export default function Contact() {
         />
       </section>
       
-      <section className="flex-1 lg:hidden py-16 px-4 md:px-8 max-w-6xl mx-auto w-full">
+      <section  style={{fontFamily:'Quicksand'}} className="flex-1 lg:hidden py-16 px-4 md:px-8 max-w-6xl mx-auto w-full">
         <div className="text-center mb-12">
-          <h1 className="text-2xl md:text-5xl font-bold text-foreground mb-4 text-balance">
+          <h1 className="text-2xl md:text-5xl font-bold text-accent mb-4 text-balance">
             Write us a Message
           </h1>
           <p className="text-sm text-foreground/70 max-w-2xl mx-auto">
@@ -300,7 +314,7 @@ export default function Contact() {
                   </form>
         </div>
       </section>
-        <Card className="lg:hidden p-6 mx-4 bg-card border-border">
+        <Card  style={{fontFamily:'Quicksand'}} className="lg:hidden p-6 mx-4 bg-card border-border">
            <h3 className="text-2xl text-accent text-center font-bold  mb-6">
                       Our Contact Information
                     </h3>
@@ -349,9 +363,9 @@ export default function Contact() {
                       </Button>
                     </div>
         </Card>
-      <section className="flex-1 py-16 px-4 md:px-8 max-w-6xl mx-auto w-full">
+      <section  style={{fontFamily:'Quicksand'}} className="flex-1 py-16 px-4 md:px-8 max-w-6xl mx-auto w-full">
         <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4 text-balance">
+          <h1 className="text-4xl md:text-5xl font-bold text-accent mb-4 text-balance">
             Locate Us and Get in Touch
           </h1>
           <p className="text-lg text-foreground/70 max-w-2xl mx-auto">

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
+import { AnimatedElement } from '@/components/motion/animated-elements';
 
 export function Hero() {
   return (
@@ -21,34 +22,37 @@ export function Hero() {
       <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col lg:flex-row items-center lg:items-start gap-8 lg:gap-12">
           {/* Left: Text */}
-          <div className="w-full lg:w-3/5 xl:w-2/3 text-center lg:text-left space-y-6 lg:space-y-8">
-            <div className="space-y-3 lg:space-y-4">
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white text-balance leading-tight drop-shadow-lg">
-                Planting Seeds of Love & Hope
-              </h1>
-              <p className="text-lg sm:text-xl md:text-2xl text-white/90 max-w-3xl mx-auto lg:mx-0 text-balance drop-shadow-md">
-                Empowering communities through education, nutrition, and sustainable development. One seed at a time.
-              </p>
-            </div>
+          <AnimatedElement variant="fadeInDown">
+            <div className="w-full lg:w-3/5 xl:w-2/3 text-center lg:text-left space-y-6 lg:space-y-8">
+              <div className="space-y-3 lg:space-y-4">
+                <h1 style={{fontFamily: 'Quicksand'}} className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white text-balance leading-tight drop-shadow-lg ">
+                  Planting Seeds of Love & Hope
+                </h1>
+                <p style={{fontFamily:'Quicksand'}} className="text-lg sm:text-xl md:text-2xl text-white/90 max-w-3xl mx-auto lg:mx-0 text-balance drop-shadow-md">
+                  Empowering communities through education, nutrition, and sustainable development. One seed at a time.
+                </p>
+              </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start pt-2 lg:pt-4">
-              <Link href="/contact">
-                <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground px-6 lg:px-8 text-base lg:text-lg font-semibold w-full sm:w-auto">
-                  Get Involved Today
-                </Button>
-              </Link>
-              <Link href="/about">
-                <Button size="lg" className="px-6 lg:px-8 text-base lg:text-lg font-semibold bg-white hover:bg-white/90 text-foreground w-full sm:w-auto">
-                  Learn Our Story
-                </Button>
-              </Link>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start pt-2 lg:pt-4">
+                <Link href="/contact">
+                  <Button  style={{fontFamily:'Quicksand'}} size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground px-6 lg:px-8 text-base lg:text-lg font-semibold w-full sm:w-auto">
+                    Get Involved Today
+                  </Button>
+                </Link>
+                <Link href="/about">
+                  <Button  style={{fontFamily:'Quicksand'}} size="lg" className="px-6 lg:px-8 text-base lg:text-lg font-semibold bg-white hover:bg-white/90 text-foreground w-full sm:w-auto">
+                    Learn Our Story
+                  </Button>
+                </Link>
+              </div>
             </div>
-          </div>
+          </AnimatedElement>
 
           {/* Right: SVG Elements */}
-          <div className="w-full hidden sm:inline-block lg:w-2/5 xl:w-1/3  justify-center lg:justify-end items-center relative">
-            {/* Primary SVG (Larger) */}
-            <div className="pointer-events-none w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 lg:w-[28rem] lg:h-[28rem] xl:w-[32rem] xl:h-[32rem] transform rotate-12 lg:rotate-22 origin-center">
+          <AnimatedElement variant="slideInRight">
+            <div className="w-full hidden sm:inline-block lg:w-2/5 xl:w-1/3  justify-center lg:justify-end items-center relative">
+           
+            <div className="pointer-events-none w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 lg:w-md lg:h-md xl:w-lg xl:h-lg transform rotate-12 lg:rotate-22 origin-center">
               <svg viewBox="0 0 210 470" className="w-full h-full" aria-hidden="true">
                 <defs>
                   <clipPath id="heroClipPrimary">
@@ -121,6 +125,7 @@ export function Hero() {
               </svg>
             </div> */}
           </div>
+          </AnimatedElement>
         </div>
       </div>
 

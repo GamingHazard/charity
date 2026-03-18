@@ -22,7 +22,7 @@ export function Navbar() {
   const navLinks = [
     { href: "/", label: "Home" },
     { href: "/about", label: "About" },
-    { href: "/programs", label: "Blogs" },
+    { href: "/blog", label: "Blogs" },
     // { href: "/get-involved", label: "Get Involved" },
     { href: "/contact", label: "Contact" },
   ];
@@ -39,6 +39,7 @@ export function Navbar() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link
+             style={{fontFamily:'Quicksand'}}
             href="/"
             className={`flex items-center gap-2 font-bold text-xl transition-colors ${
               isScrolled
@@ -58,6 +59,7 @@ export function Navbar() {
           <div className="hidden md:flex items-center gap-8">
             {navLinks.map((link) => (
               <Link
+                 style={{fontFamily:'Quicksand'}}
                 onClick={()=>setActiveBtn(link.label)}
                 key={link.href}
                 href={link.href}
@@ -71,6 +73,7 @@ export function Navbar() {
               </Link>
             ))}
             <Button
+               style={{fontFamily:'Quicksand'}}
               className={`transition-all ${
                 isScrolled
                   ? "bg-primary hover:bg-primary/90 text-primary-foreground"
@@ -109,6 +112,7 @@ export function Navbar() {
         {/* Mobile Navigation */}
         {isMenuOpen && (
           <div
+             style={{fontFamily:'Quicksand'}}
             className={`md:hidden pb-4 space-y-2 transition-all ${
               isScrolled
                 ? "bg-card/95 backdrop-blur-md border-t border-border"
@@ -117,6 +121,7 @@ export function Navbar() {
           >
             {navLinks.map((link) => (
               <Link
+                 style={{fontFamily:'Quicksand'}}
                 key={link.href}
                 href={link.href}
                 className={`block px-4 py-2 rounded-md transition-colors ${
@@ -130,6 +135,7 @@ export function Navbar() {
               </Link>
             ))}
             <Button
+               style={{fontFamily:'Quicksand'}}
               className={`w-full mt-2 transition-all ${
                 isScrolled
                   ? "bg-primary hover:bg-primary/90 text-primary-foreground"
