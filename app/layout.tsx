@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Quicksand } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { AuthProvider } from '@/lib/auth-context'
 import { DataProvider } from '@/lib/data-context'
+import { QueryProvider } from '@/components/providers/query-provider'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] });
@@ -40,11 +41,13 @@ export default function RootLayout({
   return (
     <html lang="en" className={quicksand.className}>
       <body className="font-sans antialiased">
-        <AuthProvider>
-          <DataProvider>
-            {children}
-          </DataProvider>
-        </AuthProvider>
+        <QueryProvider>
+          <AuthProvider>
+            <DataProvider>
+              {children}
+            </DataProvider>
+          </AuthProvider>
+        </QueryProvider>
         <Analytics />
       </body>
     </html>

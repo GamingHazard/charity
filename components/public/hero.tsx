@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { AnimatedElement } from '@/components/motion/animated-elements';
+import ScrollReveal from '../../lib/fontAnimation'
 
 export function Hero() {
   return (
@@ -22,9 +23,10 @@ export function Hero() {
       <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col lg:flex-row items-center lg:items-start gap-8 lg:gap-12">
           {/* Left: Text */}
-          <AnimatedElement variant="fadeInDown">
+          <AnimatedElement variant="slideInLeft">
             <div className="w-full lg:w-3/5 xl:w-2/3 text-center lg:text-left space-y-6 lg:space-y-8">
               <div className="space-y-3 lg:space-y-4">
+                
                 <h1 style={{fontFamily: 'Quicksand'}} className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white text-balance leading-tight drop-shadow-lg ">
                   Planting Seeds of Love & Hope
                 </h1>
