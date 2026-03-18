@@ -5,6 +5,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useData } from "@/lib/data-context";
 import { useState } from "react";
+import { Arrow } from "@radix-ui/react-context-menu";
+import { ArrowRight } from "lucide-react";
 
 const programEmojis: { [key: string]: string } = {
   "Education Initiatives": "📚",
@@ -86,24 +88,20 @@ export function ProgramsSection() {
 
           {activetab === "mission" && (
             <p className="mt-4 ">
-              To ensure every child receives nutritious food and a safe learning
-              environment, empowering them to build a healthier and more
-              educated future.
+             To empower individuals and communities through access to quality education and nutritious food, creating sustainable pathways out of poverty and enabling every person to reach their full potential.
             </p>
           )}
           {activetab === "vision" && (
             <p className="mt-4 ">
-              To ensure every child receives nutritious food and a safe learning
-              environment, empowering them to build a healthier and more
-              educated future.
+              A world where every child has access to education and proper nutrition, where communities are empowered to create lasting change, and where opportunity is not determined by circumstance of birth.
             </p>
           )}
 
           <span className="flex gap-4 items-center justify-center mt-6">
             <span className="w-1/2">
-              <Button className=" rounded-xlg">
-                Learn More
-              </Button>
+              <Link href="/about" className=" rounded-xlg text-primary rounded-lg justify-center p-3 flex items-center bg-primary/10 ">
+                Learn More <ArrowRight className="ml-2 w-4 h-4" />
+              </Link>
             </span>
             <span className="w-1/2">
               <h1 className="font-bold text-green-900 text-3xl">100% </h1>

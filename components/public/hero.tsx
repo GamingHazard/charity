@@ -32,7 +32,7 @@ export function Hero() {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start pt-2 lg:pt-4">
-              <Link href="/get-involved">
+              <Link href="/contact">
                 <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground px-6 lg:px-8 text-base lg:text-lg font-semibold w-full sm:w-auto">
                   Get Involved Today
                 </Button>

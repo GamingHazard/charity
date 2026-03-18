@@ -9,8 +9,12 @@ import { Footer } from '@/components/shared/footer';
 import Marquee from "react-fast-marquee";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Facebook, Instagram, Linkedin, Mail, MapPin, PhoneCall, Send } from 'lucide-react';
+import { Calendar, CalendarClock, Facebook, Instagram, Linkedin, Mail, MapPin, PhoneCall, Send } from 'lucide-react';
 import Link from 'next/link';
+// import { mockEvents } from '@/lib/mock-data';
+import ScrollStack,{ ScrollStackItem } from '@/lib/scrollStackJs';
+import StackCards from '@/components/public/scroll-stack';
+import { mockEvents } from '@/lib/mock-data';
 
 export default function Home() {
   const impactMetrics = [
@@ -58,9 +62,9 @@ export default function Home() {
       <section className="py-14 sm:py-16 px-2 sm:px-4 mt-14 md:px-8 bg-card">
        {/* relative sm:mt-14 sm:flex z-10 max-w-6xl mx-auto */}
         <section className="py-16 text-right rounded-md relative sm:px-4 md:px-8 bg-green-900 h-96 sm:h-200 border-y sm:mx-10 border-green-800">
-          <Button className='absolute lg:hidden top-0 left-5 '>
-            Join Us as a Volunteer
-          </Button>
+          <Link href="/contact" className='absolute flex items-center justify-center bg-primary  text-white rounded-lg  lg:hidden top-0 left-5  p-2'>
+            Join Us  
+          </Link  >
           <span className='  sm:absolute z-10 left-40 top-40'>
             <p className="text-2xl font-semibold sm:text-4xl text-white sm:font-bold mb-4 text-left pl-4 sm:text-center">
             VOLUNTEERS MAKING A <br /> DIFFERENCE 
@@ -168,11 +172,79 @@ export default function Home() {
           </div> 
           
       </div>
-    </section>
-     
+      </section>
+
+      {/* Upcoming Events */}
+      <section className='p-4  sm:px-10 bg-white relative mt-14 md:px-8'>
+        <h1 className='text-sm     '>Our Events</h1>
+        <h2 className='text-3xl sm:text-5xl font-bold   mb-2'>Be Part of our Upcoming Events</h2>
+        <p className='mb-10 text-muted-foreground'>(Scroll 'UP'  the events to view more!)</p>
+        
+        <div
+          className="w-full hidden  bg-background relative z-10 sm:mx-auto   rounded-md h-auto sm:h-150 sm:flex items-center  ">
+    <ScrollStack className=' relative'>
+        {mockEvents.map((event) => (
+          <ScrollStackItem  key={event._id}>
+           <span className=' text-wrap  items-center justify-evenly grid p-2 sm:w-30 rounded-full h-full bg-primary/10'>
+              <span className='w-20 h-20 flex items-center justify-center ml-2 rounded-full bg-primary'>
+                <CalendarClock size={50} className='text-white' />
+              </span>
+              <p className='text-lg text-primary'>{event.date}</p>
+            </span>
+            
+            <span className='flex-1 flex items-center h-full gap-6 px-5'>
+              <span className='w-[75%] h-full  '>
+                <p className='text-4xl  font-bold'>{event.title}</p>
+                <p className='text-lg'>{event.description}</p>
+                <p className='text-sm  mt-4 font-semibold'><b className='text-primary'>Topic:</b> {event.topic}</p>
+                <p className='text-sm  font-semibold'><b className='text-primary'>Time:</b> {event.time}</p>
+                <p className='text-sm  font-semibold'><b className='text-primary'>Location:</b> {event.location.address}</p>
+
+                <Button className='bg-primary/20 hover:bg-green-800 hover:text-white text-primary px-8 text-lg cursor-pointer font-bold rounded-lg p-5 mt-5'>
+                  Join Now
+                </Button>
+              </span>
+              <img src={`${event.image.url}`} className='w-flex h-full rounded-md ' />
+            </span>
+            
+          </ScrollStackItem>
+        ))}
+          </ScrollStack>
+          <img src='/event-image.png' className='w-1/2 h-full absolute hidden sm:inline-block -right-70' />
+          <img src='/news-1-shape-1.png' className='w-50 h-50 absolute hidden sm:inline-block top-0 left-0' />
+          <img src='/news-1-shape-2.png' className='w-50 h-50 absolute -z-20 hidden sm:inline-block bottom-0 left-0' />
+          <img src='/news-1-shape-3.png' className='w-50 h-50 absolute -z-20 hidden sm:inline-block top-0 right-0' />
+          {/* <img src='/news-1-shape-4.png' className='w-70 h-70 absolute hidden -z-20 sm:inline-block top-0 right-0' /> */}
+          
+        </div>
+        <span className='lg:hidden w-full h-120 bg-card grid gap-2 items-center overflow-y-auto'>
+          {mockEvents.map((event) => (
+            <div
+              key={event._id}
+              className='w-80 lg:hidden  bg-background relative z-10 sm:mx-auto my-10   rounded-md  h-auto pb-2      mt-10'>
+              <img src={`${event.image.url}`} className='w-full h-58 rounded-md   object-cover' />
+              <p className='text-lg truncate line-clamp-2 mt-4 px-3 text-left font-bold'>{event.title}</p>
+              <p className='text-sm truncate  text-wrap line-clamp-3 text-muted-foreground px-3 text-left  '>{event.description}</p>
+              <span className='text-sm px-3 my-4 font-semibold'><b className='text-primary'>Topic:</b> {event.topic}</span> <br />
+              <span className='text-sm px-3 my-4 font-semibold'><b className='text-primary'>Date:</b> {event.date}</span><br />
+              <span className='text-sm px-3 my-4 font-semibold'><b className='text-primary'>Time:</b> {event.time}</span><br />
+              <span className='text-sm truncate text-wrap line-clamp-2 px-3  mt-2 font-semibold'><b className='text-primary'>Location:</b> {event.location.address}</span><br />
+
+              <Button className='bg-primary/20 hover:bg-green-800 hover:text-white text-primary  text-lg cursor-pointer font-bold rounded-lg    w-[90%] ml-4'>
+                Join Now
+              </Button>
+
+          
+          
+          
+          </div>
+))}
+        </span>
+        
+      </section>
 
       {/* Footer */}
-      <footer className=" hidden sm:flex shadow-lg relative  justify-center items-center flex-1 bg-pink-400">
+      <footer className=" hidden mt-5 sm:flex shadow-lg relative  justify-center items-center flex-1 bg-pink-400">
         <img src="/footer-bg.jpg" className="  w-full h-full" />
       <div className="max-w-6xl gap-5 border-b border-muted text-white justify-evenly h-96 flex-1 flex items-center absolute     mx-auto">
         
