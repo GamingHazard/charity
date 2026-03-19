@@ -22,6 +22,7 @@ export function Navbar() {
   const navLinks = [
     { href: "/", label: "Home" },
     { href: "/about", label: "About" },
+    { href: "/campaign", label: "Campaigns" },
     { href: "/blog", label: "Blogs" },
     // { href: "/get-involved", label: "Get Involved" },
     { href: "/contact", label: "Contact" },
@@ -72,16 +73,18 @@ export function Navbar() {
                 {link.label}
               </Link>
             ))}
-            <Button
-               style={{fontFamily:'Quicksand'}}
-              className={`transition-all ${
-                isScrolled
-                  ? "bg-primary hover:bg-primary/90 text-primary-foreground"
-                  : "bg-white/20 hover:bg-white/30 text-white backdrop-blur-sm border border-white/30"
-              }`}
-            >
-              Donate
-            </Button>
+            <Link href="/donate" className="inline-block">
+              <Button
+                 style={{fontFamily:'Quicksand'}}
+                className={`transition-all ${
+                  isScrolled
+                    ? "bg-primary hover:bg-primary/90 text-primary-foreground"
+                    : "bg-white/20 hover:bg-white/30 text-white backdrop-blur-sm border border-white/30"
+                }`}
+              >
+                Donate
+              </Button>
+            </Link>
           </div>
 
           {/* Mobile Menu Button */}
@@ -134,16 +137,18 @@ export function Navbar() {
                 {link.label}
               </Link>
             ))}
-            <Button
-               style={{fontFamily:'Quicksand'}}
-              className={`w-full mt-2 transition-all ${
-                isScrolled
-                  ? "bg-primary hover:bg-primary/90 text-primary-foreground"
-                  : "bg-white/20 hover:bg-white/30 text-white backdrop-blur-sm border border-white/30"
-              }`}
-            >
-              Donate
-            </Button>
+            <Link href="/donate" className="w-full block">
+              <Button
+                 style={{fontFamily:'Quicksand'}}
+                className={`w-full mt-2 transition-all ${
+                  isScrolled
+                    ? "bg-primary hover:bg-primary/90 text-primary-foreground"
+                    : "bg-white/20 hover:bg-white/30 text-white backdrop-blur-sm border border-white/30"
+                }`}
+              >
+                Donate
+              </Button>
+            </Link>
           </div>
         )}
       </div>

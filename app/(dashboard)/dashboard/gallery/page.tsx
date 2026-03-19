@@ -1,10 +1,34 @@
-'use client';
+"use client";
 
-import { useState, useMemo } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Trash2, Edit2, Upload, Image as ImageIcon } from 'lucide-react';
+import { useState, useMemo, useRef, useEffect } from "react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Trash2,
+  Edit2,
+  Upload,
+  Image as ImageIcon,
+  ImagePlus,
+  X,
+  MoreVertical,
+} from "lucide-react";
 
 interface GalleryImage {
   id: string;
@@ -14,51 +38,101 @@ interface GalleryImage {
   uploadDate: string;
   size: string;
   featured: boolean;
+  imageFile?: File;
 }
 
 const initialImages: GalleryImage[] = [
   {
-    id: 'img-1',
-    title: 'Community Gathering 2024',
-    category: 'Events',
-    url: '/donation-image.jpg',
-    uploadDate: '2024-03-15',
-    size: '2.5MB',
+    id: "img-1",
+    title: "Community Gathering 2024",
+    category: "Events",
+    url: "/donation-image.jpg",
+    uploadDate: "2024-03-15",
+    size: "2.5MB",
     featured: true,
   },
   {
-    id: 'img-2',
-    title: 'Educational Program',
-    category: 'Education',
-    url: '/hero-bg-1-1.jpg',
-    uploadDate: '2024-03-10',
-    size: '1.8MB',
+    id: "img-2",
+    title: "Educational Program",
+    category: "Education",
+    url: "/hero-bg-1-1.jpg",
+    uploadDate: "2024-03-10",
+    size: "1.8MB",
     featured: false,
   },
   {
-    id: 'img-3',
-    title: 'Volunteer Team',
-    category: 'Volunteers',
-    url: '/volunter-bg.jpg',
-    uploadDate: '2024-03-05',
-    size: '3.1MB',
+    id: "img-3",
+    title: "Volunteer Team",
+    category: "Volunteers",
+    url: "/volunter-bg.jpg",
+    uploadDate: "2024-03-05",
+    size: "3.1MB",
     featured: false,
   },
 ];
 
 export default function GalleryPage() {
   const [images, setImages] = useState<GalleryImage[]>(initialImages);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editData, setEditData] = useState<Partial<GalleryImage>>({});
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
 
-  const categories = ['All', ...Array.from(new Set(images.map(img => img.category)))];
+  const categoryOptions = ["Events", "Education", "Volunteers", "General"];
+
+  const [newImageForm, setNewImageForm] = useState({
+    title: "",
+    category: "",
+    imageUrl: "",
+    imageFile: null as File | null,
+  });
+
+  const resetNewImageForm = () => {
+    setNewImageForm({
+      title: "",
+      category: "",
+      imageUrl: "",
+      imageFile: null,
+    });
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+    }
+    setImagePreview(null);
+  };
+
+  const handleDialogOpenChange = (open: boolean) => {
+    setShowAddDialog(open);
+    if (!open) {
+      resetNewImageForm();
+    }
+  };
+
+  const removeImage = () => {
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+    }
+    setNewImageForm((prev) => ({ ...prev, imageFile: null }));
+    setImagePreview(null);
+  };
+
+  const categories = [
+    "All",
+    ...Array.from(new Set(images.map((img) => img.category))),
+  ];
 
   const filteredImages = useMemo(() => {
-    return images.filter(image => {
-      const matchesSearch = image.title.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = selectedCategory === 'All' || image.category === selectedCategory;
+    return images.filter((image) => {
+      const matchesSearch = image.title
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+      const matchesCategory =
+        selectedCategory === "All" || image.category === selectedCategory;
       return matchesSearch && matchesCategory;
     });
   }, [images, searchTerm, selectedCategory]);
@@ -66,12 +140,15 @@ export default function GalleryPage() {
   const handleEdit = (image: GalleryImage) => {
     setEditingId(image.id);
     setEditData(image);
+    setShowEditDialog(true);
   };
 
   const handleSave = (id: string) => {
-    setImages(images.map(image =>
-      image.id === id ? { ...image, ...editData } : image
-    ));
+    setImages(
+      images.map((image) =>
+        image.id === id ? { ...image, ...editData } : image,
+      ),
+    );
     setEditingId(null);
     setEditData({});
   };
@@ -82,35 +159,51 @@ export default function GalleryPage() {
   };
 
   const handleDelete = (id: string) => {
-    setImages(images.filter(image => image.id !== id));
+    setImages(images.filter((image) => image.id !== id));
   };
 
   const handleToggleFeatured = (id: string) => {
-    setImages(images.map(image =>
-      image.id === id ? { ...image, featured: !image.featured } : image
-    ));
+    setImages(
+      images.map((image) =>
+        image.id === id ? { ...image, featured: !image.featured } : image,
+      ),
+    );
   };
 
   const handleAddNew = () => {
+    if (!newImageForm.title) return;
+
     const newId = `img-${Date.now()}`;
+    const fileSize = newImageForm.imageFile
+      ? `${(newImageForm.imageFile.size / 1024 / 1024).toFixed(1)}MB`
+      : "0MB";
+
     const newImage: GalleryImage = {
       id: newId,
-      title: 'New Image',
-      category: 'General',
-      url: '/placeholder.jpg',
-      uploadDate: new Date().toISOString().split('T')[0],
-      size: '0MB',
+      title: newImageForm.title,
+      category: newImageForm.category || "General",
+      url: imagePreview || newImageForm.imageUrl || "/placeholder.jpg",
+      uploadDate: new Date().toISOString().split("T")[0],
+      size: fileSize,
       featured: false,
+      imageFile: newImageForm.imageFile || undefined,
     };
+
     setImages([...images, newImage]);
+    resetNewImageForm();
+    setShowAddDialog(false);
   };
 
   return (
     <div className="p-8 space-y-8">
       {/* Header */}
       <div>
-        <h2 className="text-3xl font-bold text-foreground mb-2">Gallery Management</h2>
-        <p className="text-foreground/70">Manage gallery images and organize by category</p>
+        <h2 className="text-3xl font-bold text-foreground mb-2">
+          Gallery Management
+        </h2>
+        <p className="text-foreground/70">
+          Manage gallery images and organize by category
+        </p>
       </div>
 
       {/* Statistics */}
@@ -121,12 +214,17 @@ export default function GalleryPage() {
         </Card>
         <Card className="p-6">
           <p className="text-foreground/60 text-sm mb-2">Featured</p>
-          <p className="text-3xl font-bold text-accent">{images.filter(i => i.featured).length}</p>
+          <p className="text-3xl font-bold text-accent">
+            {images.filter((i) => i.featured).length}
+          </p>
         </Card>
         <Card className="p-6">
           <p className="text-foreground/60 text-sm mb-2">Total Size</p>
           <p className="text-3xl font-bold text-primary">
-            {(images.reduce((sum, img) => sum + parseFloat(img.size), 0)).toFixed(1)}MB
+            {images
+              .reduce((sum, img) => sum + parseFloat(img.size), 0)
+              .toFixed(1)}
+            MB
           </p>
         </Card>
       </div>
@@ -134,7 +232,9 @@ export default function GalleryPage() {
       {/* Filters */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">Search Images</label>
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Search Images
+          </label>
           <Input
             type="text"
             placeholder="Search by title..."
@@ -144,20 +244,24 @@ export default function GalleryPage() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">Category</label>
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Category
+          </label>
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
             className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
           >
-            {categories.map(cat => (
-              <option key={cat} value={cat}>{cat}</option>
+            {categories.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
             ))}
           </select>
         </div>
         <div className="flex items-end">
           <Button
-            onClick={handleAddNew}
+            onClick={() => setShowAddDialog(true)}
             className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-medium flex items-center justify-center gap-2"
           >
             <Upload size={16} /> Upload Image
@@ -165,105 +269,313 @@ export default function GalleryPage() {
         </div>
       </div>
 
+      {/* Add Image Dialog */}
+      <Dialog open={showAddDialog} onOpenChange={handleDialogOpenChange}>
+        <DialogContent className="w-full max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Upload Gallery Image</DialogTitle>
+            <DialogDescription>
+              Provide a title, category, and optionally upload an image or
+              provide a URL.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 gap-4">
+            <Input
+              placeholder="Title"
+              value={newImageForm.title}
+              onChange={(e) =>
+                setNewImageForm({ ...newImageForm, title: e.target.value })
+              }
+              className="bg-background border-border"
+            />
+
+            <Select
+              value={newImageForm.category}
+              onValueChange={(value) =>
+                setNewImageForm({ ...newImageForm, category: value })
+              }
+            >
+              <SelectTrigger className="bg-background border-border">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                {categoryOptions.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    {category}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Input
+              placeholder="Image URL (optional)"
+              value={newImageForm.imageUrl}
+              onChange={(e) => {
+                setNewImageForm({ ...newImageForm, imageUrl: e.target.value });
+                setImagePreview(e.target.value);
+              }}
+              className="bg-background border-border"
+            />
+
+            <div
+              className={`flex flex-col items-center justify-center gap-2 rounded-md border p-4 text-center transition ${
+                isDragging
+                  ? "border-accent bg-accent/10"
+                  : "border-border bg-background"
+              }`}
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setIsDragging(true);
+              }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setIsDragging(false);
+                const file = e.dataTransfer.files?.[0];
+                if (!file) return;
+                if (!file.type.startsWith("image/")) return;
+                if (imagePreview) {
+                  URL.revokeObjectURL(imagePreview);
+                }
+                setNewImageForm((prev) => ({ ...prev, imageFile: file }));
+                setImagePreview(URL.createObjectURL(file));
+              }}
+            >
+              {imagePreview ? (
+                <img
+                  src={imagePreview}
+                  alt="Preview"
+                  className="h-28 w-28 rounded-full object-cover"
+                />
+              ) : (
+                <>
+                  <ImagePlus className="text-foreground/60" />
+                  <p className="text-sm text-foreground/70">
+                    Drag & drop an image, or click to browse
+                  </p>
+                  <p className="text-xs text-foreground/50">
+                    JPG, PNG, SVG up to 5MB
+                  </p>
+                </>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  if (imagePreview) {
+                    URL.revokeObjectURL(imagePreview);
+                  }
+                  setNewImageForm((prev) => ({ ...prev, imageFile: file }));
+                  setImagePreview(URL.createObjectURL(file));
+                }}
+              />
+            </div>
+
+            {newImageForm.imageFile && imagePreview && (
+              <div className="flex items-center justify-between gap-4 rounded-md border border-border bg-background p-3">
+                <div className="flex items-center gap-3">
+                  <img
+                    src={imagePreview}
+                    alt="Selected preview"
+                    className="h-16 w-16 rounded-full object-cover"
+                  />
+                  <div className="text-sm">
+                    <p className="font-medium text-foreground">
+                      {newImageForm.imageFile.name}
+                    </p>
+                    <p className="text-xs text-foreground/60">
+                      {(newImageForm.imageFile.size / 1024).toFixed(0)} KB
+                    </p>
+                  </div>
+                </div>
+                <Button variant="outline" size="sm" onClick={removeImage}>
+                  <X className="size-4" />
+                  Remove
+                </Button>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => handleDialogOpenChange(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleAddNew}
+              className="bg-accent hover:bg-accent/90 text-accent-foreground font-medium"
+            >
+              Add Image
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Image Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="w-full max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Image</DialogTitle>
+            <DialogDescription>
+              Update the image title and category.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 gap-4">
+            <Input
+              placeholder="Image title"
+              value={editData.title || ""}
+              onChange={(e) =>
+                setEditData({ ...editData, title: e.target.value })
+              }
+              className="bg-background border-border"
+            />
+
+            <Select
+              value={editData.category || ""}
+              onValueChange={(value) =>
+                setEditData({ ...editData, category: value })
+              }
+            >
+              <SelectTrigger className="bg-background border-border">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                {categoryOptions.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    {category}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {editData.url && (
+              <div className="relative w-full h-48 rounded-lg overflow-hidden border border-border">
+                <img
+                  src={editData.url}
+                  alt="Preview"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                handleSave(editingId || "");
+                setShowEditDialog(false);
+              }}
+              className="bg-accent hover:bg-accent/90 text-accent-foreground font-medium"
+            >
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Images Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredImages.map((image) => (
-          <Card key={image.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-            <div className="relative aspect-video bg-background overflow-hidden">
-              <img
-                src={image.url}
-                alt={image.title}
-                className="w-full h-full object-cover"
-              />
-              {image.featured && (
-                <div className="absolute top-2 right-2 bg-accent text-accent-foreground px-2 py-1 rounded text-xs font-medium">
-                  Featured
+          <div
+            key={image.id}
+            className="relative group overflow-hidden rounded-lg shadow-md hover:shadow-lg transition-shadow h-96 bg-background"
+          >
+            {/* Background Image */}
+            <img
+              src={image.url}
+              alt={image.title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            />
+
+            {/* Overlay */}
+            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-4">
+              {/* Top section with title and menu */}
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <h3 className="font-semibold text-white text-sm mb-2 line-clamp-2">
+                    {image.title}
+                  </h3>
+                  <span className="inline-block px-2 py-1 bg-white/20 text-white rounded text-xs font-medium">
+                    {image.category}
+                  </span>
                 </div>
-              )}
-            </div>
-            <div className="p-4 space-y-3">
-              {editingId === image.id ? (
-                <>
-                  <Input
-                    value={editData.title || ''}
-                    onChange={(e) => setEditData({ ...editData, title: e.target.value })}
-                    placeholder="Image title"
-                    className="bg-background border-border text-sm"
-                  />
-                  <Input
-                    value={editData.category || ''}
-                    onChange={(e) => setEditData({ ...editData, category: e.target.value })}
-                    placeholder="Category"
-                    className="bg-background border-border text-sm"
-                  />
-                  <Input
-                    value={editData.url || ''}
-                    onChange={(e) => setEditData({ ...editData, url: e.target.value })}
-                    placeholder="Image URL"
-                    className="bg-background border-border text-sm"
-                  />
-                </>
-              ) : (
-                <>
-                  <h3 className="font-semibold text-foreground">{image.title}</h3>
-                  <div className="flex justify-between items-center text-sm text-foreground/70">
-                    <span className="px-2 py-1 bg-primary/10 text-primary rounded text-xs">
-                      {image.category}
+                <div className="relative ml-2">
+                  <button
+                    onClick={() =>
+                      setOpenMenuId(openMenuId === image.id ? null : image.id)
+                    }
+                    className="p-2 hover:bg-white/20 rounded transition-colors text-white"
+                  >
+                    <MoreVertical size={18} />
+                  </button>
+
+                  {openMenuId === image.id && (
+                    <div className="absolute right-0 mt-2 w-40 bg-card border border-border rounded-lg shadow-lg z-50 py-1">
+                      {/* Edit */}
+                      <button
+                        onClick={() => {
+                          handleEdit(image);
+                          setOpenMenuId(null);
+                        }}
+                        className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-background/50 flex items-center gap-2 transition-colors"
+                      >
+                        <Edit2 size={14} />
+                        Edit
+                      </button>
+
+                      {/* Delete */}
+                      <button
+                        onClick={() => {
+                          handleDelete(image.id);
+                          setOpenMenuId(null);
+                        }}
+                        className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50/10 flex items-center gap-2 transition-colors"
+                      >
+                        <Trash2 size={14} />
+                        Delete
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Bottom section with stats */}
+              <div className="space-y-1 text-xs text-white/80">
+                <div className="flex items-center justify-between">
+                  <span>Size: {image.size}</span>
+                  {image.featured && (
+                    <span className="bg-accent text-accent-foreground px-2 py-0.5 rounded text-xs font-medium">
+                      ⭐ Featured
                     </span>
-                    <span>{image.uploadDate}</span>
-                  </div>
-                  <p className="text-xs text-foreground/60">{image.size}</p>
-                </>
-              )}
-              <div className="flex gap-2 pt-2 border-t border-border">
-                {editingId === image.id ? (
-                  <>
-                    <Button
-                      onClick={() => handleSave(image.id)}
-                      className="flex-1 bg-accent hover:bg-accent/90 text-xs"
-                    >
-                      Save
-                    </Button>
-                    <Button
-                      onClick={handleCancel}
-                      variant="outline"
-                      className="flex-1 text-xs"
-                    >
-                      Cancel
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      onClick={() => handleToggleFeatured(image.id)}
-                      className="flex-1 p-2 hover:bg-background rounded transition-colors text-sm text-foreground/60 hover:text-foreground border border-border"
-                    >
-                      {image.featured ? '⭐ Featured' : '☆ Feature'}
-                    </button>
-                    <button
-                      onClick={() => handleEdit(image)}
-                      className="p-2 hover:bg-background rounded transition-colors text-foreground/60 hover:text-foreground border border-border"
-                    >
-                      <Edit2 size={16} />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(image.id)}
-                      className="p-2 hover:bg-background rounded transition-colors text-foreground/60 hover:text-red-500 border border-border"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </>
-                )}
+                  )}
+                </div>
+                <div className="text-white/70">
+                  Uploaded: {image.uploadDate}
+                </div>
               </div>
             </div>
-          </Card>
+          </div>
         ))}
       </div>
 
       {filteredImages.length === 0 && (
         <Card className="p-8 text-center">
           <ImageIcon size={48} className="mx-auto text-foreground/30 mb-4" />
-          <p className="text-foreground/70">No images found matching your filters</p>
+          <p className="text-foreground/70">
+            No images found matching your filters
+          </p>
         </Card>
       )}
     </div>

@@ -37,6 +37,22 @@ title: string;
     
 }
 
+export interface Campaign { 
+  _id: string;
+  title: string;
+  tagline: string;
+  description: string;
+  image: { 
+    url: string;
+    public_id: string;
+  };
+  goal: number;
+  raised: number;
+  endDate: string;
+  status: "ongoing" | "upcoming" | "completed" | string;
+  donations: string[];
+}
+
 
 export const mockEvents: Event[] = [
   {
@@ -191,5 +207,113 @@ export const mockBlogs: Post[] = [
     "likes": ["user6"],
     "views": ["ip7", "ip8", "ip9"],
     "comments": []
+  }
+]
+
+export const mockCampaigns = [
+  {
+    "id": "cmp_001",
+    "title": "Clean Water for Rural Families",
+    "tagline": "Bringing safe and reliable water sources closer to home.",
+    "description": "This campaign focuses on constructing and rehabilitating boreholes in underserved rural communities where families currently walk long distances to fetch unsafe water. The funds will support drilling, water testing, pump installation, and community maintenance training to ensure long-term access to clean water.",
+    "image": {
+      "url": "https://images.unsplash.com/photo-1542810634-71277d95dcbb?auto=format&fit=crop&w=1200&q=80",
+      "public_id": "charity/campaigns/clean-water-rural-families"
+    },
+    "goal": 25000,
+    "raised": 14350,
+    "endDate": "2026-06-30",
+    "status": "ongoing",
+    "donations": ["dn_1001", "dn_1002", "dn_1003", "dn_1004", "dn_1005"]
+  },
+  {
+    "id": "cmp_002",
+    "title": "Back to School for Every Child",
+    "tagline": "Supplying books, uniforms, and hope for vulnerable learners.",
+    "description": "This education campaign is designed to provide school supplies, uniforms, tuition support, and learning materials for children from low-income households. It aims to reduce absenteeism, improve academic confidence, and keep children in school throughout the academic year.",
+    "image": {
+      "url": "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1200&q=80",
+      "public_id": "charity/campaigns/back-to-school-every-child"
+    },
+    "goal": 18000,
+    "raised": 9200,
+    "endDate": "2026-05-20",
+    "status": "ongoing",
+    "donations": ["dn_1006", "dn_1007", "dn_1008"]
+  },
+  {
+    "id": "cmp_003",
+    "title": "Emergency Food Relief Drive",
+    "tagline": "Delivering urgent food support to families in crisis.",
+    "description": "The Emergency Food Relief Drive raises funds to provide food packages to households affected by displacement, unemployment, and natural disasters. Each package includes staple foods, nutritional supplements, and basic hygiene items to support families through difficult periods.",
+    "image": {
+      "url": "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=1200&q=80",
+      "public_id": "charity/campaigns/emergency-food-relief-drive"
+    },
+    "goal": 30000,
+    "raised": 30120,
+    "endDate": "2026-02-28",
+    "status": "passed",
+    "donations": ["dn_1009", "dn_1010", "dn_1011", "dn_1012", "dn_1013", "dn_1014"]
+  },
+  {
+    "id": "cmp_004",
+    "title": "Healthcare Outreach for Mothers",
+    "tagline": "Improving maternal care through mobile health services.",
+    "description": "This campaign supports mobile healthcare outreaches in remote communities, giving expectant and new mothers access to prenatal checkups, postnatal care, health education, and basic medicines. The project also helps local clinics with essential medical supplies and referral support.",
+    "image": {
+      "url": "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=1200&q=80",
+      "public_id": "charity/campaigns/healthcare-outreach-mothers"
+    },
+    "goal": 22000,
+    "raised": 11780,
+    "endDate": "2026-07-15",
+    "status": "ongoing",
+    "donations": ["dn_1015", "dn_1016", "dn_1017", "dn_1018"]
+  },
+  {
+    "id": "cmp_005",
+    "title": "Youth Skills and Empowerment Program",
+    "tagline": "Helping young people build skills for sustainable livelihoods.",
+    "description": "The Youth Skills and Empowerment Program equips unemployed and out-of-school youth with practical vocational training in tailoring, carpentry, digital literacy, and entrepreneurship. Donations will cover training materials, equipment, mentorship sessions, and startup support for selected graduates.",
+    "image": {
+      "url": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80",
+      "public_id": "charity/campaigns/youth-skills-empowerment"
+    },
+    "goal": 27000,
+    "raised": 6400,
+    "endDate": "2026-08-10",
+    "status": "upcoming",
+    "donations": []
+  },
+  {
+    "id": "cmp_006",
+    "title": "Safe Shelter for Street Children",
+    "tagline": "Creating a secure place for healing, care, and growth.",
+    "description": "This campaign raises funds to expand temporary shelter services for street-connected children. Support will go toward bedding, meals, psychosocial care, protection services, and pathways to family reunification or long-term safe accommodation. The project aims to provide stability and dignity to children in extremely vulnerable situations.",
+    "image": {
+      "url": "https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1200&q=80",
+      "public_id": "charity/campaigns/safe-shelter-street-children"
+    },
+    "goal": 35000,
+    "raised": 18460,
+    "endDate": "2026-09-05",
+    "status": "ongoing",
+    "donations": ["dn_1019", "dn_1020", "dn_1021"]
+  },
+  {
+    "id": "cmp_007",
+    "title": "Tree Planting for a Greener Tomorrow",
+    "tagline": "Restoring communities through environmental action.",
+    "description": "This environmental campaign mobilizes volunteers, schools, and local leaders to plant indigenous trees in degraded areas and around public institutions. Donations will fund seedlings, transport, tools, community sensitization, and follow-up maintenance to improve long-term survival rates.",
+    "image": {
+      "url": "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&q=80",
+      "public_id": "charity/campaigns/tree-planting-greener-tomorrow"
+    },
+    "goal": 15000,
+    "raised": 7200,
+    "endDate": "2026-10-12",
+    "status": "upcoming",
+    "donations": ["dn_1022"]
   }
 ]
