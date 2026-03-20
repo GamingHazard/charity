@@ -5,15 +5,15 @@ import { usePathname } from "next/navigation";
 
 const sidebarItems = [
   { href: "/dashboard", label: "Dashboard", icon: "📊" },
-  { href: "/dashboard/programs", label: "Programs", icon: "📚" },
-  { href: "/dashboard/donations", label: "Donations", icon: "💰" },
+  // { href: "/dashboard/programs", label: "Programs", icon: "📚" },
+  // { href: "/dashboard/donations", label: "Donations", icon: "💰" },
   { href: "/dashboard/staff", label: "Staff & Volunteers", icon: "👥" },
   { href: "/dashboard/blogs", label: "Blogs", icon: "📖" },
   { href: "/dashboard/gallery", label: "Gallery", icon: "🖼️" },
   { href: "/dashboard/events", label: "Events", icon: "📅" },
   { href: "/dashboard/campaigns", label: "Campaigns", icon: "🎯" },
-  { href: "/dashboard/analytics", label: "Analytics", icon: "📈" },
-  { href: "/dashboard/content", label: "Content", icon: "📝" },
+  // { href: "/dashboard/analytics", label: "Analytics", icon: "📈" },
+  // { href: "/dashboard/content", label: "Content", icon: "📝" },
   { href: "/dashboard/settings", label: "Settings", icon: "⚙️" },
 ];
 
@@ -38,8 +38,7 @@ export function DashboardSidebar() {
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-2">
         {sidebarItems.map((item) => {
-          const isActive =
-            pathname === item.href || pathname.startsWith(item.href + "/");
+          const isActive = pathname === item.href;
           return (
             <Link
               key={item.href}
