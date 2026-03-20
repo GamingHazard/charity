@@ -22,7 +22,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Upload, X, Calendar, Target, Users } from "lucide-react";
+import { Plus, Upload, X, Calendar, Target, Users, Loader } from "lucide-react";
 import Image from "next/image";
 
 interface Campaign {
@@ -36,6 +36,10 @@ interface Campaign {
   endDate: string;
   status: "ongoing" | "upcoming" | "completed" | string;
   category: string;
+  image?: {
+    url: string;
+    public_id: string;
+  } | null;
 }
 
 const mockCampaigns: Campaign[] = [
@@ -80,11 +84,16 @@ export default function CampaignsDashboard() {
     description: "",
     goal: "",
     endDate: "",
-    status: "upcoming" as const,
+    status: "" as const,
     category: "",
+    image: { url: "", public_id: "" } as {
+      url: string;
+      public_id: string;
+    } | null,
   });
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [saving, setSaving] = useState<boolean>(false);
 
   const filteredCampaigns =
     statusFilter === "all"
@@ -103,44 +112,57 @@ export default function CampaignsDashboard() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    try {
+      setSaving(true);
+      let imageData = null;
+      if (selectedImage) {
+        imageData = await uploadImageToCloudinary(selectedImage);
+      }
 
-    const newCampaign: Campaign = {
-      id: editingCampaign?.id || `camp-${Date.now()}`,
-      title: formData.title,
-      tagline: formData.tagline,
-      description: formData.description,
-      imageUrl: imagePreview || "/placeholder.jpg",
-      goal: Number(formData.goal),
-      raised: editingCampaign?.raised || 0,
-      endDate: formData.endDate,
-      status: formData.status,
-      category: formData.category,
-    };
+      const newCampaign = {
+        title: formData.title,
+        tagline: formData.tagline,
+        description: formData.description,
+        goal: Number(formData.goal),
+        raised: editingCampaign?.raised || 0,
+        endDate: formData.endDate,
+        status: formData.status,
+        category: formData.category,
+        image: imageData
+          ? {
+              url: imageData.secure_url,
+              public_id: imageData.public_id,
+            }
+          : {
+              url: editingCampaign?.image?.url || "",
+              public_id: editingCampaign?.image?.public_id || "",
+            },
+      };
 
-    if (editingCampaign) {
-      setCampaigns(
-        campaigns.map((c) => (c.id === editingCampaign.id ? newCampaign : c)),
-      );
-    } else {
-      setCampaigns([...campaigns, newCampaign]);
+      if (editingCampaign) {
+      } else {
+      }
+
+      // Reset form
+      // setFormData({
+      //   title: "",
+      //   tagline: "",
+      //   description: "",
+      //   goal: "",
+      //   endDate: "",
+      //   status: "upcoming",
+      //   category: "",
+      // });
+      // setSelectedImage(null);
+      // setImagePreview(null);
+      // setIsDialogOpen(false);
+      // setEditingCampaign(null);
+    } catch (error) {
+    } finally {
+      setSaving(false);
     }
-
-    // Reset form
-    setFormData({
-      title: "",
-      tagline: "",
-      description: "",
-      goal: "",
-      endDate: "",
-      status: "upcoming",
-      category: "",
-    });
-    setSelectedImage(null);
-    setImagePreview(null);
-    setIsDialogOpen(false);
-    setEditingCampaign(null);
   };
 
   const handleEdit = (campaign: Campaign) => {
@@ -154,7 +176,7 @@ export default function CampaignsDashboard() {
       status: campaign.status,
       category: campaign.category,
     });
-    setImagePreview(campaign.imageUrl);
+    setImagePreview(campaign.image?.url || null);
     setIsDialogOpen(true);
   };
 
@@ -174,6 +196,35 @@ export default function CampaignsDashboard() {
         return "bg-gray-100 text-gray-800";
     }
   };
+  async function uploadImageToCloudinary(file: File) {
+    if (!file) {
+      throw new Error("No file provided");
+    }
+
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+    const uploadPreset =
+      process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "charity_uploads";
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", uploadPreset);
+
+    const response = await fetch(
+      `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+      {
+        method: "POST",
+        body: formData,
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to upload image");
+    }
+
+    const data = await response.json();
+
+    return data;
+  }
 
   return (
     <main className="min-h-screen bg-background">
@@ -382,8 +433,20 @@ export default function CampaignsDashboard() {
                   >
                     Cancel
                   </Button>
-                  <Button type="submit">
-                    {editingCampaign ? "Update Campaign" : "Create Campaign"}
+                  <Button
+                    className={`${saving ? "cursor-not-allowed opacity-10" : ""}`}
+                    disabled={saving}
+                    type="submit"
+                  >
+                    {saving ? (
+                      <>
+                        Saving... <Loader className="animate-spin" />
+                      </>
+                    ) : editingCampaign ? (
+                      "Update"
+                    ) : (
+                      "Create"
+                    )}
                   </Button>
                 </div>
               </form>

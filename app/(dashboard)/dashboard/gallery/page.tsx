@@ -28,7 +28,10 @@ import {
   ImagePlus,
   X,
   MoreVertical,
+  Loader,
 } from "lucide-react";
+import { set } from "react-hook-form";
+import { url } from "inspector";
 
 interface GalleryImage {
   id: string;
@@ -83,6 +86,8 @@ export default function GalleryPage() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const categoryOptions = ["Events", "Education", "Volunteers", "General"];
 
@@ -90,7 +95,11 @@ export default function GalleryPage() {
     title: "",
     category: "",
     imageUrl: "",
-    imageFile: null as File | null,
+    image: { url: "", public_id: "", size: "0MB" } as {
+      url: string;
+      public_id: string;
+      size: string;
+    } | null,
   });
 
   const resetNewImageForm = () => {
@@ -98,7 +107,11 @@ export default function GalleryPage() {
       title: "",
       category: "",
       imageUrl: "",
-      imageFile: null,
+      image: { url: "", public_id: "", size: "0MB" } as {
+        url: string;
+        public_id: string;
+        size: string;
+      } | null,
     });
     if (imagePreview) {
       URL.revokeObjectURL(imagePreview);
@@ -170,29 +183,73 @@ export default function GalleryPage() {
     );
   };
 
-  const handleAddNew = () => {
-    if (!newImageForm.title) return;
+  const handleAddNew = async () => {
+    try {
+      setSaving(true);
+      let imageData = null;
+      if (selectedImage) {
+        imageData = await uploadImageToCloudinary(selectedImage);
+      }
+      // if (!newImageForm.title) return;
 
-    const newId = `img-${Date.now()}`;
-    const fileSize = newImageForm.imageFile
-      ? `${(newImageForm.imageFile.size / 1024 / 1024).toFixed(1)}MB`
-      : "0MB";
+      const newImage = {
+        title: newImageForm.title,
+        category: newImageForm.category || "General",
+        featured: false,
+        image: {
+          url: imageData?.secure_url || "",
+          public_id: imageData?.public_id || "",
+          size: imageData
+            ? (imageData.bytes / (1024 * 1024)).toFixed(1) + "MB"
+            : "0MB",
+        } as {
+          url: string;
+          public_id: string;
+          size: string;
+        },
+      };
 
-    const newImage: GalleryImage = {
-      id: newId,
-      title: newImageForm.title,
-      category: newImageForm.category || "General",
-      url: imagePreview || newImageForm.imageUrl || "/placeholder.jpg",
-      uploadDate: new Date().toISOString().split("T")[0],
-      size: fileSize,
-      featured: false,
-      imageFile: newImageForm.imageFile || undefined,
-    };
-
-    setImages([...images, newImage]);
-    resetNewImageForm();
-    setShowAddDialog(false);
+      console.log("====================================");
+      console.log(newImage);
+      console.log("====================================");
+      // setImages([...images, newImage]);
+      // resetNewImageForm();
+      // setShowAddDialog(false);
+    } catch (error) {
+    } finally {
+      setSaving(false);
+    }
   };
+
+  async function uploadImageToCloudinary(file: File) {
+    if (!file) {
+      throw new Error("No file provided");
+    }
+
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+    const uploadPreset =
+      process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "charity_uploads";
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", uploadPreset);
+
+    const response = await fetch(
+      `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+      {
+        method: "POST",
+        body: formData,
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to upload image");
+    }
+
+    const data = await response.json();
+
+    return data;
+  }
 
   return (
     <div className="p-8 space-y-8">
@@ -373,11 +430,12 @@ export default function GalleryPage() {
                   }
                   setNewImageForm((prev) => ({ ...prev, imageFile: file }));
                   setImagePreview(URL.createObjectURL(file));
+                  setSelectedImage(file);
                 }}
               />
             </div>
 
-            {newImageForm.imageFile && imagePreview && (
+            {newImageForm.image?.url && imagePreview && (
               <div className="flex items-center justify-between gap-4 rounded-md border border-border bg-background p-3">
                 <div className="flex items-center gap-3">
                   <img
@@ -385,14 +443,6 @@ export default function GalleryPage() {
                     alt="Selected preview"
                     className="h-16 w-16 rounded-full object-cover"
                   />
-                  <div className="text-sm">
-                    <p className="font-medium text-foreground">
-                      {newImageForm.imageFile.name}
-                    </p>
-                    <p className="text-xs text-foreground/60">
-                      {(newImageForm.imageFile.size / 1024).toFixed(0)} KB
-                    </p>
-                  </div>
                 </div>
                 <Button variant="outline" size="sm" onClick={removeImage}>
                   <X className="size-4" />
@@ -410,10 +460,17 @@ export default function GalleryPage() {
               Cancel
             </Button>
             <Button
+              disabled={saving}
               onClick={handleAddNew}
-              className="bg-accent hover:bg-accent/90 text-accent-foreground font-medium"
+              className={`bg-accent hover:bg-accent/90 text-accent-foreground font-medium ${saving ? "cursor-not-allowed opacity-70" : ""}`}
             >
-              Add Image
+              {saving ? (
+                <>
+                  Saving... <Loader className="animate-spin" />{" "}
+                </>
+              ) : (
+                "Add Image"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

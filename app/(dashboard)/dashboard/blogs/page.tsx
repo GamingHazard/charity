@@ -30,7 +30,10 @@ import {
   MoreVertical,
   Star,
   Send,
+  Loader,
 } from "lucide-react";
+import { on } from "events";
+import { set } from "react-hook-form";
 
 interface Comment {
   id: string;
@@ -137,6 +140,8 @@ export default function BlogsPage() {
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [saving, setSaving] = useState<boolean>(false);
 
   const categoryOptions = [
     "Impact",
@@ -211,19 +216,6 @@ export default function BlogsPage() {
     setEditData(blog);
   };
 
-  const handleSave = (id: string) => {
-    setBlogs(
-      blogs.map((blog) => (blog.id === id ? { ...blog, ...editData } : blog)),
-    );
-    setEditingId(null);
-    setEditData({});
-  };
-
-  const handleCancel = () => {
-    setEditingId(null);
-    setEditData({});
-  };
-
   const handleDelete = (id: string) => {
     setBlogs(blogs.filter((blog) => blog.id !== id));
   };
@@ -289,27 +281,67 @@ export default function BlogsPage() {
     setCommentText("");
   };
 
-  const handleAddNew = () => {
-    if (!newBlogForm.title || !newBlogForm.author) return;
+  const handleAddNew = async () => {
+    try {
+      setSaving(true);
+      let imageData = null;
 
-    const newId = `blog-${Date.now()}`;
-    const newBlog: BlogPost = {
-      id: newId,
-      title: newBlogForm.title,
-      author: newBlogForm.author,
-      category: newBlogForm.category || "General",
-      date: new Date().toISOString().split("T")[0],
-      status: "draft",
-      excerpt: newBlogForm.excerpt,
-      content: newBlogForm.content,
-      imageUrl:
-        imagePreview || newBlogForm.imageUrl || "/placeholder-image.jpg",
-    };
+      if (selectedImage) {
+        imageData = await uploadImageToCloudinary(selectedImage);
+      }
+      // if (!newBlogForm.title || !newBlogForm.author) return;
 
-    setBlogs([...blogs, newBlog]);
-    resetNewBlogForm();
-    setShowAddDialog(false);
+      const newBlog = {
+        title: newBlogForm.title,
+        author: newBlogForm.author,
+        category: newBlogForm.category || "General",
+        date: new Date().toISOString().split("T")[0],
+        status: "draft",
+        excerpt: newBlogForm.excerpt,
+        content: newBlogForm.content,
+        image: imageData || {},
+      };
+
+      // setBlogs([...blogs, newBlog]);
+      // resetNewBlogForm();
+      // setShowAddDialog(false);
+    } catch (error) {
+      setSaving(false);
+      console.error("Error uploading image:", error);
+    } finally {
+      setSaving(false);
+    }
   };
+
+  async function uploadImageToCloudinary(file: File) {
+    if (!file) {
+      throw new Error("No file provided");
+    }
+
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+    const uploadPreset =
+      process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "charity_uploads";
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", uploadPreset);
+
+    const response = await fetch(
+      `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+      {
+        method: "POST",
+        body: formData,
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to upload image");
+    }
+
+    const data = await response.json();
+
+    return data;
+  }
 
   return (
     <div className="p-8 space-y-8">
@@ -481,7 +513,9 @@ export default function BlogsPage() {
                   ? "border-accent bg-accent/10"
                   : "border-border bg-background"
               }`}
-              onClick={() => fileInputRef.current?.click()}
+              onClick={(e) => {
+                fileInputRef.current?.click();
+              }}
               onDragOver={(e) => {
                 e.preventDefault();
                 setIsDragging(true);
@@ -530,6 +564,7 @@ export default function BlogsPage() {
                   }
                   setNewBlogForm((prev) => ({ ...prev, imageFile: file }));
                   setImagePreview(URL.createObjectURL(file));
+                  setSelectedImage(file);
                 }}
               />
             </div>
@@ -567,10 +602,17 @@ export default function BlogsPage() {
               Cancel
             </Button>
             <Button
+              disabled={saving}
               onClick={handleAddNew}
-              className="bg-accent hover:bg-accent/90 text-accent-foreground font-medium"
+              className={`bg-accent hover:bg-accent/90 text-accent-foreground font-medium ${saving ? "cursor-not-allowed opacity-70" : ""}`}
             >
-              Create Post
+              {saving ? (
+                <>
+                  Saving... <Loader className="animate-spin" />
+                </>
+              ) : (
+                "Add Blog Post"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

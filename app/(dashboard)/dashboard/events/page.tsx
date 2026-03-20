@@ -30,7 +30,9 @@ import {
   MoreVertical,
   Clock,
   Users,
+  Loader,
 } from "lucide-react";
+import { set } from "react-hook-form";
 
 interface Event {
   id: string;
@@ -98,6 +100,8 @@ export default function EventsPage() {
   const [viewingEvent, setViewingEvent] = useState<Event | null>(null);
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [saving, setSaving] = useState<boolean>(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
 
   const categoryOptions = ["Community", "Education", "Volunteer", "General"];
 
@@ -203,27 +207,41 @@ export default function EventsPage() {
     setShowViewDialog(true);
   };
 
-  const handleAddNew = () => {
-    if (!newEventForm.title || !newEventForm.date) return;
+  const handleAddNew = async () => {
+    try {
+      setSaving(true);
+      let imageData = null;
+      if (selectedImage) {
+        imageData = await uploadImageToCloudinary(selectedImage);
+      }
 
-    const newId = `event-${Date.now()}`;
-    const newEvent: Event = {
-      id: newId,
-      title: newEventForm.title,
-      date: newEventForm.date,
-      time: newEventForm.time || "10:00 AM",
-      location: newEventForm.location,
-      category: newEventForm.category || "General",
-      description: newEventForm.description,
-      status: "upcoming",
-      attendees: 0,
-      imageUrl:
-        imagePreview || newEventForm.imageUrl || "/placeholder-image.jpg",
-    };
+      // if (!newEventForm.title || !newEventForm.date) return;
 
-    setEvents([...events, newEvent]);
-    resetNewEventForm();
-    setShowAddDialog(false);
+      const newEvent = {
+        title: newEventForm.title,
+        date: newEventForm.date,
+        time: newEventForm.time || "10:00 AM",
+        location: newEventForm.location,
+        category: newEventForm.category || "General",
+        description: newEventForm.description,
+        status: "upcoming",
+        attendees: 0,
+        image: {
+          url: imageData ? imageData.secure_url : "",
+          public_id: imageData ? imageData.public_id : "",
+        },
+      };
+
+      // setEvents([...events, newEvent]);
+      // resetNewEventForm();
+      // setShowAddDialog(false);
+    } catch (error) {
+      console.log("====================================");
+      console.log(error);
+      console.log("====================================");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -238,6 +256,36 @@ export default function EventsPage() {
         return "bg-gray-100 text-gray-700";
     }
   };
+
+  async function uploadImageToCloudinary(file: File) {
+    if (!file) {
+      throw new Error("No file provided");
+    }
+
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+    const uploadPreset =
+      process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "charity_uploads";
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", uploadPreset);
+
+    const response = await fetch(
+      `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+      {
+        method: "POST",
+        body: formData,
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to upload image");
+    }
+
+    const data = await response.json();
+
+    return data;
+  }
 
   return (
     <div className="p-8 space-y-8">
@@ -444,6 +492,7 @@ export default function EventsPage() {
                 }
                 setNewEventForm((prev) => ({ ...prev, imageFile: file }));
                 setImagePreview(URL.createObjectURL(file));
+                setSelectedImage(file);
               }}
             >
               {imagePreview ? (
@@ -476,6 +525,7 @@ export default function EventsPage() {
                   }
                   setNewEventForm((prev) => ({ ...prev, imageFile: file }));
                   setImagePreview(URL.createObjectURL(file));
+                  setSelectedImage(file);
                 }}
               />
             </div>
@@ -513,10 +563,17 @@ export default function EventsPage() {
               Cancel
             </Button>
             <Button
+              disabled={saving}
               onClick={handleAddNew}
-              className="bg-accent hover:bg-accent/90 text-accent-foreground font-medium"
+              className={`bg-accent hover:bg-accent/90 text-accent-foreground font-medium ${saving ? "cursor-not-allowed opacity-70" : ""}`}
             >
-              Create Event
+              {saving ? (
+                <>
+                  Creating... <Loader className="animate-spin" />
+                </>
+              ) : (
+                "Create Event"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

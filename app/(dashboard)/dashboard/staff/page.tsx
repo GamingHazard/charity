@@ -30,6 +30,8 @@ import {
   X,
   Loader,
 } from "lucide-react";
+import { set } from "react-hook-form";
+import { url } from "inspector";
 
 interface StaffMember {
   _id: string;
@@ -55,7 +57,7 @@ interface NewsletterSubscriber {
 
 const initialStaff: StaffMember[] = [
   {
-    id: "staff-1",
+    _id: "staff-1",
     name: "Sarah Johnson",
     role: "Executive Director",
     position: "Leadership",
@@ -68,7 +70,7 @@ const initialStaff: StaffMember[] = [
     imageUrl: "/placeholder-avatar.jpg",
   },
   {
-    id: "staff-2",
+    _id: "staff-2",
     name: "Michael Chen",
     role: "Program Manager",
     position: "Programs",
@@ -81,7 +83,7 @@ const initialStaff: StaffMember[] = [
     imageUrl: "/placeholder-avatar.jpg",
   },
   {
-    id: "vol-1",
+    _id: "vol-1",
     name: "Emma Davis",
     role: "Community Volunteer",
     position: "Outreach",
@@ -162,7 +164,7 @@ export default function StaffPage() {
     position: "",
     email: "",
     socialLinks: "",
-    photo: null,
+    photo: { url: "", public_id: "" },
   });
 
   const resetNewMemberForm = () => {
@@ -173,7 +175,7 @@ export default function StaffPage() {
       position: "",
       email: "",
       socialLinks: "",
-      photo: null,
+      photo: { url: "", public_id: "" },
     });
     setImagePreview(null);
   };
@@ -224,14 +226,14 @@ export default function StaffPage() {
   }, [subscribers, searchTerm]);
 
   const handleEdit = (member: StaffMember) => {
-    setEditingId(member.id);
+    setEditingId(member._id);
     setEditData(member);
   };
 
   const handleSave = (id: string) => {
     setStaff(
       staff.map((member) =>
-        member.id === id ? { ...member, ...editData } : member,
+        member._id === id ? { ...member, ...editData } : member,
       ),
     );
     setEditingId(null);
@@ -244,7 +246,7 @@ export default function StaffPage() {
   };
 
   const handleDelete = (id: string) => {
-    setStaff(staff.filter((member) => member.id !== id));
+    setStaff(staff.filter((member) => member._id !== id));
   };
 
   const handleAddMember = async () => {
@@ -269,7 +271,10 @@ export default function StaffPage() {
         phone: newMemberForm.contact,
         socialLinks,
         status: "active",
-        photo: imageData,
+        photo: {
+          url: imageData?.secure_url || "",
+          public_id: imageData?.public_id || "",
+        },
       };
 
       console.log("====================================");
@@ -300,7 +305,7 @@ export default function StaffPage() {
   const handleStatusChange = (id: string, newStatus: "active" | "inactive") => {
     setStaff(
       staff.map((member) =>
-        member.id === id ? { ...member, status: newStatus } : member,
+        member._id === id ? { ...member, status: newStatus } : member,
       ),
     );
   };
@@ -346,19 +351,6 @@ export default function StaffPage() {
 
     return data;
   }
-
-  const handleImageUpload = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      setSelectedImage(file);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const onFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (f) handleImageUpload(f);
-  };
 
   return (
     <div className="p-8 space-y-8">
@@ -587,9 +579,6 @@ export default function StaffPage() {
                 }`}
                 onClick={(e) => {
                   fileInputRef.current?.click();
-                  onFileInputChange(
-                    e as unknown as React.ChangeEvent<HTMLInputElement>,
-                  );
                 }}
                 onDragOver={(e) => {
                   e.preventDefault();
@@ -639,11 +628,12 @@ export default function StaffPage() {
                     }
                     setNewMemberForm((prev) => ({ ...prev, imageFile: file }));
                     setImagePreview(URL.createObjectURL(file));
+                    setSelectedImage(file);
                   }}
                 />
               </div>
 
-              {newMemberForm.imageFile && imagePreview && (
+              {newMemberForm.photo.url && imagePreview && (
                 <div className="flex items-center justify-between gap-4 rounded-md border border-border bg-background p-3">
                   <div className="flex items-center gap-3">
                     <img
@@ -651,14 +641,6 @@ export default function StaffPage() {
                       alt="Selected preview"
                       className="h-16 w-16 rounded-full object-cover"
                     />
-                    <div className="text-sm">
-                      <p className="font-medium text-foreground">
-                        {newMemberForm.imageFile.name}
-                      </p>
-                      <p className="text-xs text-foreground/60">
-                        {(newMemberForm.imageFile.size / 1024).toFixed(0)} KB
-                      </p>
-                    </div>
                   </div>
                   <Button variant="outline" size="sm" onClick={removeImage}>
                     <X className="size-4" />
@@ -745,11 +727,11 @@ export default function StaffPage() {
               <tbody>
                 {filteredStaff.map((member) => (
                   <tr
-                    key={member.id}
+                    key={member._id}
                     className="border-b border-border hover:bg-background/50"
                   >
                     <td className="px-6 py-4 text-foreground">
-                      {editingId === member.id ? (
+                      {editingId === member._id ? (
                         <Input
                           value={editData.name || ""}
                           onChange={(e) =>
@@ -762,7 +744,7 @@ export default function StaffPage() {
                       )}
                     </td>
                     <td className="px-6 py-4 text-foreground/70">
-                      {editingId === member.id ? (
+                      {editingId === member._id ? (
                         <Input
                           value={editData.role || ""}
                           onChange={(e) =>
@@ -775,7 +757,7 @@ export default function StaffPage() {
                       )}
                     </td>
                     <td className="px-6 py-4 text-foreground/70">
-                      {editingId === member.id ? (
+                      {editingId === member._id ? (
                         <Input
                           value={editData.position || ""}
                           onChange={(e) =>
@@ -791,7 +773,7 @@ export default function StaffPage() {
                       )}
                     </td>
                     <td className="px-6 py-4 text-foreground/70">
-                      {editingId === member.id ? (
+                      {editingId === member._id ? (
                         <Input
                           value={editData.email || ""}
                           onChange={(e) =>
@@ -807,7 +789,7 @@ export default function StaffPage() {
                       )}
                     </td>
                     <td className="px-6 py-4 text-foreground/70">
-                      {editingId === member.id ? (
+                      {editingId === member._id ? (
                         <Input
                           value={editData.phone || ""}
                           onChange={(e) =>
@@ -830,7 +812,7 @@ export default function StaffPage() {
                         value={member.status}
                         onChange={(e) =>
                           handleStatusChange(
-                            member.id,
+                            member._id,
                             e.target.value as "active" | "inactive",
                           )
                         }
@@ -846,10 +828,10 @@ export default function StaffPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex gap-2">
-                        {editingId === member.id ? (
+                        {editingId === member._id ? (
                           <>
                             <Button
-                              onClick={() => handleSave(member.id)}
+                              onClick={() => handleSave(member._id)}
                               className="bg-accent hover:bg-accent/90 text-xs px-3"
                             >
                               Save
@@ -871,7 +853,7 @@ export default function StaffPage() {
                               <Edit2 size={16} />
                             </button>
                             <button
-                              onClick={() => handleDelete(member.id)}
+                              onClick={() => handleDelete(member._id)}
                               className="p-2 hover:bg-background rounded transition-colors text-foreground/60 hover:text-red-500"
                             >
                               <Trash2 size={16} />
