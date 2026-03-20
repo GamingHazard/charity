@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
+import Link from "next/link";
 
 export function Footer() {
   return (
@@ -9,59 +9,151 @@ export function Footer() {
         <div className="grid md:grid-cols-4 gap-8 mb-8">
           {/* About */}
           <div>
-            <h3  style={{fontFamily:'Quicksand'}} className="font-bold text-foreground mb-4 flex items-center gap-2">
-              <span className="w-6 h-6 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-sm">🌱</span>
+            <h3
+              style={{ fontFamily: "Quicksand" }}
+              className="font-bold text-foreground mb-4 flex items-center gap-2"
+            >
+              <span className="w-6 h-6 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-sm">
+                🌱
+              </span>
               Seeds of Love
             </h3>
-            <p  style={{fontFamily:'Quicksand'}} className="text-foreground/70 text-sm">
-              Creating lasting change through education, nutrition, and community empowerment.
+            <p
+              style={{ fontFamily: "Quicksand" }}
+              className="text-foreground/70 text-sm"
+            >
+              Creating lasting change through education, nutrition, and
+              community empowerment.
             </p>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h4  style={{fontFamily:'Quicksand'}} className="font-semibold text-foreground mb-4">Quick Links</h4>
-            <ul  style={{fontFamily:'Quicksand'}} className="space-y-2 text-sm">
-              <li><Link href="/about" className="text-foreground/70 hover:text-foreground transition-colors">About Us</Link></li>
-              <li><Link href="/programs" className="text-foreground/70 hover:text-foreground transition-colors">Our Programs</Link></li>
-              <li><Link href="/get-involved" className="text-foreground/70 hover:text-foreground transition-colors">Get Involved</Link></li>
-              <li><Link href="/contact" className="text-foreground/70 hover:text-foreground transition-colors">Contact</Link></li>
+            <h4
+              style={{ fontFamily: "Quicksand" }}
+              className="font-semibold text-foreground mb-4"
+            >
+              Quick Links
+            </h4>
+            <ul
+              style={{ fontFamily: "Quicksand" }}
+              className="space-y-2 text-sm"
+            >
+              <li>
+                <Link
+                  href="/about"
+                  className="text-foreground/70 hover:text-foreground transition-colors"
+                >
+                  About Us
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/blogs"
+                  className="text-foreground/70 hover:text-foreground transition-colors"
+                >
+                  Our News
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/campaigns"
+                  className="text-foreground/70 hover:text-foreground transition-colors"
+                >
+                  Our Campaigns
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/contact"
+                  className="text-foreground/70 hover:text-foreground transition-colors"
+                >
+                  Contact
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/donate"
+                  className="text-foreground/70 hover:text-foreground transition-colors"
+                >
+                  Donate
+                </Link>
+              </li>
             </ul>
           </div>
 
           {/* Contact */}
           <div>
-            <h4  style={{fontFamily:'Quicksand'}} className="font-semibold text-foreground mb-4">Contact</h4>
-            <div  style={{fontFamily:'Quicksand'}} className="text-sm text-foreground/70 space-y-1">
+            <h4
+              style={{ fontFamily: "Quicksand" }}
+              className="font-semibold text-foreground mb-4"
+            >
+              Contact
+            </h4>
+            <div
+              style={{ fontFamily: "Quicksand" }}
+              className="text-sm text-foreground/70 space-y-1"
+            >
               <p>hello@seedsoflove.org</p>
               <p>+1 (555) 123-4567</p>
-              <p>123 Main Street<br />New York, NY 10001</p>
+              <p>
+                123 Main Street
+                <br />
+                New York, NY 10001
+              </p>
             </div>
           </div>
 
           {/* Social */}
           <div>
-            <h4  style={{fontFamily:'Quicksand'}} className="font-semibold text-foreground mb-4">Follow Us</h4>
-            <div  style={{fontFamily:'Quicksand'}} className="flex gap-4">
-              <a href="#" className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-colors">
+            <h4
+              style={{ fontFamily: "Quicksand" }}
+              className="font-semibold text-foreground mb-4"
+            >
+              Follow Us
+            </h4>
+            <div style={{ fontFamily: "Quicksand" }} className="flex gap-4">
+              <a
+                href="#"
+                className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
                 <span className="text-lg">f</span>
               </a>
-              <a href="#" className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-colors">
+              <a
+                href="#"
+                className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
                 <span className="text-lg">𝕏</span>
               </a>
-              <a href="#" className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-colors">
+              <a
+                href="#"
+                className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
                 <span className="text-lg">in</span>
               </a>
             </div>
           </div>
         </div>
 
-        <div  style={{fontFamily:'Quicksand'}} className="border-t border-border pt-8">
+        <div
+          style={{ fontFamily: "Quicksand" }}
+          className="border-t border-border pt-8"
+        >
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-foreground/60">
             <p>&copy; 2024 Seeds of Love Foundation. All rights reserved.</p>
             <div className="flex gap-6">
-              <Link href="#" className="hover:text-foreground transition-colors">Privacy Policy</Link>
-              <Link href="#" className="hover:text-foreground transition-colors">Terms of Service</Link>
+              <Link
+                href="#"
+                className="hover:text-foreground transition-colors"
+              >
+                Privacy Policy
+              </Link>
+              <Link
+                href="#"
+                className="hover:text-foreground transition-colors"
+              >
+                Terms of Service
+              </Link>
             </div>
           </div>
         </div>

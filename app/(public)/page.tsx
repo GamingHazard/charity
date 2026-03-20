@@ -637,10 +637,19 @@ export default function Home() {
                 <li>
                   <Link
                     style={{ fontFamily: "Quicksand" }}
+                    href="/campaigns"
+                    className="hover:text-primary text-lg  mt-5 transition-colors"
+                  >
+                    Our Campaigns
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    style={{ fontFamily: "Quicksand" }}
                     href="/blog"
                     className="hover:text-primary text-lg  mt-5 transition-colors"
                   >
-                    Blog
+                    Our News
                   </Link>
                 </li>
                 <li>
@@ -650,6 +659,24 @@ export default function Home() {
                     className="hover:text-primary text-lg  mt-5 transition-colors"
                   >
                     Contact
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    style={{ fontFamily: "Quicksand" }}
+                    href="/contact"
+                    className="hover:text-primary text-lg  mt-5 transition-colors"
+                  >
+                    Contact
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    style={{ fontFamily: "Quicksand" }}
+                    href="/donate"
+                    className="hover:text-primary text-lg  mt-5 transition-colors"
+                  >
+                    Donate
                   </Link>
                 </li>
               </ul>
