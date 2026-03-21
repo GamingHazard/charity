@@ -32,50 +32,26 @@ import {
 } from "lucide-react";
 import { set } from "react-hook-form";
 import { url } from "inspector";
+import { apiRequest } from "@/lib/query-client";
+import { useQuery } from "@tanstack/react-query";
 
 interface GalleryImage {
-  id: string;
+  _id: string;
   title: string;
   category: string;
   url: string;
   uploadDate: string;
   size: string;
   featured: boolean;
-  imageFile?: File;
+  image?: {
+    url: string;
+    public_id: string;
+    size: string;
+  };
 }
 
-const initialImages: GalleryImage[] = [
-  {
-    id: "img-1",
-    title: "Community Gathering 2024",
-    category: "Events",
-    url: "/donation-image.jpg",
-    uploadDate: "2024-03-15",
-    size: "2.5MB",
-    featured: true,
-  },
-  {
-    id: "img-2",
-    title: "Educational Program",
-    category: "Education",
-    url: "/hero-bg-1-1.jpg",
-    uploadDate: "2024-03-10",
-    size: "1.8MB",
-    featured: false,
-  },
-  {
-    id: "img-3",
-    title: "Volunteer Team",
-    category: "Volunteers",
-    url: "/volunter-bg.jpg",
-    uploadDate: "2024-03-05",
-    size: "3.1MB",
-    featured: false,
-  },
-];
-
 export default function GalleryPage() {
-  const [images, setImages] = useState<GalleryImage[]>(initialImages);
+  const [images, setImages] = useState<GalleryImage[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -91,6 +67,10 @@ export default function GalleryPage() {
 
   const categoryOptions = ["Events", "Education", "Volunteers", "General"];
 
+  const { data: galleryData, refetch } = useQuery<GalleryImage[]>({
+    queryKey: ["gallery", "all"],
+  });
+
   const [newImageForm, setNewImageForm] = useState({
     title: "",
     category: "",
@@ -101,6 +81,12 @@ export default function GalleryPage() {
       size: string;
     } | null,
   });
+
+  useEffect(() => {
+    if (galleryData) {
+      setImages(galleryData);
+    }
+  }, [galleryData]);
 
   const resetNewImageForm = () => {
     setNewImageForm({
@@ -151,7 +137,7 @@ export default function GalleryPage() {
   }, [images, searchTerm, selectedCategory]);
 
   const handleEdit = (image: GalleryImage) => {
-    setEditingId(image.id);
+    setEditingId(image._id);
     setEditData(image);
     setShowEditDialog(true);
   };
@@ -159,7 +145,7 @@ export default function GalleryPage() {
   const handleSave = (id: string) => {
     setImages(
       images.map((image) =>
-        image.id === id ? { ...image, ...editData } : image,
+        image._id === id ? { ...image, ...editData } : image,
       ),
     );
     setEditingId(null);
@@ -172,13 +158,13 @@ export default function GalleryPage() {
   };
 
   const handleDelete = (id: string) => {
-    setImages(images.filter((image) => image.id !== id));
+    setImages(images.filter((image) => image._id !== id));
   };
 
   const handleToggleFeatured = (id: string) => {
     setImages(
       images.map((image) =>
-        image.id === id ? { ...image, featured: !image.featured } : image,
+        image._id === id ? { ...image, featured: !image.featured } : image,
       ),
     );
   };
@@ -196,6 +182,7 @@ export default function GalleryPage() {
         title: newImageForm.title,
         category: newImageForm.category || "General",
         featured: false,
+        imageUrl: newImageForm.imageUrl || "",
         image: {
           url: imageData?.secure_url || "",
           public_id: imageData?.public_id || "",
@@ -209,9 +196,7 @@ export default function GalleryPage() {
         },
       };
 
-      console.log("====================================");
-      console.log(newImage);
-      console.log("====================================");
+      apiRequest("POST", "/gallery/new", newImage);
       // setImages([...images, newImage]);
       // resetNewImageForm();
       // setShowAddDialog(false);
@@ -279,7 +264,7 @@ export default function GalleryPage() {
           <p className="text-foreground/60 text-sm mb-2">Total Size</p>
           <p className="text-3xl font-bold text-primary">
             {images
-              .reduce((sum, img) => sum + parseFloat(img.size), 0)
+              .reduce((sum, img) => sum + parseFloat(img.image?.size), 0)
               .toFixed(1)}
             MB
           </p>
@@ -546,12 +531,12 @@ export default function GalleryPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredImages.map((image) => (
           <div
-            key={image.id}
+            key={image?._id}
             className="relative group overflow-hidden rounded-lg shadow-md hover:shadow-lg transition-shadow h-96 bg-background"
           >
             {/* Background Image */}
             <img
-              src={image.url}
+              src={image.image?.url}
               alt={image.title}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             />
@@ -571,14 +556,14 @@ export default function GalleryPage() {
                 <div className="relative ml-2">
                   <button
                     onClick={() =>
-                      setOpenMenuId(openMenuId === image.id ? null : image.id)
+                      setOpenMenuId(openMenuId === image._id ? null : image._id)
                     }
                     className="p-2 hover:bg-white/20 rounded transition-colors text-white"
                   >
                     <MoreVertical size={18} />
                   </button>
 
-                  {openMenuId === image.id && (
+                  {openMenuId === image._id && (
                     <div className="absolute right-0 mt-2 w-40 bg-card border border-border rounded-lg shadow-lg z-50 py-1">
                       {/* Edit */}
                       <button
@@ -595,7 +580,7 @@ export default function GalleryPage() {
                       {/* Delete */}
                       <button
                         onClick={() => {
-                          handleDelete(image.id);
+                          handleDelete(image._id);
                           setOpenMenuId(null);
                         }}
                         className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50/10 flex items-center gap-2 transition-colors"
@@ -611,7 +596,7 @@ export default function GalleryPage() {
               {/* Bottom section with stats */}
               <div className="space-y-1 text-xs text-white/80">
                 <div className="flex items-center justify-between">
-                  <span>Size: {image.size}</span>
+                  <span>Size: {image.image?.size || "unknown"}</span>
                   {image.featured && (
                     <span className="bg-accent text-accent-foreground px-2 py-0.5 rounded text-xs font-medium">
                       ⭐ Featured
@@ -619,7 +604,7 @@ export default function GalleryPage() {
                   )}
                 </div>
                 <div className="text-white/70">
-                  Uploaded: {image.uploadDate}
+                  Uploaded: {new Date(image.createdAt).toLocaleDateString()}
                 </div>
               </div>
             </div>
