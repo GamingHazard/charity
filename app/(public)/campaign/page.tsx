@@ -240,13 +240,13 @@ export default function CampaignPage() {
                     delay={index * 0.12}
                     className="overflow-hidden"
                   >
-                    <Card className="overflow-hidden">
-                      <div className="relative h-48">
+                    <Card className="overflow-hidden pt-0">
+                      <div className="relative h-96">
                         <Image
-                          src={campaign.imageUrl}
+                          src={campaign.image.url}
                           alt={campaign.title}
                           fill
-                          className="object-cover"
+                          className="object-conatin h-full"
                         />
                         <div className="absolute inset-0 bg-black/30" />
                         <div className="absolute bottom-4 left-4 text-white">

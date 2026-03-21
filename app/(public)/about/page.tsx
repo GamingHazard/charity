@@ -84,42 +84,48 @@ export default function About() {
       name: "Sarah Johnson",
       role: "Executive Director",
       type: "staff",
-      imageUrl: "/user.avif",
+      imageUrl:
+        "https://content.fortune.com/wp-content/uploads/2017/09/afr-10-01-17-packnett.jpg",
     },
     {
       id: "staff-2",
       name: "Michael Chen",
       role: "Program Manager",
       type: "staff",
-      imageUrl: "/user.avif",
+      imageUrl:
+        "https://t4.ftcdn.net/jpg/05/35/49/09/360_F_535490924_ntlR1s9x6bRVV3TkgrGMJRgOvQ2YeGfW.jpg",
     },
     {
       id: "vol-1",
       name: "Emma Davis",
       role: "Community Volunteer",
       type: "volunteer",
-      imageUrl: "/user.avif",
+      imageUrl:
+        "https://img.freepik.com/free-photo/vertical-shot-attractive-african-american-male-smiling-camera_181624-36894.jpg",
     },
     {
       id: "vol-2",
       name: "Carlos Ramirez",
       role: "Event Volunteer",
       type: "volunteer",
-      imageUrl: "/user.avif",
+      imageUrl:
+        "https://media.istockphoto.com/id/117148115/photo/beautiful-cowgirl.jpg?s=612x612&w=0&k=20&c=G2w8lHvu6dqxuO1dU_0ag5rBgzuVrZW1K7nkMoR1HXU=",
     },
     {
       id: "vol-3",
       name: "Amina Patel",
       role: "Outreach Volunteer",
       type: "volunteer",
-      imageUrl: "/user.avif",
+      imageUrl:
+        "https://t3.ftcdn.net/jpg/01/87/83/26/360_F_187832626_Z0K54NuFDzPM10NZw6gWdRYMC763xJQM.jpg",
     },
     {
       id: "staff-3",
       name: "Olivia Brooks",
       role: "Communications Lead",
       type: "staff",
-      imageUrl: "/user.avif",
+      imageUrl:
+        "https://media.istockphoto.com/id/1742373297/photo/outdoor-portrait-of-senior-african-american-woman-at-home.jpg?s=612x612&w=0&k=20&c=EOUSAGPoOrDTukmi7vEaA2gOCGWffj5BKRw6vDyAznA=",
     },
   ];
 
@@ -193,10 +199,21 @@ export default function About() {
                   style={{ fontFamily: "Quicksand" }}
                   className="text-sm sm:text-base text-foreground/70 leading-relaxed"
                 >
-                  To empower individuals and communities through access to
-                  quality education and nutritious food, creating sustainable
-                  pathways out of poverty and enabling every person to reach
-                  their full potential.
+                  To compassionately serve and uplift needy and vulnerable
+                  children by providing inclusive care, protection, and
+                  essential support systems that address both immediate and
+                  long-term needs. We are committed to building a brighter
+                  future for orphans by ensuring access to proper nutrition,
+                  quality care, and opportunities for growth and development.
+                  Our mission promotes the holistic well-being of children by
+                  supporting their physical, emotional, and social development.
+                  We advocate for environmental health, sustainable food
+                  security, and improved sanitation to create safe and healthy
+                  communities. Through dedicated outreach and strong
+                  partnerships, we work to strengthen families and empower
+                  communities. We strive to restore dignity, inspire hope, and
+                  equip every child with the foundation for a meaningful and
+                  fulfilling life.
                 </p>
               </Card>
             </AnimatedElement>
@@ -213,10 +230,15 @@ export default function About() {
                   style={{ fontFamily: "Quicksand" }}
                   className="text-sm sm:text-base text-foreground/70 leading-relaxed"
                 >
-                  A world where every child has access to education and proper
-                  nutrition, where communities are empowered to create lasting
-                  change, and where opportunity is not determined by
-                  circumstance of birth.
+                  To nurture a generation of children who are deeply grounded in
+                  spiritual values, academically empowered, and socially
+                  confident to thrive in every sphere of life. To provide
+                  quality education that opens doors to opportunity, growth, and
+                  lasting impact. To build a supportive community where every
+                  child is valued, guided, and encouraged to succeed. Through
+                  meaningful sponsorship and outreach, we seek to transform
+                  lives and create hope. Our vision is to raise responsible,
+                  capable, and purpose-driven leaders for a better future.
                 </p>
               </Card>
             </AnimatedElement>

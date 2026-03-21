@@ -8,6 +8,7 @@ import Marquee from "react-fast-marquee";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  ArrowUp,
   CalendarClock,
   Facebook,
   Instagram,
@@ -219,12 +220,13 @@ export default function Home() {
               src="/volunter-bg.jpg"
               className="w-[90%] sm:h-[70%] h-50 rounded-md absolute -bottom-[10%] right-[5%]"
             />
-            <Button
+            <Link
               style={{ fontFamily: "Quicksand" }}
-              className="absolute  hidden sm:flex bottom-0 sm:-bottom-26 left-[50%]   bg-primary hover:bg-accent/90 text-white px-8 text-lg cursor-pointer font-bold rounded-lg p-5"
+              href="/contact"
+              className="absolute  hidden sm:flex bottom-0 sm:-bottom-26 left-[50%]   bg-primary hover:bg-accent/90 text-white px-8 text-lg cursor-pointer font-bold rounded-full p-5"
             >
               Join Us
-            </Button>
+            </Link>
           </section>
 
           <AnimatedContainer staggerDelay={0.15}>
@@ -462,18 +464,19 @@ export default function Home() {
                       </p>
                       <p
                         style={{ fontFamily: "Quicksand" }}
-                        className="text-sm  font-semibold text-accent"
+                        className="text-sm sm:mb-10 font-semibold text-accent"
                       >
                         <b className="text-primary">Location:</b>{" "}
                         {event.location.address}
                       </p>
 
-                      <Button
+                      <Link
+                        href="/contact"
                         style={{ fontFamily: "Quicksand" }}
-                        className="bg-primary/20 hover:bg-green-800 hover:text-white text-primary px-8 text-lg cursor-pointer font-bold rounded-lg p-5 mt-5"
+                        className="bg-primary/20 hover:bg-green-800 hover:text-white text-primary  p-2 mt-5 text-lg cursor-pointer font-bold rounded-lg   "
                       >
                         Join Now
-                      </Button>
+                      </Link>
                     </span>
                     <img
                       src={`${event.image.url}`}
@@ -693,19 +696,25 @@ export default function Home() {
               </h2>
               <ul className="text-sm mt-4 text-justify text-muted">
                 <li className="flex mt-5 items-center gap-2">
-                  <span className="text-primary">
-                    <MapPin />
-                  </span>
-                  <span style={{ fontFamily: "Quicksand" }}>
-                    123 Charity Street, City, Country
-                  </span>
+                  <span className="text-primary"></span>
+                  <p className="flex" style={{ fontFamily: "Quicksand" }}>
+                    <MapPin
+                      className="mr-2 text-primary
+                    
+                    <span><span>"
+                    />
+                    Gayaza Rd, Kumukaaga, <br />
+                    Opposite kumbuzi, <br /> Kyadondo East,
+                    <br />
+                    Wakiso District, Uganda
+                  </p>
                 </li>
                 <li className="flex mt-5 items-center gap-2">
                   <span className="text-primary">
                     <PhoneCall />{" "}
                   </span>
                   <span style={{ fontFamily: "Quicksand" }}>
-                    +1 (123) 456-7890
+                    +256 7xx-xxx-xxx
                   </span>
                 </li>
                 <li className="flex mt-5 items-center gap-2">
@@ -756,6 +765,12 @@ export default function Home() {
           className="text-sm text-muted mt-5 text-center w-full absolute bottom-10"
         >
           &copy; {new Date().getFullYear()} Seeds of Love. All rights reserved.
+        </span>
+        <span
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          className="w-10 h-10 absolute bottom-5 cursor-pointer border-2 border-white hover:bg-accent right-10 rounded-full bg-primary flex items-center justify-center"
+        >
+          <ArrowUp size={18} className="text-white" />
         </span>
       </footer>
 

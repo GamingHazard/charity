@@ -1,10 +1,11 @@
 "use client";
 
+import { ArrowUp, Mail, MapPin, PhoneCall } from "lucide-react";
 import Link from "next/link";
 
 export function Footer() {
   return (
-    <footer className="bg-card border-t border-border mt-auto">
+    <footer className="bg-card border-t relative border-border mt-auto">
       <div className="max-w-6xl mx-auto px-4 md:px-8 py-12">
         <div className="grid md:grid-cols-4 gap-8 mb-8">
           {/* About */}
@@ -94,12 +95,21 @@ export function Footer() {
               style={{ fontFamily: "Quicksand" }}
               className="text-sm text-foreground/70 space-y-1"
             >
-              <p>hello@seedsoflove.org</p>
-              <p>+1 (555) 123-4567</p>
-              <p>
-                123 Main Street
+              <p className="flex items-center gap-2">
+                <Mail className="w-5 h-5 mr-2" />
+                hello@seedsoflove.org
+              </p>
+              <p className="flex items-center gap-2">
+                <PhoneCall className="w-5 h-5 mr-2" />
+                +256 7xx-xxx-xxx
+              </p>
+              <p className="flex ">
+                <MapPin className="w-5 h-5 mr-2" />
+                Gayaza Rd, Kumukaaga,
                 <br />
-                New York, NY 10001
+                Opposite kumbuzi, Kyadondo East
+                <br />
+                Wakiso District, Uganda
               </p>
             </div>
           </div>
@@ -158,6 +168,12 @@ export function Footer() {
           </div>
         </div>
       </div>
+      <span
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        className="w-10 h-10 absolute bottom-5 cursor-pointer text-primary border-2 border-primary hover:text-accent hover:bg-white hover:border-accent h right-3 sm:right-10 rounded-full bg-white flex items-center justify-center"
+      >
+        <ArrowUp size={18} />
+      </span>
     </footer>
   );
 }

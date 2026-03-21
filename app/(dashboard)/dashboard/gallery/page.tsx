@@ -46,8 +46,9 @@ interface GalleryImage {
   image?: {
     url: string;
     public_id: string;
-    size: string;
+    size: null;
   };
+  createdAt: string;
 }
 
 export default function GalleryPage() {

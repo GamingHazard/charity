@@ -217,7 +217,7 @@ export const mockCampaigns = [
     "tagline": "Bringing safe and reliable water sources closer to home.",
     "description": "This campaign focuses on constructing and rehabilitating boreholes in underserved rural communities where families currently walk long distances to fetch unsafe water. The funds will support drilling, water testing, pump installation, and community maintenance training to ensure long-term access to clean water.",
     "image": {
-      "url": "https://images.unsplash.com/photo-1542810634-71277d95dcbb?auto=format&fit=crop&w=1200&q=80",
+      "url": "https://ob.org/wp-content/uploads/2024/10/clean-water-solutions-in-africa.jpg",
       "public_id": "charity/campaigns/clean-water-rural-families"
     },
     "goal": 25000,
@@ -232,28 +232,28 @@ export const mockCampaigns = [
     "tagline": "Supplying books, uniforms, and hope for vulnerable learners.",
     "description": "This education campaign is designed to provide school supplies, uniforms, tuition support, and learning materials for children from low-income households. It aims to reduce absenteeism, improve academic confidence, and keep children in school throughout the academic year.",
     "image": {
-      "url": "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1200&q=80",
+      "url": "https://itvs.org/wp-content/uploads/2021/03/african_school-01-1.jpg",
       "public_id": "charity/campaigns/back-to-school-every-child"
     },
     "goal": 18000,
     "raised": 9200,
     "endDate": "2026-05-20",
-    "status": "ongoing",
+    "status": "upcoming",
     "donations": ["dn_1006", "dn_1007", "dn_1008"]
   },
   {
     "id": "cmp_003",
     "title": "Emergency Food Relief Drive",
     "tagline": "Delivering urgent food support to families in crisis.",
-    "description": "The Emergency Food Relief Drive raises funds to provide food packages to households affected by displacement, unemployment, and natural disasters. Each package includes staple foods, nutritional supplements, and basic hygiene items to support families through difficult periods.",
+    "description": "The Emergency Food Relief Drive raised funds to provide food packages to households affected by displacement, unemployment, and natural disasters. Each package includes staple foods, nutritional supplements, and basic hygiene items to support families through difficult periods.",
     "image": {
-      "url": "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=1200&q=80",
+      "url": "https://www.amjamboafrica.com/wp-content/uploads/2022/07/image_6483441-2.jpg",
       "public_id": "charity/campaigns/emergency-food-relief-drive"
     },
     "goal": 30000,
     "raised": 30120,
     "endDate": "2026-02-28",
-    "status": "passed",
+    "status": "completed",
     "donations": ["dn_1009", "dn_1010", "dn_1011", "dn_1012", "dn_1013", "dn_1014"]
   },
   {
@@ -271,34 +271,20 @@ export const mockCampaigns = [
     "status": "ongoing",
     "donations": ["dn_1015", "dn_1016", "dn_1017", "dn_1018"]
   },
-  {
-    "id": "cmp_005",
-    "title": "Youth Skills and Empowerment Program",
-    "tagline": "Helping young people build skills for sustainable livelihoods.",
-    "description": "The Youth Skills and Empowerment Program equips unemployed and out-of-school youth with practical vocational training in tailoring, carpentry, digital literacy, and entrepreneurship. Donations will cover training materials, equipment, mentorship sessions, and startup support for selected graduates.",
-    "image": {
-      "url": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80",
-      "public_id": "charity/campaigns/youth-skills-empowerment"
-    },
-    "goal": 27000,
-    "raised": 6400,
-    "endDate": "2026-08-10",
-    "status": "upcoming",
-    "donations": []
-  },
+   
   {
     "id": "cmp_006",
     "title": "Safe Shelter for Street Children",
     "tagline": "Creating a secure place for healing, care, and growth.",
     "description": "This campaign raises funds to expand temporary shelter services for street-connected children. Support will go toward bedding, meals, psychosocial care, protection services, and pathways to family reunification or long-term safe accommodation. The project aims to provide stability and dignity to children in extremely vulnerable situations.",
     "image": {
-      "url": "https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1200&q=80",
+      "url": "https://media.licdn.com/dms/image/v2/C4E12AQHkava47RBuGg/article-cover_image-shrink_720_1280/article-cover_image-shrink_720_1280/0/1562846296010?e=2147483647&v=beta&t=e_p0lIiquTixH1_YteMF9S--H8J7jr9pLd0MFEUiC_U",
       "public_id": "charity/campaigns/safe-shelter-street-children"
     },
     "goal": 35000,
     "raised": 18460,
     "endDate": "2026-09-05",
-    "status": "ongoing",
+    "status": "upcoming",
     "donations": ["dn_1019", "dn_1020", "dn_1021"]
   },
   {

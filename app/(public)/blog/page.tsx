@@ -80,7 +80,7 @@ export default function BlogsPage() {
             </div>
 
             {/* Filter Buttons */}
-            <div className="flex flex-wrap gap-2 sm:gap-3">
+            <div className="flex mt-3 flex-wrap gap-2 sm:gap-3">
               <Button
                 onClick={() => setSelectedFilter("all")}
                 variant={selectedFilter === "all" ? "default" : "outline"}
@@ -91,17 +91,6 @@ export default function BlogsPage() {
                 }`}
               >
                 All Articles
-              </Button>
-              <Button
-                onClick={() => setSelectedFilter("published")}
-                variant={selectedFilter === "published" ? "default" : "outline"}
-                className={`text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-3 rounded-lg transition-all ${
-                  selectedFilter === "published"
-                    ? "bg-primary text-white"
-                    : "bg-card hover:bg-card/80 text-foreground"
-                }`}
-              >
-                Published
               </Button>
               <Button
                 onClick={() => setSelectedFilter("popular")}
