@@ -181,7 +181,7 @@ export default function EventsPage() {
 
       // if (!newEventForm.title || !newEventForm.date) return;
 
-      const newEvent: Event = {
+      const newEvent = {
         title: newEventForm.title,
         topic: newEventForm.topic,
         date: newEventForm.date,
@@ -199,7 +199,6 @@ export default function EventsPage() {
 
       await apiRequest("POST", "/events/new", newEvent);
 
-      setEvents([...events, newEvent]);
       resetNewEventForm();
       setShowAddDialog(false);
     } catch (error) {
