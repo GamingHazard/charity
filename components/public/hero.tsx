@@ -201,7 +201,7 @@ export function Hero() {
       />
       <img
         src="/object-1-2.png"
-        className="absolute hidden sm:inline-block bottom-0 "
+        className="absolute hidden w-70 h-70 sm:inline-block bottom-0 "
       />
     </section>
   );

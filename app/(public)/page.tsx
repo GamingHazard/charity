@@ -8,6 +8,7 @@ import Marquee from "react-fast-marquee";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  ArrowRight,
   ArrowUp,
   CalendarClock,
   Facebook,
@@ -167,9 +168,9 @@ export default function Home() {
 
       {/* Volunteer section */}
       <AnimatedElement variant="fadeInUp">
-        <section className="py-14 sm:py-16 px-2 sm:px-4 mt-14 md:px-8 bg-card">
+        <section className="py-14 sm:py-16  px-2 sm:px-4 mt-14 md:px-0 bg-card">
           {/* relative sm:mt-14 sm:flex z-10 max-w-6xl mx-auto */}
-          <section className="py-16 text-right rounded-md relative sm:px-4 md:px-8 bg-green-900 h-96 sm:h-200 border-y sm:mx-10 border-green-800">
+          <section className="py-16 text-right rounded-md relative sm:px-4 md:px-8 bg-green-900 h-96  sm:h-140   border-y sm:mx-10 border-green-800">
             <Link
               style={{ fontFamily: "Quicksand" }}
               href="/contact"
@@ -177,7 +178,7 @@ export default function Home() {
             >
               Join Us
             </Link>
-            <span className="  sm:absolute z-10 left-40 top-40">
+            <span className="  sm:absolute z-10 left-40 md:left-10 top-20">
               <p
                 style={{ fontFamily: "Quicksand" }}
                 className="text-2xl font-bold sm:text-4xl text-white sm:font-bold mb-4 text-left pl-4 sm:text-center "
@@ -206,11 +207,11 @@ export default function Home() {
             </span>
             <img
               src="frame1-1.png"
-              className="hidden sm:inline-block w-80 h-80 absolute top-0 left-70"
+              className="hidden sm:inline-block w-60 h-60 absolute top-0 left-70"
             />
             <img
               src="vec-1-1.png"
-              className="hidden sm:inline-block w-50 h-70 absolute top-20 left-0"
+              className="hidden sm:inline-block w-40 h-50 absolute top-20 left-0"
             />
             <img
               src="shape1-4.png"
@@ -267,25 +268,26 @@ export default function Home() {
 
       {/* Donations */}
       <AnimatedElement variant="slideInUp">
-        <section className="py-5 sm:py-0 px-2 sm:px-4 sm:flex mt-14 md:px-8 bg-background relative">
+        <section className="py-5 sm:py-0 px-2 sm:px-4 sm:flex mt-14 md:px-8 bg-card relative">
           <img
             src="/donation-image.jpg"
             className="rounded-md hidden w-1/2 sm:inline-block"
           />
+          <div className="flex-1 bg-white w-1/2 h-full"></div>
           <img
             src="/shape1-3.png"
-            className="w-40   h-100  absolute hidden sm:inline-block right-20 bottom-0"
+            className="w-20   h-50  absolute hidden sm:inline-block right-20 bottom-0"
           />
           <img
             src="/shape1-2.png"
-            className="w-30 h-30 absolute hidden sm:inline-block right-10 top-20"
+            className="w-30 h-30 absolute hidden sm:inline-block right-5 top-10"
           />
           <img
             src="/shape1-1.png"
-            className="w-80 h-80 absolute hidden sm:inline-block bottom-20 left-20"
+            className="w-40 h-40 absolute hidden sm:inline-block bottom-5 left-15"
           />
 
-          <div className="max-w-6xl  sm:absolute left-1/4 sm:top-15 py-0 z-10 mx-auto bg-card rounded-md h-auto sm:h-180 sm:flex items-center  ">
+          <div className="max-w-5xl  sm:shadow-md sm:absolute  left-40 sm:top-10 py-0 z-10 mx-auto bg-card rounded-md h-auto sm:h-120 sm:flex items-center  ">
             <div className="sm:w-2/4 text-white rounded-md sm:rounded-l-md relative p-5 sm:p-20 h-auto sm:h-full bg-green-800">
               <img
                 src="/hand-shape.png"
@@ -299,20 +301,20 @@ export default function Home() {
               </p>
               <h1
                 style={{ fontFamily: "Quicksand" }}
-                className="text-2xl font-bold sm:text-6xl"
+                className="text-2xl font-bold sm:text-3xl"
               >
                 Your Small Contribution can Change a Life
               </h1>
               <p
                 style={{ fontFamily: "Quicksand" }}
-                className="text-sm mx-5 sm:text-base"
+                className="text-sm mx-2 sm:text-base"
               >
                 Your generous donations help us maintain our work, provide
                 community services, and educate future generations. Every
                 contribution counts and is greatly appreciated.
               </p>
 
-              <span className="  mt-10 flex  p-5 w-full border-[0.5px] border-muted-foreground rounded-full">
+              <span className="  mt-5 flex  p-5 w-full border-[0.5px] border-muted-foreground rounded-full">
                 {donators.map((donator, i) => (
                   <img
                     key={i}
@@ -337,36 +339,36 @@ export default function Home() {
               </span>
             </div>
 
-            <div className="w-auto sm:w-full flex-1 text-white rounded-r-md relative h-auto p-5 sm:p-20 sm:h-full  ">
+            <div className="w-auto sm:w-full sm:grid flex-1 text-white bg-background rounded-r-md relative h-auto p-4 sm:p-5 sm:h-full  ">
               <h1
                 style={{ fontFamily: "Quicksand" }}
-                className="text-3xl text-accent font-bold"
+                className="text-2xl text-accent font-bold"
               >
                 Make A Donation
               </h1>
 
-              <form className="grid gap-5">
-                <span className="w-full grid sm:flex items-center my-5 gap-3 px-3 ">
+              <form className="h-full w-full">
+                <span className="w-full grid sm:flex items-center   gap-3   ">
                   <Input
                     style={{ fontFamily: "Quicksand" }}
                     placeholder="Enter your Names"
-                    className="sm:flex-1 bg-background text-accent border-0 sm:p-5"
+                    className="sm:flex-1 bg-card text-accent border-0 sm:p-5"
                   />
                   <Input
                     style={{ fontFamily: "Quicksand" }}
                     placeholder="Enter your Email Address"
-                    className="sm:flex-1 bg-background text-accent border-0 sm:p-7"
+                    className="sm:flex-1 bg-card text-accent border-0 sm:p-5"
                   />
                 </span>
                 <Input
                   style={{ fontFamily: "Quicksand" }}
                   placeholder="Company name (Optional)"
-                  className="sm:flex-1 bg-background text-accent border-0 sm:p-5 sm:my-3 mr-3"
+                  className="sm:flex-1 bg-card text-accent border-0 sm:p-5 sm:my-3 mr-3"
                 />
                 <Input
                   style={{ fontFamily: "Quicksand" }}
                   placeholder="Amount Donating"
-                  className="sm:flex-1 bg-background text-accent border-0 sm:p-5 my-3 mr-3"
+                  className="sm:flex-1 bg-card text-accent border-0 sm:p-5 my-3 mr-3"
                 />
                 <span className="flex w-full justify-evenly items-center gap-3">
                   {quickdonations.map((donation, i) => (
@@ -374,19 +376,19 @@ export default function Home() {
                       style={{ fontFamily: "Quicksand" }}
                       key={i}
                       variant="outline"
-                      className="bg-transparent cursor-pointer border-2 border-green-800 text-green-800 hover:bg-green-800 hover:text-white"
+                      className="bg-card cursor-pointer border-2 border-green-800 text-green-800 hover:bg-green-800 hover:text-white"
                     >
                       {donation.amount}
                     </Button>
                   ))}
                 </span>
-                <span className="flex items-center gap-3">
+                <span className="flex my-2 items-center gap-3">
                   <Input type="checkbox" className="w-5 h-5" />
                   <p className="text-xs text-muted-foreground">
                     I want to receive updates about the impact of my donation
                   </p>
                 </span>
-                <span className="flex items-center gap-3">
+                <span className="flex my-2 items-center gap-3">
                   <Input type="checkbox" className="w-5 h-5" />
                   <p className="text-xs text-muted-foreground">
                     I agree to the terms and conditions
@@ -403,7 +405,7 @@ export default function Home() {
 
       {/* Upcoming Events */}
       <AnimatedElement variant="fadeInUp">
-        <section className="p-4  sm:px-10 bg-white relative mt-14 md:px-8">
+        <section className="p-4  sm:px-5 bg-white relative mt-14 md:px-8">
           <h1 style={{ fontFamily: "Quicksand" }} className="text-sm     ">
             Our Events
           </h1>
@@ -420,17 +422,17 @@ export default function Home() {
             (Scroll 'UP' the events to view more!)
           </p>
 
-          <div className="w-full hidden  bg-background relative z-10 sm:mx-auto   rounded-md h-auto sm:h-150 sm:flex items-center  ">
-            <ScrollStack className=" relative">
+          <div className="w-full hidden flex-1 bg-background relative z-10 sm:mx-auto p-0  rounded-md h-auto sm:h-120 sm:flex items-center  ">
+            <ScrollStack    className=" relative">
               {mockEvents.map((event) => (
                 <ScrollStackItem key={event._id}>
-                  <span className=" text-wrap  items-center justify-evenly grid p-2 sm:w-30 rounded-full h-full bg-primary/10">
-                    <span className="w-20 h-20 flex items-center justify-center ml-2 rounded-full bg-primary">
-                      <CalendarClock size={50} className="text-white" />
+                  <span className=" text-wrap  items-center justify-evenly grid p-2 sm:w-20 rounded-full h-full bg-primary/10">
+                    <span className="w-15 h-15 flex items-center justify-center   rounded-full bg-primary">
+                      <CalendarClock size={30} className="text-white" />
                     </span>
                     <p
                       style={{ fontFamily: "Quicksand" }}
-                      className="text-lg text-primary"
+                      className="text-xs font-bold text-primary"
                     >
                       {event.date}
                     </p>
@@ -440,43 +442,52 @@ export default function Home() {
                     <span className="w-[75%] h-full  ">
                       <p
                         style={{ fontFamily: "Quicksand" }}
-                        className="text-4xl text-accent font-bold"
+                        className=" xl:text-2xl text-accent font-bold"
                       >
                         {event.title}
                       </p>
                       <p
                         style={{ fontFamily: "Quicksand" }}
-                        className="text-lg text-muted-foreground"
+                        className="text-md truncate line-clamp-2 text-wrap text-muted-foreground"
                       >
                         {event.description}
                       </p>
                       <p
                         style={{ fontFamily: "Quicksand" }}
-                        className="text-sm  mt-4 font-semibold text-accent"
+                        className="text-xs  mt-4 font-semibold text-accent"
                       >
                         <b className="text-primary">Topic:</b> {event.topic}
                       </p>
                       <p
                         style={{ fontFamily: "Quicksand" }}
-                        className="text-sm  font-semibold text-accent"
+                        className="text-xs  font-semibold text-accent"
                       >
                         <b className="text-primary">Time:</b> {event.time}
                       </p>
                       <p
                         style={{ fontFamily: "Quicksand" }}
-                        className="text-sm sm:mb-10 font-semibold text-accent"
+                        className="text-xs  xl:mb-3 font-semibold text-accent"
                       >
                         <b className="text-primary">Location:</b>{" "}
                         {event.location.address}
                       </p>
 
-                      <Link
+                      <span className="flex   gap-3">
+                        <Link
                         href="/contact"
                         style={{ fontFamily: "Quicksand" }}
-                        className="bg-primary/20 hover:bg-green-800 hover:text-white text-primary  p-2 mt-5 text-lg cursor-pointer font-bold rounded-lg   "
+                        className="bg-primary/20 hover:bg-green-800 hover:text-white text-primary  p-2  text-lg cursor-pointer font-bold rounded-lg   "
                       >
                         Join Now
+                        </Link>
+                        <Link
+                        href="/contact"
+                        style={{ fontFamily: "Quicksand" }}
+                        className="bg-accent/20 flex items-center justify-center hover:bg-green-800 hover:text-white text-accent  p-2  text-md cursor-pointer font-bold rounded-lg   "
+                      >
+                        See Details <ArrowRight/>
                       </Link>
+                      </span>
                     </span>
                     <img
                       src={`${event.image.url}`}
@@ -486,13 +497,13 @@ export default function Home() {
                 </ScrollStackItem>
               ))}
             </ScrollStack>
-            <img
+            {/* <img
               src="/event-image.png"
-              className="w-1/2 h-full absolute hidden sm:inline-block -right-70"
+              className="w-1/2 h-full absolute hidden sm:inline-block -right-50"
             />
             <img
               src="/news-1-shape-1.png"
-              className="w-50 h-50 absolute hidden sm:inline-block top-0 left-0"
+              className="w-25 h-25 absolute hidden sm:inline-block top-0 left-0"
             />
             <img
               src="/news-1-shape-2.png"
@@ -500,8 +511,8 @@ export default function Home() {
             />
             <img
               src="/news-1-shape-3.png"
-              className="w-50 h-50 absolute -z-20 hidden sm:inline-block top-0 right-0"
-            />
+              className="w-25 h-25 absolute -z-20 hidden sm:inline-block top-0 right-0"
+            /> */}
             {/* <img src='/news-1-shape-4.png' className='w-70 h-70 absolute hidden -z-20 sm:inline-block top-0 right-0' /> */}
           </div>
           <span className="lg:hidden w-full h-120 bg-card grid gap-2 items-center overflow-y-auto">
