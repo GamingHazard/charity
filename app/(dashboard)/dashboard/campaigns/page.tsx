@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Navbar } from "@/components/shared/navbar";
 import { Footer } from "@/components/shared/footer";
 import { Card } from "@/components/ui/card";
@@ -24,15 +24,16 @@ import {
 } from "@/components/ui/dialog";
 import { Plus, Upload, X, Calendar, Target, Users, Loader } from "lucide-react";
 import Image from "next/image";
+import { apiRequest } from "@/lib/query-client";
 
 interface Campaign {
-  id: string;
+  _id: string;
   title: string;
   tagline: string;
   description: string;
   imageUrl: string;
-  goal: number;
-  raised: number;
+  goal: string;
+  raised: [string];
   endDate: string;
   status: "ongoing" | "upcoming" | "completed" | string;
   category: string;
@@ -42,50 +43,26 @@ interface Campaign {
   } | null;
 }
 
-const mockCampaigns: Campaign[] = [
-  {
-    id: "camp-1",
-    title: "School Kit Drive",
-    tagline: "Help us equip children for the next school year",
-    description:
-      "We are raising funds to provide school supplies to 500 students in underserved communities.",
-    imageUrl: "/campaign-school.jpg",
-    goal: 25000,
-    raised: 17200,
-    endDate: "2026-05-15",
-    status: "ongoing",
-    category: "Education",
-  },
-  {
-    id: "camp-2",
-    title: "Nutrition Support Program",
-    tagline: "Meal packs for families in need",
-    description:
-      "Our nutrition program delivers meal kits to families struggling with food insecurity.",
-    imageUrl: "/campaign-nutrition.jpg",
-    goal: 18000,
-    raised: 0,
-    endDate: "2026-07-10",
-    status: "upcoming",
-    category: "Nutrition",
-  },
-];
+import { useQuery } from "@tanstack/react-query";
 
 export default function CampaignsDashboard() {
-  const [campaigns, setCampaigns] = useState<Campaign[]>(mockCampaigns);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
   const [statusFilter, setStatusFilter] = useState<
     "all" | "ongoing" | "upcoming" | "completed"
   >("all");
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<Campaign>({
+    _id: "",
     title: "",
     tagline: "",
     description: "",
     goal: "",
+    raised: ["0"],
     endDate: "",
-    status: "" as const,
+    status: "upcoming" as const,
     category: "",
+    imageUrl: "",
     image: { url: "", public_id: "" } as {
       url: string;
       public_id: string;
@@ -94,6 +71,20 @@ export default function CampaignsDashboard() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [saving, setSaving] = useState<boolean>(false);
+
+  const {
+    data: campaignData,
+    isLoading,
+    error,
+  } = useQuery<Campaign[]>({
+    queryKey: ["campaigns", "all"],
+  });
+
+  useEffect(() => {
+    if (campaignData) {
+      setCampaigns(campaignData);
+    }
+  }, [campaignData]);
 
   const filteredCampaigns =
     statusFilter === "all"
@@ -126,10 +117,11 @@ export default function CampaignsDashboard() {
         tagline: formData.tagline,
         description: formData.description,
         goal: Number(formData.goal),
-        raised: editingCampaign?.raised || 0,
+        raised: Number(formData.raised),
         endDate: formData.endDate,
         status: formData.status,
         category: formData.category,
+        imageUrl: formData.imageUrl || "",
         image: imageData
           ? {
               url: imageData.secure_url,
@@ -142,23 +134,30 @@ export default function CampaignsDashboard() {
       };
 
       if (editingCampaign) {
+        await apiRequest(
+          "PUT",
+          `/campaigns/${editingCampaign.id}/update`,
+          newCampaign,
+        );
       } else {
+        await apiRequest("POST", "/campaigns/new", newCampaign);
       }
 
       // Reset form
-      // setFormData({
-      //   title: "",
-      //   tagline: "",
-      //   description: "",
-      //   goal: "",
-      //   endDate: "",
-      //   status: "upcoming",
-      //   category: "",
-      // });
-      // setSelectedImage(null);
-      // setImagePreview(null);
-      // setIsDialogOpen(false);
-      // setEditingCampaign(null);
+      setFormData({
+        title: "",
+        tagline: "",
+        description: "",
+        goal: "",
+        raised: 0,
+        endDate: "",
+        status: "upcoming",
+        category: "",
+      });
+      setSelectedImage(null);
+      setImagePreview(null);
+      setIsDialogOpen(false);
+      setEditingCampaign(null);
     } catch (error) {
     } finally {
       setSaving(false);
@@ -171,10 +170,12 @@ export default function CampaignsDashboard() {
       title: campaign.title,
       tagline: campaign.tagline,
       description: campaign.description,
-      goal: campaign.goal.toString(),
+      goal: campaign.goal,
+      raised: campaign.raised,
       endDate: campaign.endDate,
       status: campaign.status,
       category: campaign.category,
+      imageUrl: campaign.imageUrl,
     });
     setImagePreview(campaign.image?.url || null);
     setIsDialogOpen(true);
@@ -248,7 +249,7 @@ export default function CampaignsDashboard() {
                 Add Campaign
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-2xl max-h-[90vh] bg-card overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>
                   {editingCampaign ? "Edit Campaign" : "Create New Campaign"}
@@ -326,47 +327,37 @@ export default function CampaignsDashboard() {
                     />
                   </div>
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="category">Category</Label>
+                  <Select
+                    value={formData.category}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, category: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Education">Education</SelectItem>
+                      <SelectItem value="Nutrition">Nutrition</SelectItem>
+                      <SelectItem value="Health">Health</SelectItem>
+                      <SelectItem value="Environment">Environment</SelectItem>
+                      <SelectItem value="Community">Community</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="status">Status</Label>
-                    <Select
-                      value={formData.status}
-                      onValueChange={(value: any) =>
-                        setFormData({ ...formData, status: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="upcoming">Upcoming</SelectItem>
-                        <SelectItem value="ongoing">Ongoing</SelectItem>
-                        <SelectItem value="completed">Completed</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="category">Category</Label>
-                    <Select
-                      value={formData.category}
-                      onValueChange={(value) =>
-                        setFormData({ ...formData, category: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Education">Education</SelectItem>
-                        <SelectItem value="Nutrition">Nutrition</SelectItem>
-                        <SelectItem value="Health">Health</SelectItem>
-                        <SelectItem value="Environment">Environment</SelectItem>
-                        <SelectItem value="Community">Community</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="imageUrl">ImageUrl</Label>
+                  <Input
+                    id="imageUrl"
+                    value={formData.imageUrl}
+                    onChange={(e) =>
+                      setFormData({ ...formData, imageUrl: e.target.value })
+                    }
+                    placeholder="Image URL (optional if uploading)"
+                  />
                 </div>
 
                 {/* Image Upload */}
@@ -489,12 +480,11 @@ export default function CampaignsDashboard() {
         {/* Campaigns Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCampaigns.map((campaign) => (
-            <Card key={campaign.id} className="overflow-hidden">
-              <div className="relative h-48">
-                <Image
-                  src={campaign.imageUrl}
+            <Card key={campaign._id} className="overflow-hidden pt-0 ">
+              <div className="relative h-48 p-0">
+                <img
+                  src={campaign.image?.url}
                   alt={campaign.title}
-                  fill
                   className="object-cover"
                 />
                 <div className="absolute top-4 right-4">
