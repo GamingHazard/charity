@@ -22,14 +22,20 @@ import {
 } from "@/components/ui/select";
 import {
   Trash2,
-  Edit2,
   Mail,
   Phone,
   Users,
   ImagePlus,
   X,
   Loader,
+  MoreVertical,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { set } from "react-hook-form";
 import { url } from "inspector";
 
@@ -144,6 +150,14 @@ export default function StaffPage() {
   const [saving, setSaving] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [viewDetailsId, setViewDetailsId] = useState<string | null>(null);
+  const [showAddSocialLink, setShowAddSocialLink] = useState<string | null>(
+    null,
+  );
+  const [socialLinkForm, setSocialLinkForm] = useState({
+    platform: "",
+    url: "",
+  });
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const roleOptions = [
@@ -163,7 +177,6 @@ export default function StaffPage() {
     role: "",
     position: "",
     email: "",
-    socialLinks: "",
     photo: { url: "", public_id: "" },
   });
 
@@ -174,7 +187,6 @@ export default function StaffPage() {
       role: "",
       position: "",
       email: "",
-      socialLinks: "",
       photo: { url: "", public_id: "" },
     });
     setImagePreview(null);
@@ -257,11 +269,6 @@ export default function StaffPage() {
         imageData = await uploadImageToCloudinary(selectedImage);
       }
 
-      const socialLinks = newMemberForm.socialLinks
-        .split(",")
-        .map((link) => link.trim())
-        .filter(Boolean);
-
       const newMember = {
         name: newMemberForm.name,
         role: newMemberForm.role,
@@ -269,7 +276,7 @@ export default function StaffPage() {
         type: activeTab === "staff" ? "staff" : "volunteer",
         email: newMemberForm.email,
         phone: newMemberForm.contact,
-        socialLinks,
+        socialLinks: [],
         status: "active",
         photo: {
           url: imageData?.secure_url || "",
@@ -559,18 +566,6 @@ export default function StaffPage() {
                 </SelectContent>
               </Select>
 
-              <Textarea
-                placeholder="Social links (separate with commas)"
-                value={newMemberForm.socialLinks}
-                onChange={(e) =>
-                  setNewMemberForm({
-                    ...newMemberForm,
-                    socialLinks: e.target.value,
-                  })
-                }
-                className="bg-background border-border"
-              />
-
               <div
                 className={`flex flex-col items-center justify-center gap-2 rounded-md border p-4 text-center transition ${
                   isDragging
@@ -845,20 +840,40 @@ export default function StaffPage() {
                             </Button>
                           </>
                         ) : (
-                          <>
-                            <button
-                              onClick={() => handleEdit(member)}
-                              className="p-2 hover:bg-background rounded transition-colors text-foreground/60 hover:text-foreground"
-                            >
-                              <Edit2 size={16} />
-                            </button>
-                            <button
-                              onClick={() => handleDelete(member._id)}
-                              className="p-2 hover:bg-background rounded transition-colors text-foreground/60 hover:text-red-500"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                              >
+                                <MoreVertical size={16} />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() => setViewDetailsId(member._id)}
+                              >
+                                View Details
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleEdit(member)}
+                              >
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => setShowAddSocialLink(member._id)}
+                              >
+                                Add Social Link
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="text-red-500"
+                                onClick={() => handleDelete(member._id)}
+                              >
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         )}
                       </div>
                     </td>
@@ -962,6 +977,185 @@ export default function StaffPage() {
           </p>
         </Card>
       )}
+
+      {/* View Details Dialog */}
+      <Dialog
+        open={viewDetailsId !== null}
+        onOpenChange={(open) => {
+          if (!open) setViewDetailsId(null);
+        }}
+      >
+        <DialogContent className="w-full bg-card max-w-md">
+          <DialogHeader>
+            <DialogTitle>Staff Member Details</DialogTitle>
+          </DialogHeader>
+          {viewDetailsId && staff.find((s) => s._id === viewDetailsId) && (
+            <div className="space-y-4">
+              {(() => {
+                const member = staff.find((s) => s._id === viewDetailsId);
+                return member ? (
+                  <>
+                    <div>
+                      <p className="text-sm font-medium text-foreground/70">
+                        Name
+                      </p>
+                      <p className="text-foreground">{member.name}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-foreground/70">
+                        Role
+                      </p>
+                      <p className="text-foreground">{member.role}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-foreground/70">
+                        Position
+                      </p>
+                      <p className="text-foreground">{member.position}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-foreground/70">
+                        Email
+                      </p>
+                      <p className="text-foreground">{member.email}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-foreground/70">
+                        Phone
+                      </p>
+                      <p className="text-foreground">{member.phone}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-foreground/70">
+                        Join Date
+                      </p>
+                      <p className="text-foreground">{member.joinDate}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-foreground/70">
+                        Status
+                      </p>
+                      <p className="text-foreground capitalize">
+                        {member.status}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-foreground/70 mb-2">
+                        Social Links
+                      </p>
+                      {member.socialLinks && member.socialLinks.length > 0 ? (
+                        <ul className="space-y-1">
+                          {member.socialLinks.map((link, idx) => (
+                            <li key={idx} className="text-foreground text-sm">
+                              <a
+                                href={link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-accent hover:underline"
+                              >
+                                {link}
+                              </a>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-foreground/60 text-sm">
+                          No social links added
+                        </p>
+                      )}
+                    </div>
+                  </>
+                ) : null;
+              })()}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setViewDetailsId(null)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Social Link Dialog */}
+      <Dialog
+        open={showAddSocialLink !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowAddSocialLink(null);
+            setSocialLinkForm({ platform: "", url: "" });
+          }
+        }}
+      >
+        <DialogContent className="w-full bg-card max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add Social Link</DialogTitle>
+            <DialogDescription>
+              Add a social media link for this staff member.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Input
+              placeholder="Platform (e.g., Twitter, LinkedIn, Facebook)"
+              value={socialLinkForm.platform}
+              onChange={(e) =>
+                setSocialLinkForm({
+                  ...socialLinkForm,
+                  platform: e.target.value,
+                })
+              }
+              className="bg-background border-border"
+            />
+            <Input
+              placeholder="URL"
+              value={socialLinkForm.url}
+              onChange={(e) =>
+                setSocialLinkForm({
+                  ...socialLinkForm,
+                  url: e.target.value,
+                })
+              }
+              className="bg-background border-border"
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowAddSocialLink(null);
+                setSocialLinkForm({ platform: "", url: "" });
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (showAddSocialLink && socialLinkForm.url) {
+                  setStaff(
+                    staff.map((member) =>
+                      member._id === showAddSocialLink
+                        ? {
+                            ...member,
+                            socialLinks: [
+                              ...member.socialLinks,
+                              socialLinkForm.url,
+                            ],
+                          }
+                        : member,
+                    ),
+                  );
+                  setShowAddSocialLink(null);
+                  setSocialLinkForm({ platform: "", url: "" });
+                }
+              }}
+              disabled={!socialLinkForm.url}
+              className="bg-accent hover:bg-accent/90 text-accent-foreground"
+            >
+              Add Link
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

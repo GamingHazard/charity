@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect, use } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,10 +33,13 @@ import {
   Loader,
 } from "lucide-react";
 import { set } from "react-hook-form";
+import { apiRequest } from "@/lib/query-client";
+import { useQuery } from "@tanstack/react-query";
 
 interface Event {
   id: string;
   title: string;
+  topic: string;
   date: string;
   time: string;
   location: string;
@@ -44,50 +47,14 @@ interface Event {
   description: string;
   status: "upcoming" | "ongoing" | "completed";
   attendees: number;
-  imageUrl?: string;
+  image?: {
+    url: string;
+    public_id: string;
+  };
 }
 
-const initialEvents: Event[] = [
-  {
-    id: "event-1",
-    title: "Community Outreach Program",
-    date: "2024-04-15",
-    time: "10:00 AM",
-    location: "123 Charity Street, City",
-    category: "Community",
-    description: "Join us for our quarterly community outreach program",
-    status: "upcoming",
-    attendees: 0,
-    imageUrl: "/placeholder-image.jpg",
-  },
-  {
-    id: "event-2",
-    title: "Education Workshop",
-    date: "2024-04-20",
-    time: "2:00 PM",
-    location: "Community Center, Hall A",
-    category: "Education",
-    description: "Learn about our education initiatives and how to help",
-    status: "upcoming",
-    attendees: 0,
-    imageUrl: "/placeholder-image.jpg",
-  },
-  {
-    id: "event-3",
-    title: "Volunteer Appreciation Night",
-    date: "2024-03-25",
-    time: "6:00 PM",
-    location: "Foundation Office",
-    category: "Volunteer",
-    description: "Celebrate and thank our amazing volunteers",
-    status: "completed",
-    attendees: 45,
-    imageUrl: "/placeholder-image.jpg",
-  },
-];
-
 export default function EventsPage() {
-  const [events, setEvents] = useState<Event[]>(initialEvents);
+  const [events, setEvents] = useState<Event[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [selectedStatus, setSelectedStatus] = useState<string>("All");
@@ -105,9 +72,20 @@ export default function EventsPage() {
 
   const categoryOptions = ["Community", "Education", "Volunteer", "General"];
 
+  const { data: eventsData, isLoading } = useQuery<any[]>({
+    queryKey: ["events", "all"],
+  });
+
+  useEffect(() => {
+    if (eventsData) {
+      setEvents(eventsData);
+    }
+  }, [eventsData]);
+
   const [newEventForm, setNewEventForm] = useState({
     title: "",
     category: "",
+    topic: "",
     date: "",
     time: "",
     location: "",
@@ -120,6 +98,7 @@ export default function EventsPage() {
     setNewEventForm({
       title: "",
       category: "",
+      topic: "",
       date: "",
       time: "",
       location: "",
@@ -172,21 +151,6 @@ export default function EventsPage() {
     setEditData(event);
   };
 
-  const handleSave = (id: string) => {
-    setEvents(
-      events.map((event) =>
-        event.id === id ? { ...event, ...editData } : event,
-      ),
-    );
-    setEditingId(null);
-    setEditData({});
-  };
-
-  const handleCancel = () => {
-    setEditingId(null);
-    setEditData({});
-  };
-
   const handleDelete = (id: string) => {
     setEvents(events.filter((event) => event.id !== id));
   };
@@ -217,24 +181,27 @@ export default function EventsPage() {
 
       // if (!newEventForm.title || !newEventForm.date) return;
 
-      const newEvent = {
+      const newEvent: Event = {
         title: newEventForm.title,
+        topic: newEventForm.topic,
         date: newEventForm.date,
-        time: newEventForm.time || "10:00 AM",
+        time: newEventForm.time || "",
         location: newEventForm.location,
-        category: newEventForm.category || "General",
+        category: newEventForm.category || "",
         description: newEventForm.description,
         status: "upcoming",
-        attendees: 0,
+
         image: {
           url: imageData ? imageData.secure_url : "",
           public_id: imageData ? imageData.public_id : "",
         },
       };
 
-      // setEvents([...events, newEvent]);
-      // resetNewEventForm();
-      // setShowAddDialog(false);
+      await apiRequest("POST", "/events/new", newEvent);
+
+      setEvents([...events, newEvent]);
+      resetNewEventForm();
+      setShowAddDialog(false);
     } catch (error) {
       console.log("====================================");
       console.log(error);
@@ -397,6 +364,14 @@ export default function EventsPage() {
               value={newEventForm.title}
               onChange={(e) =>
                 setNewEventForm({ ...newEventForm, title: e.target.value })
+              }
+              className="bg-background border-border"
+            />
+            <Input
+              placeholder="Topic"
+              value={newEventForm.topic}
+              onChange={(e) =>
+                setNewEventForm({ ...newEventForm, topic: e.target.value })
               }
               className="bg-background border-border"
             />
@@ -593,10 +568,10 @@ export default function EventsPage() {
 
               <div className="space-y-6 py-4">
                 {/* Event Image */}
-                {viewingEvent.imageUrl && (
+                {viewingEvent.image?.url && (
                   <div className="relative w-full h-64 rounded-lg overflow-hidden">
                     <img
-                      src={viewingEvent.imageUrl}
+                      src={viewingEvent.image?.url}
                       alt={viewingEvent.title}
                       className="w-full h-full object-cover"
                     />
@@ -660,7 +635,7 @@ export default function EventsPage() {
                 </div>
 
                 {/* Attendees */}
-                <div>
+                {/* <div>
                   <p className="text-xs font-medium text-foreground/70 mb-1">
                     Attendees
                   </p>
@@ -668,7 +643,7 @@ export default function EventsPage() {
                     <Users size={16} />
                     {viewingEvent.attendees} registered
                   </div>
-                </div>
+                </div> */}
 
                 {/* Description */}
                 <div className="border-t border-border pt-6">
@@ -686,8 +661,8 @@ export default function EventsPage() {
       </Dialog>
 
       {/* Events Table */}
-      <Card className="overflow-hidden">
-        <div className="overflow-x-auto">
+      <Card className="overflow-hidden h-screen">
+        <div className="overflow-x-auto flex-1">
           <table className="w-full">
             <thead className="bg-background border-b border-border">
               <tr>
@@ -695,7 +670,10 @@ export default function EventsPage() {
                   Title
                 </th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">
-                  Date & Time
+                  Date
+                </th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">
+                  Time
                 </th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">
                   Location
@@ -706,9 +684,7 @@ export default function EventsPage() {
                 <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">
-                  Attendees
-                </th>
+
                 <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">
                   Actions
                 </th>
@@ -744,6 +720,17 @@ export default function EventsPage() {
                           }
                           className="bg-background border-border text-sm"
                         />
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Calendar size={14} />
+                        {event.date}
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 text-foreground/70">
+                    {editingId === event.id ? (
+                      <div className="space-y-2">
                         <Input
                           value={editData.time || ""}
                           onChange={(e) =>
@@ -755,8 +742,8 @@ export default function EventsPage() {
                       </div>
                     ) : (
                       <div className="flex items-center gap-2">
-                        <Calendar size={14} />
-                        {event.date} {event.time}
+                        <Clock size={14} />
+                        {event.time}
                       </div>
                     )}
                   </td>
@@ -810,23 +797,7 @@ export default function EventsPage() {
                       <option value="completed">Completed</option>
                     </select>
                   </td>
-                  <td className="px-6 py-4 text-foreground/70">
-                    {editingId === event.id ? (
-                      <Input
-                        type="number"
-                        value={editData.attendees || 0}
-                        onChange={(e) =>
-                          setEditData({
-                            ...editData,
-                            attendees: parseInt(e.target.value),
-                          })
-                        }
-                        className="bg-background border-border w-20"
-                      />
-                    ) : (
-                      event.attendees
-                    )}
-                  </td>
+
                   <td className="px-6 py-4">
                     <div className="relative">
                       <button
