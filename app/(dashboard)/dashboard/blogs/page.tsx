@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,6 +34,8 @@ import {
 } from "lucide-react";
 import { on } from "events";
 import { set } from "react-hook-form";
+import { apiRequest } from "@/lib/query-client";
+import { useQuery } from "@tanstack/react-query";
 
 interface Comment {
   id: string;
@@ -44,89 +46,25 @@ interface Comment {
 }
 
 interface BlogPost {
-  id: string;
+  _id: string;
   title: string;
   author: string;
   category: string;
-  date: string;
   status: "published" | "draft";
   excerpt: string;
   content: string;
-  imageUrl?: string;
+  videoId?: string;
+  image?: {
+    url: string;
+    public_id: string;
+  };
   featured?: boolean;
   comments?: Comment[];
+  createdAt?: null | string;
 }
 
-const initialBlogs: BlogPost[] = [
-  {
-    id: "blog-1",
-    title: "Making a Difference in Our Community",
-    author: "John Doe",
-    category: "Impact",
-    date: "2024-03-15",
-    status: "published",
-    excerpt: "Learn how our initiatives are creating lasting change...",
-    content:
-      "Full blog content here. This is a comprehensive article about our community impact initiatives and the positive changes we have seen. Our programs have reached over 200 families and continue to grow each month.",
-    imageUrl: "/placeholder-image.jpg",
-    featured: true,
-    comments: [
-      {
-        id: "c-1",
-        author: "Sarah",
-        text: "Great article! Keep up the good work.",
-        date: "2024-03-16",
-        avatar: "/placeholder-avatar.jpg",
-      },
-      {
-        id: "c-2",
-        author: "Michael",
-        text: "This really inspires me to get involved.",
-        date: "2024-03-17",
-        avatar: "/placeholder-avatar.jpg",
-      },
-    ],
-  },
-  {
-    id: "blog-2",
-    title: "Education Program Success Stories",
-    author: "Jane Smith",
-    category: "Education",
-    date: "2024-03-10",
-    status: "published",
-    excerpt: "Celebrating our students achievements and growth...",
-    content:
-      "Full blog content here. Our education program has transformed the lives of young students in our community. We have seen remarkable progress in literacy and numeracy skills across all participant groups.",
-    imageUrl: "/placeholder-image.jpg",
-    featured: false,
-    comments: [
-      {
-        id: "c-3",
-        author: "Emma",
-        text: "These stories are truly heartwarming.",
-        date: "2024-03-12",
-        avatar: "/placeholder-avatar.jpg",
-      },
-    ],
-  },
-  {
-    id: "blog-3",
-    title: "Upcoming Events and Volunteering Opportunities",
-    author: "Mike Johnson",
-    category: "Events",
-    date: "2024-03-05",
-    status: "draft",
-    excerpt: "Join us for upcoming community events...",
-    content:
-      "Full blog content here. We have exciting events coming up this month. Join us for community cleanup drives, educational workshops, and networking sessions.",
-    imageUrl: "/placeholder-image.jpg",
-    featured: false,
-    comments: [],
-  },
-];
-
 export default function BlogsPage() {
-  const [blogs, setBlogs] = useState<BlogPost[]>(initialBlogs);
+  const [blogs, setBlogs] = useState<BlogPost[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [selectedStatus, setSelectedStatus] = useState<string>("All");
@@ -143,6 +81,20 @@ export default function BlogsPage() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [saving, setSaving] = useState<boolean>(false);
 
+  const {
+    data: blogData,
+    isLoading,
+    error,
+  } = useQuery<any[]>({
+    queryKey: ["blogs", "all"],
+  });
+
+  useEffect(() => {
+    if (blogData) {
+      setBlogs(blogData);
+    }
+  }, [blogData]);
+
   const categoryOptions = [
     "Impact",
     "Education",
@@ -157,6 +109,7 @@ export default function BlogsPage() {
     author: "",
     content: "",
     imageUrl: "",
+    videoId: "",
     category: "",
     imageFile: null as File | null,
   });
@@ -168,6 +121,7 @@ export default function BlogsPage() {
       author: "",
       content: "",
       imageUrl: "",
+      videoId: "",
       category: "",
       imageFile: null,
     });
@@ -212,18 +166,18 @@ export default function BlogsPage() {
   }, [blogs, searchTerm, selectedCategory, selectedStatus]);
 
   const handleEdit = (blog: BlogPost) => {
-    setEditingId(blog.id);
+    setEditingId(blog._id);
     setEditData(blog);
   };
 
   const handleDelete = (id: string) => {
-    setBlogs(blogs.filter((blog) => blog.id !== id));
+    setBlogs(blogs.filter((blog) => blog._id !== id));
   };
 
   const handleStatusChange = (id: string, newStatus: "published" | "draft") => {
     setBlogs(
       blogs.map((blog) =>
-        blog.id === id ? { ...blog, status: newStatus } : blog,
+        blog._id === id ? { ...blog, status: newStatus } : blog,
       ),
     );
   };
@@ -236,7 +190,7 @@ export default function BlogsPage() {
   const handleToggleFeatured = (id: string) => {
     setBlogs(
       blogs.map((blog) =>
-        blog.id === id ? { ...blog, featured: !blog.featured } : blog,
+        blog._id === id ? { ...blog, featured: !blog.featured } : blog,
       ),
     );
     setOpenMenuId(null);
@@ -245,7 +199,7 @@ export default function BlogsPage() {
   const handlePublish = (id: string) => {
     setBlogs(
       blogs.map((blog) =>
-        blog.id === id ? { ...blog, status: "published" } : blog,
+        blog._id === id ? { ...blog, status: "published" } : blog,
       ),
     );
     setOpenMenuId(null);
@@ -256,7 +210,7 @@ export default function BlogsPage() {
 
     setBlogs(
       blogs.map((blog) => {
-        if (blog.id === blogId) {
+        if (blog._id === blogId) {
           const newComment: Comment = {
             id: `c-${Date.now()}`,
             author: "Admin",
@@ -272,8 +226,8 @@ export default function BlogsPage() {
       }),
     );
 
-    if (viewingBlog?.id === blogId) {
-      const updatedBlog = blogs.find((b) => b.id === blogId);
+    if (viewingBlog?._id === blogId) {
+      const updatedBlog = blogs.find((b) => b._id === blogId);
       if (updatedBlog) {
         setViewingBlog(updatedBlog);
       }
@@ -295,16 +249,20 @@ export default function BlogsPage() {
         title: newBlogForm.title,
         author: newBlogForm.author,
         category: newBlogForm.category || "General",
-        date: new Date().toISOString().split("T")[0],
         status: "draft",
         excerpt: newBlogForm.excerpt,
         content: newBlogForm.content,
-        image: imageData || {},
+        videoId: newBlogForm.videoId,
+        imageUrl: newBlogForm.imageUrl,
+        image: imageData
+          ? { url: imageData.secure_url, public_id: imageData.public_id }
+          : {},
       };
 
-      // setBlogs([...blogs, newBlog]);
-      // resetNewBlogForm();
-      // setShowAddDialog(false);
+      await apiRequest("POST", "/blogs/new", newBlog);
+
+      resetNewBlogForm();
+      setShowAddDialog(false);
     } catch (error) {
       setSaving(false);
       console.error("Error uploading image:", error);
@@ -506,6 +464,14 @@ export default function BlogsPage() {
               }}
               className="bg-background border-border"
             />
+            <Input
+              placeholder="Video ID (optional)"
+              value={newBlogForm.videoId}
+              onChange={(e) => {
+                setNewBlogForm({ ...newBlogForm, videoId: e.target.value });
+              }}
+              className="bg-background border-border"
+            />
 
             <div
               className={`flex flex-col items-center justify-center gap-2 rounded-md border p-4 text-center transition ${
@@ -628,7 +594,7 @@ export default function BlogsPage() {
                   {viewingBlog.title}
                 </DialogTitle>
                 <DialogDescription>
-                  By {viewingBlog.author} • {viewingBlog.date} •{" "}
+                  By {viewingBlog.author} • {viewingBlog?.createdAt} •{" "}
                   {viewingBlog.category}
                 </DialogDescription>
               </DialogHeader>
@@ -643,10 +609,10 @@ export default function BlogsPage() {
                 )}
 
                 {/* Featured Image */}
-                {viewingBlog.imageUrl && (
+                {viewingBlog.image?.url && (
                   <div className="relative w-full h-64 rounded-lg overflow-hidden">
                     <img
-                      src={viewingBlog.imageUrl}
+                      src={viewingBlog.image.url}
                       alt={viewingBlog.title}
                       className="w-full h-full object-cover"
                     />
@@ -708,7 +674,7 @@ export default function BlogsPage() {
                     </div>
                     <div className="mt-3 flex justify-end">
                       <Button
-                        onClick={() => handleAddComment(viewingBlog.id)}
+                        onClick={() => handleAddComment(viewingBlog._id)}
                         size="sm"
                         className="bg-accent hover:bg-accent/90 text-accent-foreground"
                       >
@@ -777,7 +743,7 @@ export default function BlogsPage() {
                   Category
                 </th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">
-                  Date
+                  Creation Date
                 </th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">
                   Status
@@ -790,11 +756,11 @@ export default function BlogsPage() {
             <tbody>
               {filteredBlogs.map((blog) => (
                 <tr
-                  key={blog.id}
+                  key={blog._id}
                   className="border-b border-border hover:bg-background/50"
                 >
                   <td className="px-6 py-4 text-foreground">
-                    {editingId === blog.id ? (
+                    {editingId === blog._id ? (
                       <Input
                         value={editData.title || ""}
                         onChange={(e) =>
@@ -807,7 +773,7 @@ export default function BlogsPage() {
                     )}
                   </td>
                   <td className="px-6 py-4 text-foreground/70">
-                    {editingId === blog.id ? (
+                    {editingId === blog._id ? (
                       <Input
                         value={editData.author || ""}
                         onChange={(e) =>
@@ -820,7 +786,7 @@ export default function BlogsPage() {
                     )}
                   </td>
                   <td className="px-6 py-4 text-foreground/70">
-                    {editingId === blog.id ? (
+                    {editingId === blog._id ? (
                       <Input
                         value={editData.category || ""}
                         onChange={(e) =>
@@ -834,12 +800,14 @@ export default function BlogsPage() {
                       </span>
                     )}
                   </td>
-                  <td className="px-6 py-4 text-foreground/70">{blog.date}</td>
+                  <td className="px-6 py-4 text-foreground/70">
+                    {new Date(blog.createdAt || "").toLocaleDateString()}
+                  </td>
                   <td className="px-6 py-4">
                     <button
                       onClick={() =>
                         handleStatusChange(
-                          blog.id,
+                          blog._id,
                           blog.status === "published" ? "draft" : "published",
                         )
                       }
@@ -861,14 +829,16 @@ export default function BlogsPage() {
                     <div className="relative">
                       <button
                         onClick={() =>
-                          setOpenMenuId(openMenuId === blog.id ? null : blog.id)
+                          setOpenMenuId(
+                            openMenuId === blog._id ? null : blog._id,
+                          )
                         }
                         className="p-2 hover:bg-background rounded transition-colors text-foreground/60 hover:text-foreground"
                       >
                         <MoreVertical size={20} />
                       </button>
 
-                      {openMenuId === blog.id && (
+                      {openMenuId === blog._id && (
                         <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg z-50 py-2">
                           {/* View */}
                           <button
@@ -896,7 +866,7 @@ export default function BlogsPage() {
 
                           {/* Set Featured */}
                           <button
-                            onClick={() => handleToggleFeatured(blog.id)}
+                            onClick={() => handleToggleFeatured(blog._id)}
                             className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-background/50 flex items-center gap-2 transition-colors"
                           >
                             <Star
@@ -909,7 +879,7 @@ export default function BlogsPage() {
                           {/* Publish (only for drafts) */}
                           {blog.status === "draft" && (
                             <button
-                              onClick={() => handlePublish(blog.id)}
+                              onClick={() => handlePublish(blog._id)}
                               className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-background/50 flex items-center gap-2 transition-colors"
                             >
                               <Eye size={16} />
@@ -921,7 +891,7 @@ export default function BlogsPage() {
                           <div className="border-t border-border my-1"></div>
                           <button
                             onClick={() => {
-                              handleDelete(blog.id);
+                              handleDelete(blog._id);
                               setOpenMenuId(null);
                             }}
                             className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50/10 flex items-center gap-2 transition-colors"
