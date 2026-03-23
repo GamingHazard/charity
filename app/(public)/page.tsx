@@ -268,7 +268,7 @@ export default function Home() {
 
       {/* Donations */}
       <AnimatedElement variant="slideInUp">
-        <section className="py-5 sm:py-0 px-2 sm:px-4 sm:flex mt-14 md:px-8 bg-card relative">
+        <section className="py-5 sm:py-0 px-2 sm:px-4 sm:flex justify-center items-center mt-14 md:px-8 bg-card relative">
           <img
             src="/donation-image.jpg"
             className="rounded-md hidden w-1/2 sm:inline-block"
@@ -287,114 +287,113 @@ export default function Home() {
             className="w-40 h-40 absolute hidden sm:inline-block bottom-5 left-15"
           />
 
-          <div className="max-w-5xl  sm:shadow-md sm:absolute  left-40 sm:top-10 py-0 z-10 mx-auto bg-card rounded-md h-auto sm:h-120 sm:flex items-center  ">
-            <div className="sm:w-2/4 text-white rounded-md sm:rounded-l-md relative p-5 sm:p-20 h-auto sm:h-full bg-green-800">
+          <div className="w-full  max-w-5xl   h-auto  xl:h-120   sm:shadow-md   bg-card      rounded-2xl shadow-md overflow-hidden sm:absolute    flex flex-col md:flex-row">
+            {/* LEFT SIDE */}
+            <div className="w-full sm:w-1/2 xl:w-1/2 bg-green-800 text-white p-6 sm:p-10 xl:p-10 relative flex flex-col justify-between">
               <img
                 src="/hand-shape.png"
-                className="w-20 h-20 hidden sm:inline-block absolute top-10 right-10"
+                className="w-16 h-16 hidden sm:block absolute top-6 right-6 opacity-80"
               />
-              <p
-                style={{ fontFamily: "Quicksand" }}
-                className="text-orange-300"
-              >
-                Help & Donate
-              </p>
-              <h1
-                style={{ fontFamily: "Quicksand" }}
-                className="text-2xl font-bold sm:text-3xl"
-              >
-                Your Small Contribution can Change a Life
-              </h1>
-              <p
-                style={{ fontFamily: "Quicksand" }}
-                className="text-sm mx-2 sm:text-base"
-              >
-                Your generous donations help us maintain our work, provide
-                community services, and educate future generations. Every
-                contribution counts and is greatly appreciated.
-              </p>
 
-              <span className="  mt-5 flex  p-5 w-full border-[0.5px] border-muted-foreground rounded-full">
-                {donators.map((donator, i) => (
-                  <img
-                    key={i}
-                    src={donator}
-                    className="w-10 h-10 rounded-full -mx-1 border-2 border-green-800 inline-block "
-                  />
-                ))}
+              <div className="space-y-3">
+                <p className="text-orange-300 text-sm">Help & Donate</p>
 
-                <p
+                <h1
                   style={{ fontFamily: "Quicksand" }}
-                  className="text-sm flex-1 text-right font-semibold text-muted"
+                  className="text-xl  lg:text-4xl  font-bold leading-snug"
                 >
-                  <b
-                    style={{ fontFamily: "Quicksand" }}
-                    className="text-orange-400"
-                  >
+                  Your Small Contribution can Change a Life
+                </h1>
+
+                <p className="text-sm   sm:text-base text-gray-200">
+                  Your generous donations help us maintain our work, provide
+                  community services, and educate future generations. Every
+                  contribution counts and is greatly appreciated.
+                </p>
+              </div>
+
+              {/* DONATORS */}
+              <div className="  flex border-2 border-border p-2 rounded-full px-5 items-center gap-3 flex-wrap">
+                <div className="flex  rounded-full p-1">
+                  {donators.map((donator, i) => (
+                    <img
+                      key={i}
+                      src={donator}
+                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-full -ml-2 first:ml-0 border-2 border-green-800"
+                    />
+                  ))}
+                </div>
+
+                <p className="text-xs sm:text-sm ml-auto text-right">
+                  <span className="text-orange-400 font-bold">
                     $ <AnimatedCounter value={3546} duration={2500} />
-                  </b>{" "}
-                  raised by <br />
+                  </span>
+                  <br />
                   {donators.length} Donors
                 </p>
-              </span>
+              </div>
             </div>
 
-            <div className="w-auto sm:w-full sm:grid flex-1 text-white bg-background rounded-r-md relative h-auto p-4 sm:p-5 sm:h-full  ">
+            {/* RIGHT SIDE */}
+            <div className="w-full md:w-1/2 bg-background p-6 sm:p-10 flex flex-col justify-center">
               <h1
                 style={{ fontFamily: "Quicksand" }}
-                className="text-2xl text-accent font-bold"
+                className="text-xl sm:text-2xl font-bold text-accent mb-4"
               >
                 Make A Donation
               </h1>
 
-              <form className="h-full w-full">
-                <span className="w-full grid sm:flex items-center   gap-3   ">
+              <form className="space-y-4">
+                <div className="flex flex-col sm:flex-row gap-3">
                   <Input
-                    style={{ fontFamily: "Quicksand" }}
                     placeholder="Enter your Names"
-                    className="sm:flex-1 bg-card text-accent border-0 sm:p-5"
+                    className="flex-1 bg-card border-0"
                   />
                   <Input
-                    style={{ fontFamily: "Quicksand" }}
                     placeholder="Enter your Email Address"
-                    className="sm:flex-1 bg-card text-accent border-0 sm:p-5"
+                    className="flex-1 bg-card border-0"
                   />
-                </span>
+                </div>
+
                 <Input
-                  style={{ fontFamily: "Quicksand" }}
                   placeholder="Company name (Optional)"
-                  className="sm:flex-1 bg-card text-accent border-0 sm:p-5 sm:my-3 mr-3"
+                  className="bg-card border-0"
                 />
+
                 <Input
-                  style={{ fontFamily: "Quicksand" }}
                   placeholder="Amount Donating"
-                  className="sm:flex-1 bg-card text-accent border-0 sm:p-5 my-3 mr-3"
+                  className="bg-card border-0"
                 />
-                <span className="flex w-full justify-evenly items-center gap-3">
+
+                {/* QUICK DONATIONS */}
+                <div className="flex flex-wrap gap-2">
                   {quickdonations.map((donation, i) => (
                     <Button
-                      style={{ fontFamily: "Quicksand" }}
                       key={i}
                       variant="outline"
-                      className="bg-card cursor-pointer border-2 border-green-800 text-green-800 hover:bg-green-800 hover:text-white"
+                      className="border-green-800 text-green-800 hover:bg-green-800 hover:text-white"
                     >
                       {donation.amount}
                     </Button>
                   ))}
-                </span>
-                <span className="flex my-2 items-center gap-3">
-                  <Input type="checkbox" className="w-5 h-5" />
+                </div>
+
+                {/* CHECKBOXES */}
+                <div className="flex items-start gap-2">
+                  <Input type="checkbox" className="w-4 h-4 mt-1" />
                   <p className="text-xs text-muted-foreground">
                     I want to receive updates about the impact of my donation
                   </p>
-                </span>
-                <span className="flex my-2 items-center gap-3">
-                  <Input type="checkbox" className="w-5 h-5" />
+                </div>
+
+                <div className="flex items-start gap-2">
+                  <Input type="checkbox" className="w-4 h-4 mt-1" />
                   <p className="text-xs text-muted-foreground">
                     I agree to the terms and conditions
                   </p>
-                </span>
-                <Button className="bg-primary w-full hover:bg-accent/90 text-white px-8 text-lg cursor-pointer font-bold rounded-lg p-5 mt-5">
+                </div>
+
+                <Button className="w-full bg-primary hover:bg-accent/90 text-white font-bold py-4 text-lg rounded-lg">
                   Donate Now
                 </Button>
               </form>
@@ -423,7 +422,7 @@ export default function Home() {
           </p>
 
           <div className="w-full hidden flex-1 bg-background relative z-10 sm:mx-auto p-0  rounded-md h-auto sm:h-120 sm:flex items-center  ">
-            <ScrollStack    className=" relative">
+            <ScrollStack className=" relative">
               {mockEvents.map((event) => (
                 <ScrollStackItem key={event._id}>
                   <span className=" text-wrap  items-center justify-evenly grid p-2 sm:w-20 rounded-full h-full bg-primary/10">
@@ -474,19 +473,19 @@ export default function Home() {
 
                       <span className="flex   gap-3">
                         <Link
-                        href="/contact"
-                        style={{ fontFamily: "Quicksand" }}
-                        className="bg-primary/20 hover:bg-green-800 hover:text-white text-primary  p-2  text-lg cursor-pointer font-bold rounded-lg   "
-                      >
-                        Join Now
+                          href="/contact"
+                          style={{ fontFamily: "Quicksand" }}
+                          className="bg-primary/20 hover:bg-green-800 hover:text-white text-primary  p-2  text-lg cursor-pointer font-bold rounded-lg   "
+                        >
+                          Join Now
                         </Link>
                         <Link
-                        href="/contact"
-                        style={{ fontFamily: "Quicksand" }}
-                        className="bg-accent/20 flex items-center justify-center hover:bg-green-800 hover:text-white text-accent  p-2  text-md cursor-pointer font-bold rounded-lg   "
-                      >
-                        See Details <ArrowRight/>
-                      </Link>
+                          href="/contact"
+                          style={{ fontFamily: "Quicksand" }}
+                          className="bg-accent/20 flex items-center justify-center hover:bg-green-800 hover:text-white text-accent  p-2  text-md cursor-pointer font-bold rounded-lg   "
+                        >
+                          See Details <ArrowRight />
+                        </Link>
                       </span>
                     </span>
                     <img

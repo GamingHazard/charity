@@ -46,7 +46,7 @@ interface GalleryImage {
   image?: {
     url: string;
     public_id: string;
-    size: null;
+    size: string|number;
   };
   createdAt: string;
 }
@@ -265,7 +265,10 @@ export default function GalleryPage() {
           <p className="text-foreground/60 text-sm mb-2">Total Size</p>
           <p className="text-3xl font-bold text-primary">
             {images
-              .reduce((sum, img) => sum + parseFloat(img.image?.size), 0)
+              .reduce(
+                (sum, img) => sum + parseFloat(Number(img.image?.size)),
+                0,
+              )
               .toFixed(1)}
             MB
           </p>
