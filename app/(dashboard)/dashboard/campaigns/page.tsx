@@ -54,6 +54,7 @@ interface Campaign {
 }
 
 import { useQuery } from "@tanstack/react-query";
+import { set } from "react-hook-form";
 
 export default function CampaignsDashboard() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
@@ -131,19 +132,16 @@ export default function CampaignsDashboard() {
         endDate: formData.endDate,
         status: formData.status,
         category: formData.category,
-        imageUrl: formData.imageUrl || "",
         image: imageData
           ? {
               url: imageData.secure_url,
               public_id: imageData.public_id,
             }
-          : {
-              url: editingCampaign?.image?.url || "",
-              public_id: editingCampaign?.image?.public_id || "",
-            },
+          : editingCampaign?.image ||
+            formData.image || { url: formData.imageUrl || "", public_id: "" },
       };
 
-      if (editingCampaign) {
+      if (editingCampaign && editingCampaign._id) {
         await apiRequest(
           "PUT",
           `/campaigns/${editingCampaign._id}/update`,
@@ -163,6 +161,8 @@ export default function CampaignsDashboard() {
         endDate: "",
         status: "upcoming",
         category: "",
+        imageUrl: "",
+        image: { url: "", public_id: "" },
       });
       setSelectedImage(null);
       setImagePreview(null);
@@ -429,6 +429,12 @@ export default function CampaignsDashboard() {
                             onClick={() => {
                               setSelectedImage(null);
                               setImagePreview(null);
+                              setFormData({
+                                ...formData,
+                                imageUrl: "",
+                                image: { url: "", public_id: "" },
+                              });
+                              setSelectedImage(null);
                             }}
                           >
                             <X className="w-4 h-4" />
@@ -527,7 +533,10 @@ export default function CampaignsDashboard() {
         {/* Campaigns Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCampaigns.map((campaign) => (
-            <Card key={campaign._id} className="overflow-hidden pt-0 ">
+            <Card
+              key={campaign._id}
+              className="overflow-hidden pt-0 flex flex-col"
+            >
               <div className="relative h-48 p-0">
                 <img
                   src={campaign.image?.url}
@@ -543,7 +552,7 @@ export default function CampaignsDashboard() {
                 </div>
               </div>
 
-              <div className="p-6">
+              <div className="py-12 px-4">
                 <div className="flex items-start justify-between mb-2">
                   <h3 className="text-lg font-semibold text-foreground">
                     {campaign.title}

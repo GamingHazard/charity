@@ -179,7 +179,10 @@ export default function StaffPage() {
     if (imagePreview) {
       URL.revokeObjectURL(imagePreview);
     }
-    setNewMemberForm((prev) => ({ ...prev, imageFile: null }));
+    setNewMemberForm((prev) => ({
+      ...prev,
+      photo: { url: "", public_id: "" },
+    }));
     setImagePreview(null);
     setSelectedImage(null);
   };
@@ -250,12 +253,13 @@ export default function StaffPage() {
         socialLinks: [],
         status: "active",
         photo: {
-          url: imageData?.secure_url || "",
-          public_id: imageData?.public_id || "",
+          url: imageData?.secure_url || newMemberForm.photo?.url || "",
+          public_id:
+            imageData?.public_id || newMemberForm.photo?.public_id || "",
         },
       };
 
-      if (editData._id) {
+      if (editData && editData._id) {
         await apiRequest("PUT", `/staff/update/${editData._id}`, newMember);
       } else {
         await apiRequest("POST", "/staff/new", newMember);
@@ -274,9 +278,6 @@ export default function StaffPage() {
       resetNewMemberForm();
       setShowAddForm(false);
     } catch (error) {
-      console.log("====================================");
-      console.log(error);
-      console.log("====================================");
     } finally {
       setSaving(false);
     }

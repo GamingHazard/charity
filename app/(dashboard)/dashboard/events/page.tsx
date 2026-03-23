@@ -179,9 +179,6 @@ export default function EventsPage() {
       await apiRequest("DELETE", `/events/delete/${id}`);
       setEvents(events.filter((event) => event._id !== id));
     } catch (error) {
-      console.log("====================================");
-      console.log(error);
-      console.log("====================================");
     } finally {
       setSaving(false);
     }
@@ -222,14 +219,21 @@ export default function EventsPage() {
         category: newEventForm.category || "",
         description: newEventForm.description,
         status: "upcoming",
-
         image: {
-          url: imageData ? imageData.secure_url : "",
-          public_id: imageData ? imageData.public_id : "",
+          url: imageData
+            ? imageData.secure_url
+            : newEventForm.image.url || newEventForm.imageUrl || "",
+          public_id: imageData
+            ? imageData.public_id
+            : newEventForm.image.public_id || "",
         },
       };
 
-      await apiRequest("POST", "/events/new", newEvent);
+      if (editData && editData._id) {
+        await apiRequest("PUT", `/events/${editData._id}/update`, newEvent);
+      } else {
+        await apiRequest("POST", "/events/new", newEvent);
+      }
 
       resetNewEventForm();
       setShowAddDialog(false);
@@ -800,6 +804,7 @@ export default function EventsPage() {
                           <button
                             onClick={() => {
                               handleEdit(event);
+                              setEditData(event);
                               setShowAddDialog(true);
                               setOpenMenuId(null);
                             }}

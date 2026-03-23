@@ -39,6 +39,7 @@ import { set } from "react-hook-form";
 import { apiRequest } from "@/lib/query-client";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
+import { url } from "inspector";
 
 interface Comment {
   id: string;
@@ -286,11 +287,14 @@ export default function BlogsPage() {
         imageUrl: newBlogForm.imageUrl,
         image: imageData
           ? { url: imageData.secure_url, public_id: imageData.public_id }
-          : {},
+          : {
+              url: newBlogForm.image?.url || "",
+              public_id: newBlogForm.image?.public_id || "",
+            },
       };
 
-      if (editData && editingId) {
-        apiRequest("PUT", `/blogs/${editingId}`, payLoad);
+      if (editData && editData._id) {
+        apiRequest("PUT", `/blogs/${editData._id}/update`, payLoad);
       } else {
         await apiRequest("POST", "/blogs/new", payLoad);
       }
