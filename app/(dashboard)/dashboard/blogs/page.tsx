@@ -36,6 +36,7 @@ import { on } from "events";
 import { set } from "react-hook-form";
 import { apiRequest } from "@/lib/query-client";
 import { useQuery } from "@tanstack/react-query";
+import { Badge } from "@/components/ui/badge";
 
 interface Comment {
   id: string;
@@ -111,7 +112,10 @@ export default function BlogsPage() {
     imageUrl: "",
     videoId: "",
     category: "",
-    imageFile: null as File | null,
+    image: { url: "", public_id: "" } as {
+      url: string;
+      public_id: string;
+    } | null,
   });
 
   const resetNewBlogForm = () => {
@@ -123,7 +127,10 @@ export default function BlogsPage() {
       imageUrl: "",
       videoId: "",
       category: "",
-      imageFile: null,
+      image: { url: "", public_id: "" } as {
+        url: string;
+        public_id: string;
+      } | null,
     });
     if (imagePreview) {
       URL.revokeObjectURL(imagePreview);
@@ -142,7 +149,11 @@ export default function BlogsPage() {
     if (imagePreview) {
       URL.revokeObjectURL(imagePreview);
     }
-    setNewBlogForm((prev) => ({ ...prev, imageFile: null }));
+    setNewBlogForm((prev) => ({
+      ...prev,
+      imageUrl: "",
+      image: { url: "", public_id: "" },
+    }));
     setImagePreview(null);
   };
 
@@ -165,13 +176,30 @@ export default function BlogsPage() {
     });
   }, [blogs, searchTerm, selectedCategory, selectedStatus]);
 
-  const handleEdit = (blog: BlogPost) => {
-    setEditingId(blog._id);
+  const handleEdit = (blog: any) => {
+    setNewBlogForm({
+      title: blog.title,
+      excerpt: blog.excerpt,
+      author: blog.author,
+      content: blog.content,
+      imageUrl: blog.image?.public_id ? "" : blog.image?.url || "",
+      image: blog.image && blog.image.url ? blog.image : null,
+      videoId: blog.videoId || "",
+      category: blog.category,
+    });
     setEditData(blog);
   };
 
-  const handleDelete = (id: string) => {
-    setBlogs(blogs.filter((blog) => blog._id !== id));
+  const handleDelete = async (id: string) => {
+    try {
+      setSaving(true);
+
+      await apiRequest("DELETE", `/blogs/delete/${id}`);
+      setBlogs(blogs.filter((blog) => blog._id !== id));
+    } catch (error) {
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleStatusChange = (id: string, newStatus: "published" | "draft") => {
@@ -245,7 +273,7 @@ export default function BlogsPage() {
       }
       // if (!newBlogForm.title || !newBlogForm.author) return;
 
-      const newBlog = {
+      const payLoad = {
         title: newBlogForm.title,
         author: newBlogForm.author,
         category: newBlogForm.category || "General",
@@ -259,7 +287,11 @@ export default function BlogsPage() {
           : {},
       };
 
-      await apiRequest("POST", "/blogs/new", newBlog);
+      if (editData && editingId) {
+        apiRequest("PUT", `/blogs/${editingId}`, payLoad);
+      } else {
+        await apiRequest("POST", "/blogs/new", payLoad);
+      }
 
       resetNewBlogForm();
       setShowAddDialog(false);
@@ -391,7 +423,7 @@ export default function BlogsPage() {
 
       {/* Add Blog Dialog */}
       <Dialog open={showAddDialog} onOpenChange={handleDialogOpenChange}>
-        <DialogContent className="w-full max-w-2xl">
+        <DialogContent className="w-full bg-card max-h-200 overflow-y-auto bg-card max-w-2xl">
           <DialogHeader>
             <DialogTitle>Create New Blog Post</DialogTitle>
             <DialogDescription>
@@ -452,7 +484,7 @@ export default function BlogsPage() {
               onChange={(e) =>
                 setNewBlogForm({ ...newBlogForm, content: e.target.value })
               }
-              className="bg-background border-border"
+              className="bg-background min-h-96 max-h-96 border-border"
             />
 
             <Input
@@ -502,7 +534,12 @@ export default function BlogsPage() {
             >
               {imagePreview ? (
                 <img
-                  src={imagePreview}
+                  src={
+                    imagePreview ||
+                    newBlogForm.imageUrl ||
+                    newBlogForm.image?.url ||
+                    ""
+                  }
                   alt="Preview"
                   className="h-28 w-28 rounded-full object-cover"
                 />
@@ -535,22 +572,16 @@ export default function BlogsPage() {
               />
             </div>
 
-            {newBlogForm.imageFile && imagePreview && (
+            {(imagePreview ||
+              newBlogForm.imageUrl ||
+              newBlogForm.image?.url) && (
               <div className="flex items-center justify-between gap-4 rounded-md border border-border bg-background p-3">
                 <div className="flex items-center gap-3">
                   <img
-                    src={imagePreview}
+                    src={`${imagePreview || newBlogForm.imageUrl || newBlogForm.image?.url || ""}`}
                     alt="Selected preview"
                     className="h-16 w-16 rounded-full object-cover"
                   />
-                  <div className="text-sm">
-                    <p className="font-medium text-foreground">
-                      {newBlogForm.imageFile.name}
-                    </p>
-                    <p className="text-xs text-foreground/60">
-                      {(newBlogForm.imageFile.size / 1024).toFixed(0)} KB
-                    </p>
-                  </div>
                 </div>
                 <Button variant="outline" size="sm" onClick={removeImage}>
                   <X className="size-4" />
@@ -576,6 +607,8 @@ export default function BlogsPage() {
                 <>
                   Saving... <Loader className="animate-spin" />
                 </>
+              ) : editData ? (
+                "Update Post"
               ) : (
                 "Add Blog Post"
               )}
@@ -586,7 +619,7 @@ export default function BlogsPage() {
 
       {/* View Blog Details Dialog */}
       <Dialog open={showViewDialog} onOpenChange={setShowViewDialog}>
-        <DialogContent className="w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-full bg-card max-w-3xl max-h-[90vh] overflow-y-auto">
           {viewingBlog && (
             <>
               <DialogHeader>
@@ -594,7 +627,8 @@ export default function BlogsPage() {
                   {viewingBlog.title}
                 </DialogTitle>
                 <DialogDescription>
-                  By {viewingBlog.author} • {viewingBlog?.createdAt} •{" "}
+                  By {viewingBlog.author} •{" "}
+                  {new Date(viewingBlog?.createdAt).toLocaleDateString()} •{" "}
                   {viewingBlog.category}
                 </DialogDescription>
               </DialogHeader>
@@ -648,13 +682,13 @@ export default function BlogsPage() {
                   <h4 className="font-semibold text-foreground mb-2">
                     Content
                   </h4>
-                  <p className="text-foreground/70 whitespace-pre-wrap">
+                  <p className="text-foreground/70 text-justify whitespace-pre-wrap">
                     {viewingBlog.content}
                   </p>
                 </div>
 
                 {/* Comments Section */}
-                <div className="border-t border-border pt-6">
+                <div className="border-t hidden border-border pt-6">
                   <h4 className="font-semibold text-foreground mb-4">
                     Comments ({viewingBlog.comments?.length || 0})
                   </h4>
@@ -685,7 +719,7 @@ export default function BlogsPage() {
                   </div>
 
                   {/* Comments List */}
-                  <div className="space-y-4">
+                  <div className="space-y-4 bg-card">
                     {viewingBlog.comments && viewingBlog.comments.length > 0 ? (
                       viewingBlog.comments.map((comment) => (
                         <div
@@ -728,8 +762,8 @@ export default function BlogsPage() {
           )}
         </DialogContent>
       </Dialog>
-      <Card className="overflow-hidden">
-        <div className="overflow-x-auto">
+      <Card className="overflow-hidden h-screen">
+        <div className="overflow-x-auto flex-1">
           <table className="w-full">
             <thead className="bg-background border-b border-border">
               <tr>
@@ -759,58 +793,18 @@ export default function BlogsPage() {
                   key={blog._id}
                   className="border-b border-border hover:bg-background/50"
                 >
-                  <td className="px-6 py-4 text-foreground">
-                    {editingId === blog._id ? (
-                      <Input
-                        value={editData.title || ""}
-                        onChange={(e) =>
-                          setEditData({ ...editData, title: e.target.value })
-                        }
-                        className="bg-background border-border"
-                      />
-                    ) : (
-                      blog.title
-                    )}
+                  <td className="px-6 py-4 text-foreground">{blog.title}</td>
+                  <td className="px-6 py-4 text-foreground/70">
+                    {blog.author}
                   </td>
                   <td className="px-6 py-4 text-foreground/70">
-                    {editingId === blog._id ? (
-                      <Input
-                        value={editData.author || ""}
-                        onChange={(e) =>
-                          setEditData({ ...editData, author: e.target.value })
-                        }
-                        className="bg-background border-border"
-                      />
-                    ) : (
-                      blog.author
-                    )}
-                  </td>
-                  <td className="px-6 py-4 text-foreground/70">
-                    {editingId === blog._id ? (
-                      <Input
-                        value={editData.category || ""}
-                        onChange={(e) =>
-                          setEditData({ ...editData, category: e.target.value })
-                        }
-                        className="bg-background border-border"
-                      />
-                    ) : (
-                      <span className="px-2 py-1 bg-primary/10 text-primary rounded text-xs">
-                        {blog.category}
-                      </span>
-                    )}
+                    {blog.category}
                   </td>
                   <td className="px-6 py-4 text-foreground/70">
                     {new Date(blog.createdAt || "").toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4">
-                    <button
-                      onClick={() =>
-                        handleStatusChange(
-                          blog._id,
-                          blog.status === "published" ? "draft" : "published",
-                        )
-                      }
+                    <Badge
                       className={`px-3 py-1 rounded text-xs font-medium flex items-center gap-1 ${
                         blog.status === "published"
                           ? "bg-accent/10 text-accent"
@@ -823,7 +817,7 @@ export default function BlogsPage() {
                         <EyeOff size={14} />
                       )}
                       {blog.status}
-                    </button>
+                    </Badge>
                   </td>
                   <td className="px-6 py-4">
                     <div className="relative">
@@ -856,6 +850,7 @@ export default function BlogsPage() {
                           <button
                             onClick={() => {
                               handleEdit(blog);
+                              setShowAddDialog(true);
                               setOpenMenuId(null);
                             }}
                             className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-background/50 flex items-center gap-2 transition-colors"
@@ -896,8 +891,17 @@ export default function BlogsPage() {
                             }}
                             className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50/10 flex items-center gap-2 transition-colors"
                           >
-                            <Trash2 size={16} />
-                            Delete
+                            {saving ? (
+                              <>
+                                Deleting... <Loader className="animate-spin" />
+                              </>
+                            ) : (
+                              <>
+                                {" "}
+                                <Trash2 size={16} />
+                                Delete
+                              </>
+                            )}
                           </button>
                         </div>
                       )}
@@ -910,13 +914,13 @@ export default function BlogsPage() {
         </div>
       </Card>
 
-      {filteredBlogs.length === 0 && (
+      {/* {filteredBlogs.length === 0 && (
         <Card className="p-8 text-center">
           <p className="text-foreground/70">
             No blog posts found matching your filters
           </p>
         </Card>
-      )}
+      )} */}
     </div>
   );
 }

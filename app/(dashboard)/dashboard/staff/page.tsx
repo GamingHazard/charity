@@ -29,6 +29,9 @@ import {
   X,
   Loader,
   MoreVertical,
+  Eye,
+  Edit,
+  UserRoundPlus,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -38,19 +41,25 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { set } from "react-hook-form";
 import { url } from "inspector";
+import { apiRequest } from "@/lib/query-client";
+import { useQuery } from "@tanstack/react-query";
 
 interface StaffMember {
   _id: string;
   name: string;
   role: string;
-  position: string;
+
   type: "staff" | "volunteer";
   email: string;
   phone: string;
   socialLinks: string[];
   joinDate: string;
   status: "active" | "inactive";
-  imageUrl: string;
+  photo: {
+    url: string;
+    public_id: string;
+  } | null;
+  createdAt?: string;
 }
 
 interface NewsletterSubscriber {
@@ -60,48 +69,6 @@ interface NewsletterSubscriber {
   subscribedDate: string;
   status: "active" | "unsubscribed";
 }
-
-const initialStaff: StaffMember[] = [
-  {
-    _id: "staff-1",
-    name: "Sarah Johnson",
-    role: "Executive Director",
-    position: "Leadership",
-    type: "staff",
-    email: "sarah@seedsoflove.org",
-    phone: "+1 (555) 123-4567",
-    socialLinks: ["https://twitter.com/sarahjohnson"],
-    joinDate: "2015-01-15",
-    status: "active",
-    imageUrl: "/placeholder-avatar.jpg",
-  },
-  {
-    _id: "staff-2",
-    name: "Michael Chen",
-    role: "Program Manager",
-    position: "Programs",
-    type: "staff",
-    email: "michael@seedsoflove.org",
-    phone: "+1 (555) 234-5678",
-    socialLinks: ["https://linkedin.com/in/michaelchen"],
-    joinDate: "2018-03-20",
-    status: "active",
-    imageUrl: "/placeholder-avatar.jpg",
-  },
-  {
-    _id: "vol-1",
-    name: "Emma Davis",
-    role: "Community Volunteer",
-    position: "Outreach",
-    type: "volunteer",
-    email: "emma@example.com",
-    phone: "+1 (555) 345-6789",
-    socialLinks: ["https://facebook.com/emma.davis"],
-    joinDate: "2024-01-10",
-    status: "active",
-    imageUrl: "/placeholder-avatar.jpg",
-  },
-];
 
 const initialNewsletterSubscribers: NewsletterSubscriber[] = [
   {
@@ -135,7 +102,7 @@ const initialNewsletterSubscribers: NewsletterSubscriber[] = [
 ];
 
 export default function StaffPage() {
-  const [staff, setStaff] = useState<StaffMember[]>(initialStaff);
+  const [staff, setStaff] = useState<StaffMember[]>([]);
   const [subscribers, setSubscribers] = useState<NewsletterSubscriber[]>(
     initialNewsletterSubscribers,
   );
@@ -160,6 +127,16 @@ export default function StaffPage() {
   });
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  const { data: staffData, refetch: refetchStaff } = useQuery<StaffMember[]>({
+    queryKey: ["staff", "all"],
+  });
+
+  useEffect(() => {
+    if (staffData) {
+      setStaff(staffData);
+    }
+  }, [staffData]);
+
   const roleOptions = [
     "Executive Director",
     "Program Manager",
@@ -175,7 +152,7 @@ export default function StaffPage() {
     name: "",
     contact: "",
     role: "",
-    position: "",
+
     email: "",
     photo: { url: "", public_id: "" },
   });
@@ -185,7 +162,6 @@ export default function StaffPage() {
       name: "",
       contact: "",
       role: "",
-      position: "",
       email: "",
       photo: { url: "", public_id: "" },
     });
@@ -207,8 +183,6 @@ export default function StaffPage() {
     setImagePreview(null);
     setSelectedImage(null);
   };
-
-  useEffect(() => {}, []);
 
   const staffList = staff.filter((s) => s.type === "staff");
   const volunteerList = staff.filter((s) => s.type === "volunteer");
@@ -238,27 +212,24 @@ export default function StaffPage() {
   }, [subscribers, searchTerm]);
 
   const handleEdit = (member: StaffMember) => {
-    setEditingId(member._id);
-    setEditData(member);
+    setNewMemberForm({
+      name: member.name,
+      contact: member.phone,
+      role: member.role,
+      photo: member.photo ? member.photo : { url: "", public_id: "" },
+      email: member.email,
+    });
   };
 
-  const handleSave = (id: string) => {
-    setStaff(
-      staff.map((member) =>
-        member._id === id ? { ...member, ...editData } : member,
-      ),
-    );
-    setEditingId(null);
-    setEditData({});
-  };
-
-  const handleCancel = () => {
-    setEditingId(null);
-    setEditData({});
-  };
-
-  const handleDelete = (id: string) => {
-    setStaff(staff.filter((member) => member._id !== id));
+  const handleDelete = async (id: string) => {
+    setSaving;
+    try {
+      await apiRequest("DELETE", `/staff/delete/${id}`);
+      setStaff(staff.filter((member) => member._id !== id));
+    } catch (error) {
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleAddMember = async () => {
@@ -272,7 +243,7 @@ export default function StaffPage() {
       const newMember = {
         name: newMemberForm.name,
         role: newMemberForm.role,
-        position: newMemberForm.position,
+
         type: activeTab === "staff" ? "staff" : "volunteer",
         email: newMemberForm.email,
         phone: newMemberForm.contact,
@@ -284,22 +255,24 @@ export default function StaffPage() {
         },
       };
 
-      console.log("====================================");
-      console.log(newMember);
-      console.log("====================================");
+      if (editData._id) {
+        await apiRequest("PUT", `/staff/update/${editData._id}`, newMember);
+      } else {
+        await apiRequest("POST", "/staff/new", newMember);
+      }
 
-      // setStaff([...staff, newMember]);
-      // removeImage();
-      // setNewMemberForm({
-      //   name: "",
-      //   contact: "",
-      //   role: "",
-      //   position: "",
-      //   email: "",
-      //   socialLinks: "",
-      //   imageFile: null,
-      // });
-      // setShowAddForm(false);
+      setStaff((prev: any) => {
+        if (editData._id) {
+          return prev.map((member: any) =>
+            member._id === editData._id ? { ...member, ...newMember } : member,
+          );
+        }
+        return [...prev, newMember];
+      });
+
+      removeImage();
+      resetNewMemberForm();
+      setShowAddForm(false);
     } catch (error) {
       console.log("====================================");
       console.log(error);
@@ -503,17 +476,21 @@ export default function StaffPage() {
         )}
       </div>
 
+      {/* staff and volunteer form */}
       {activeTab !== "subscribers" && (
         <Dialog open={showAddForm} onOpenChange={handleDialogOpenChange}>
           <DialogContent className="w-full bg-card max-w-xl">
             <DialogHeader>
-              <DialogTitle>
-                Add New {activeTab === "staff" ? "Staff Member" : "Volunteer"}
-              </DialogTitle>
-              <DialogDescription>
-                Add the new member's details and upload an optional profile
-                image.
-              </DialogDescription>
+              {editData && editData._id ? (
+                <DialogTitle>
+                  Updating{" "}
+                  {activeTab === "staff" ? "Staff Member" : "Volunteer"} Profile
+                </DialogTitle>
+              ) : (
+                <DialogTitle>
+                  Add New {activeTab === "staff" ? "Staff Member" : "Volunteer"}
+                </DialogTitle>
+              )}
             </DialogHeader>
 
             <div className="grid grid-cols-1 gap-4">
@@ -591,11 +568,12 @@ export default function StaffPage() {
                   }
                   setNewMemberForm((prev) => ({ ...prev, imageFile: file }));
                   setImagePreview(URL.createObjectURL(file));
+                  setSelectedImage(file);
                 }}
               >
-                {imagePreview ? (
+                {imagePreview || newMemberForm.photo.url ? (
                   <img
-                    src={imagePreview}
+                    src={imagePreview || newMemberForm.photo.url}
                     alt="Preview"
                     className="h-28 w-28 rounded-full object-cover"
                   />
@@ -628,33 +606,22 @@ export default function StaffPage() {
                 />
               </div>
 
-              {newMemberForm.photo.url && imagePreview && (
-                <div className="flex items-center justify-between gap-4 rounded-md border border-border bg-background p-3">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={imagePreview}
-                      alt="Selected preview"
-                      className="h-16 w-16 rounded-full object-cover"
-                    />
+              {imagePreview ||
+                (newMemberForm.photo.url && (
+                  <div className="flex items-center justify-between gap-4 rounded-md border border-border bg-background p-3">
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={imagePreview || newMemberForm.photo.url}
+                        alt="Selected preview"
+                        className="h-16 w-16 rounded-full object-cover"
+                      />
+                    </div>
+                    <Button variant="outline" size="sm" onClick={removeImage}>
+                      <X className="size-4" />
+                      Remove
+                    </Button>
                   </div>
-                  <Button variant="outline" size="sm" onClick={removeImage}>
-                    <X className="size-4" />
-                    Remove
-                  </Button>
-                </div>
-              )}
-
-              <Input
-                placeholder="Position/Department (optional)"
-                value={newMemberForm.position}
-                onChange={(e) =>
-                  setNewMemberForm({
-                    ...newMemberForm,
-                    position: e.target.value,
-                  })
-                }
-                className="bg-background border-border"
-              />
+                ))}
             </div>
 
             <DialogFooter>
@@ -677,8 +644,10 @@ export default function StaffPage() {
                   <>
                     Saving... <Loader className="animate-spin" />
                   </>
+                ) : editData._id ? (
+                  "Update Member"
                 ) : (
-                  `Add ${activeTab === "staff" ? "Staff" : "Volunteer"}`
+                  `Add ${activeTab === "staff" ? "Staff Member" : "Volunteer"}`
                 )}
               </Button>
             </DialogFooter>
@@ -688,20 +657,21 @@ export default function StaffPage() {
 
       {/* Staff/Volunteers Table */}
       {(activeTab === "staff" || activeTab === "volunteers") && (
-        <Card className="overflow-hidden">
+        <Card className="overflow-hidden h-screen">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-background border-b border-border">
                 <tr>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">
+                    Photo
+                  </th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">
                     Name
                   </th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">
                     Role
                   </th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">
-                    Position
-                  </th>
+
                   <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">
                     Email
                   </th>
@@ -726,81 +696,33 @@ export default function StaffPage() {
                     className="border-b border-border hover:bg-background/50"
                   >
                     <td className="px-6 py-4 text-foreground">
-                      {editingId === member._id ? (
-                        <Input
-                          value={editData.name || ""}
-                          onChange={(e) =>
-                            setEditData({ ...editData, name: e.target.value })
-                          }
-                          className="bg-background border-border"
-                        />
-                      ) : (
-                        member.name
-                      )}
+                      <img
+                        src={member.photo?.url || "/user.avif"}
+                        alt={member.name}
+                        className="w-10 h-10 rounded-full object-cover"
+                      />
+                    </td>
+                    <td className="px-6 py-4 text-foreground">{member.name}</td>
+                    <td className="px-6 py-4 text-foreground/70">
+                      {member.role}
+                    </td>
+
+                    <td className="px-6 py-4 text-foreground/70">
+                      <div className="flex items-center gap-2">
+                        <Mail size={14} />
+                        {member.email}
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-foreground/70">
-                      {editingId === member._id ? (
-                        <Input
-                          value={editData.role || ""}
-                          onChange={(e) =>
-                            setEditData({ ...editData, role: e.target.value })
-                          }
-                          className="bg-background border-border"
-                        />
-                      ) : (
-                        member.role
-                      )}
+                      <div className="flex items-center gap-2">
+                        <Phone size={14} />
+                        {member.phone}
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-foreground/70">
-                      {editingId === member._id ? (
-                        <Input
-                          value={editData.position || ""}
-                          onChange={(e) =>
-                            setEditData({
-                              ...editData,
-                              position: e.target.value,
-                            })
-                          }
-                          className="bg-background border-border"
-                        />
-                      ) : (
-                        member.position
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-foreground/70">
-                      {editingId === member._id ? (
-                        <Input
-                          value={editData.email || ""}
-                          onChange={(e) =>
-                            setEditData({ ...editData, email: e.target.value })
-                          }
-                          className="bg-background border-border text-sm"
-                        />
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <Mail size={14} />
-                          {member.email}
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-foreground/70">
-                      {editingId === member._id ? (
-                        <Input
-                          value={editData.phone || ""}
-                          onChange={(e) =>
-                            setEditData({ ...editData, phone: e.target.value })
-                          }
-                          className="bg-background border-border text-sm"
-                        />
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <Phone size={14} />
-                          {member.phone}
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-foreground/70">
-                      {member.joinDate}
+                      {member.createdAt
+                        ? new Date(member.createdAt).toLocaleDateString()
+                        : "N/A"}
                     </td>
                     <td className="px-6 py-4">
                       <select
@@ -822,59 +744,59 @@ export default function StaffPage() {
                       </select>
                     </td>
                     <td className="px-6 py-4">
+                      {/* 3 dot menu options */}
                       <div className="flex gap-2">
-                        {editingId === member._id ? (
-                          <>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
                             <Button
-                              onClick={() => handleSave(member._id)}
-                              className="bg-accent hover:bg-accent/90 text-xs px-3"
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
                             >
-                              Save
+                              <MoreVertical size={16} />
                             </Button>
-                            <Button
-                              onClick={handleCancel}
-                              variant="outline"
-                              className="text-xs px-3"
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              className="hover:text-white"
+                              onClick={() => setViewDetailsId(member._id)}
                             >
-                              Cancel
-                            </Button>
-                          </>
-                        ) : (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0"
-                              >
-                                <MoreVertical size={16} />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                onClick={() => setViewDetailsId(member._id)}
-                              >
-                                View Details
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleEdit(member)}
-                              >
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => setShowAddSocialLink(member._id)}
-                              >
-                                Add Social Link
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                className="text-red-500"
-                                onClick={() => handleDelete(member._id)}
-                              >
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        )}
+                              <Eye /> View Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="hover:text-white"
+                              onClick={() => {
+                                setShowAddForm(true);
+                                setEditData(member);
+                                handleEdit(member);
+                              }}
+                            >
+                              <Edit />
+                              Edit Profile
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="hover:text-white"
+                              onClick={() => setShowAddSocialLink(member._id)}
+                            >
+                              <UserRoundPlus /> Add Social Link
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className={`hover:text-white ${saving ? "items-center justify-center text-red-500" : ""}`}
+                              onClick={() => handleDelete(member._id)}
+                            >
+                              {saving ? (
+                                <>
+                                  Deleting...{" "}
+                                  <Loader className="animate-spin" />
+                                </>
+                              ) : (
+                                <>
+                                  <Trash2 className="text-red-600" /> Delete
+                                </>
+                              )}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </td>
                   </tr>
@@ -985,53 +907,56 @@ export default function StaffPage() {
           if (!open) setViewDetailsId(null);
         }}
       >
-        <DialogContent className="w-full bg-card max-w-md">
+        <DialogContent className="w-full max-h-200 overflow-y-auto bg-card max-w-md">
           <DialogHeader>
             <DialogTitle>Staff Member Details</DialogTitle>
           </DialogHeader>
           {viewDetailsId && staff.find((s) => s._id === viewDetailsId) && (
-            <div className="space-y-4">
+            <div className="space-y-4  ">
               {(() => {
                 const member = staff.find((s) => s._id === viewDetailsId);
                 return member ? (
                   <>
-                    <div>
+                    <div className="w-full shadow-md object-contain h-100 flex items-center justify-center flex-1">
+                      <img
+                        className="w-full h-full"
+                        src={member.photo?.url || "/user.avif"}
+                      />
+                    </div>
+                    <div className="border-b border-border pb-2">
                       <p className="text-sm font-medium text-foreground/70">
                         Name
                       </p>
                       <p className="text-foreground">{member.name}</p>
                     </div>
-                    <div>
+                    <div className="border-b border-border pb-2">
                       <p className="text-sm font-medium text-foreground/70">
                         Role
                       </p>
                       <p className="text-foreground">{member.role}</p>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-foreground/70">
-                        Position
-                      </p>
-                      <p className="text-foreground">{member.position}</p>
-                    </div>
-                    <div>
+
+                    <div className="border-b border-border pb-2">
                       <p className="text-sm font-medium text-foreground/70">
                         Email
                       </p>
                       <p className="text-foreground">{member.email}</p>
                     </div>
-                    <div>
+                    <div className="border-b border-border pb-2">
                       <p className="text-sm font-medium text-foreground/70">
                         Phone
                       </p>
                       <p className="text-foreground">{member.phone}</p>
                     </div>
-                    <div>
+                    <div className="border-b border-border pb-2">
                       <p className="text-sm font-medium text-foreground/70">
                         Join Date
                       </p>
-                      <p className="text-foreground">{member.joinDate}</p>
+                      <p className="text-foreground">
+                        {new Date(member?.createdAt).toLocaleDateString()}
+                      </p>
                     </div>
-                    <div>
+                    <div className="border-b border-border pb-2">
                       <p className="text-sm font-medium text-foreground/70">
                         Status
                       </p>
@@ -1039,7 +964,7 @@ export default function StaffPage() {
                         {member.status}
                       </p>
                     </div>
-                    <div>
+                    <div className="border-b border-border pb-2">
                       <p className="text-sm font-medium text-foreground/70 mb-2">
                         Social Links
                       </p>

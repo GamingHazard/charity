@@ -37,7 +37,7 @@ import { apiRequest } from "@/lib/query-client";
 import { useQuery } from "@tanstack/react-query";
 
 interface Event {
-  id: string;
+  _id: string;
   title: string;
   topic: string;
   date: string;
@@ -91,7 +91,10 @@ export default function EventsPage() {
     location: "",
     description: "",
     imageUrl: "",
-    imageFile: null as File | null,
+    image: {
+      url: "",
+      public_id: "",
+    },
   });
 
   const resetNewEventForm = () => {
@@ -123,8 +126,13 @@ export default function EventsPage() {
     if (imagePreview) {
       URL.revokeObjectURL(imagePreview);
     }
-    setNewEventForm((prev) => ({ ...prev, imageFile: null }));
+    setNewEventForm((prev) => ({
+      ...prev,
+      image: { url: "", public_id: "" },
+      imageUrl: "",
+    }));
     setImagePreview(null);
+    setSelectedImage(null);
   };
 
   const categories = [
@@ -147,12 +155,36 @@ export default function EventsPage() {
   }, [events, searchTerm, selectedCategory, selectedStatus]);
 
   const handleEdit = (event: Event) => {
-    setEditingId(event.id);
-    setEditData(event);
+    setEditingId(event._id);
+    setNewEventForm({
+      title: event.title,
+      category: event.category,
+      topic: event.topic,
+      date: event.date,
+      time: event.time,
+      location: event.location,
+      description: event.description,
+      imageUrl: event.image?.public_id === "" ? event.image?.url : "",
+      image:
+        event.image && event.image.public_id
+          ? { url: event.image.url, public_id: event.image.public_id }
+          : { url: "", public_id: "" },
+    });
   };
 
-  const handleDelete = (id: string) => {
-    setEvents(events.filter((event) => event.id !== id));
+  const handleDelete = async (id: string) => {
+    setSaving(true);
+
+    try {
+      await apiRequest("DELETE", `/events/delete/${id}`);
+      setEvents(events.filter((event) => event._id !== id));
+    } catch (error) {
+      console.log("====================================");
+      console.log(error);
+      console.log("====================================");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleStatusChange = (
@@ -161,7 +193,7 @@ export default function EventsPage() {
   ) => {
     setEvents(
       events.map((event) =>
-        event.id === id ? { ...event, status: newStatus } : event,
+        event._id === id ? { ...event, status: newStatus } : event,
       ),
     );
   };
@@ -283,12 +315,12 @@ export default function EventsPage() {
             {events.filter((e) => e.status === "ongoing").length}
           </p>
         </Card>
-        <Card className="p-6">
+        {/* <Card className="p-6">
           <p className="text-foreground/60 text-sm mb-2">Total Attendees</p>
           <p className="text-3xl font-bold text-accent">
             {events.reduce((sum, e) => sum + e.attendees, 0)}
           </p>
-        </Card>
+        </Card> */}
       </div>
 
       {/* Filters */}
@@ -349,7 +381,7 @@ export default function EventsPage() {
 
       {/* Add Event Dialog */}
       <Dialog open={showAddDialog} onOpenChange={handleDialogOpenChange}>
-        <DialogContent className="w-full max-w-2xl">
+        <DialogContent className="w-full  bg-card max-h-200 overflow-y-auto max-w-2xl">
           <DialogHeader>
             <DialogTitle>Create New Event</DialogTitle>
             <DialogDescription>
@@ -430,7 +462,7 @@ export default function EventsPage() {
                   description: e.target.value,
                 })
               }
-              className="bg-background border-border"
+              className="bg-background min-h-96 max-h-96 border-border"
             />
 
             <Input
@@ -497,29 +529,27 @@ export default function EventsPage() {
                   if (imagePreview) {
                     URL.revokeObjectURL(imagePreview);
                   }
-                  setNewEventForm((prev) => ({ ...prev, imageFile: file }));
+
                   setImagePreview(URL.createObjectURL(file));
                   setSelectedImage(file);
                 }}
               />
             </div>
 
-            {newEventForm.imageFile && imagePreview && (
+            {(imagePreview ||
+              newEventForm?.imageUrl ||
+              newEventForm?.image?.url) && (
               <div className="flex items-center justify-between gap-4 rounded-md border border-border bg-background p-3">
                 <div className="flex items-center gap-3">
                   <img
-                    src={imagePreview}
+                    src={
+                      imagePreview ||
+                      newEventForm?.imageUrl ||
+                      newEventForm.image?.url
+                    }
                     alt="Selected preview"
                     className="h-16 w-16 rounded-full object-cover"
                   />
-                  <div className="text-sm">
-                    <p className="font-medium text-foreground">
-                      {newEventForm.imageFile.name}
-                    </p>
-                    <p className="text-xs text-foreground/60">
-                      {(newEventForm.imageFile.size / 1024).toFixed(0)} KB
-                    </p>
-                  </div>
                 </div>
                 <Button variant="outline" size="sm" onClick={removeImage}>
                   <X className="size-4" />
@@ -692,97 +722,39 @@ export default function EventsPage() {
             <tbody>
               {filteredEvents.map((event) => (
                 <tr
-                  key={event.id}
+                  key={event._id}
                   className="border-b border-border hover:bg-background/50"
                 >
-                  <td className="px-6 py-4 text-foreground">
-                    {editingId === event.id ? (
-                      <Input
-                        value={editData.title || ""}
-                        onChange={(e) =>
-                          setEditData({ ...editData, title: e.target.value })
-                        }
-                        className="bg-background border-border"
-                      />
-                    ) : (
-                      event.title
-                    )}
+                  <td className="px-6 py-4 text-foreground">{event.title}</td>
+                  <td className="px-6 py-4 text-foreground/70">
+                    <div className="flex items-center gap-2">
+                      <Calendar size={14} />
+                      {event.date}
+                    </div>
                   </td>
                   <td className="px-6 py-4 text-foreground/70">
-                    {editingId === event.id ? (
-                      <div className="space-y-2">
-                        <Input
-                          type="date"
-                          value={editData.date || ""}
-                          onChange={(e) =>
-                            setEditData({ ...editData, date: e.target.value })
-                          }
-                          className="bg-background border-border text-sm"
-                        />
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <Calendar size={14} />
-                        {event.date}
-                      </div>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <Clock size={14} />
+                      {event.time}
+                    </div>
                   </td>
                   <td className="px-6 py-4 text-foreground/70">
-                    {editingId === event.id ? (
-                      <div className="space-y-2">
-                        <Input
-                          value={editData.time || ""}
-                          onChange={(e) =>
-                            setEditData({ ...editData, time: e.target.value })
-                          }
-                          className="bg-background border-border text-sm"
-                          placeholder="10:00 AM"
-                        />
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <Clock size={14} />
-                        {event.time}
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 text-foreground/70">
-                    {editingId === event.id ? (
-                      <Input
-                        value={editData.location || ""}
-                        onChange={(e) =>
-                          setEditData({ ...editData, location: e.target.value })
-                        }
-                        className="bg-background border-border"
-                      />
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <MapPin size={14} />
-                        {event.location}
-                      </div>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <MapPin size={14} />
+                      {event.location}
+                    </div>
                   </td>
                   <td className="px-6 py-4">
-                    {editingId === event.id ? (
-                      <Input
-                        value={editData.category || ""}
-                        onChange={(e) =>
-                          setEditData({ ...editData, category: e.target.value })
-                        }
-                        className="bg-background border-border"
-                      />
-                    ) : (
-                      <span className="px-2 py-1 bg-primary/10 text-primary rounded text-xs">
-                        {event.category}
-                      </span>
-                    )}
+                    <span className="px-2 py-1 bg-primary/10 text-primary rounded text-xs">
+                      {event.category}
+                    </span>
                   </td>
                   <td className="px-6 py-4">
                     <select
                       value={event.status}
                       onChange={(e) =>
                         handleStatusChange(
-                          event.id,
+                          event._id,
                           e.target.value as
                             | "upcoming"
                             | "ongoing"
@@ -802,7 +774,7 @@ export default function EventsPage() {
                       <button
                         onClick={() =>
                           setOpenMenuId(
-                            openMenuId === event.id ? null : event.id,
+                            openMenuId === event._id ? null : event._id,
                           )
                         }
                         className="p-2 hover:bg-background rounded transition-colors text-foreground/60 hover:text-foreground"
@@ -810,7 +782,7 @@ export default function EventsPage() {
                         <MoreVertical size={20} />
                       </button>
 
-                      {openMenuId === event.id && (
+                      {openMenuId === event._id && (
                         <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg z-50 py-2">
                           {/* View Details */}
                           <button
@@ -828,6 +800,7 @@ export default function EventsPage() {
                           <button
                             onClick={() => {
                               handleEdit(event);
+                              setShowAddDialog(true);
                               setOpenMenuId(null);
                             }}
                             className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-background/50 flex items-center gap-2 transition-colors"
@@ -840,13 +813,21 @@ export default function EventsPage() {
                           <div className="border-t border-border my-1"></div>
                           <button
                             onClick={() => {
-                              handleDelete(event.id);
+                              handleDelete(event._id);
                               setOpenMenuId(null);
                             }}
                             className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50/10 flex items-center gap-2 transition-colors"
                           >
-                            <Trash2 size={16} />
-                            Delete
+                            {saving ? (
+                              <>
+                                Deleting... <Loader className="animate-spin" />
+                              </>
+                            ) : (
+                              <>
+                                <Trash2 size={16} />
+                                Delete
+                              </>
+                            )}
                           </button>
                         </div>
                       )}
