@@ -31,6 +31,8 @@ import {
   Star,
   Send,
   Loader,
+  Edit,
+  FileUpIcon,
 } from "lucide-react";
 import { on } from "events";
 import { set } from "react-hook-form";
@@ -423,7 +425,7 @@ export default function BlogsPage() {
 
       {/* Add Blog Dialog */}
       <Dialog open={showAddDialog} onOpenChange={handleDialogOpenChange}>
-        <DialogContent className="w-full bg-card max-h-200 overflow-y-auto bg-card max-w-2xl">
+        <DialogContent className="w-full  max-h-200 overflow-y-auto bg-card max-w-2xl">
           <DialogHeader>
             <DialogTitle>Create New Blog Post</DialogTitle>
             <DialogDescription>
@@ -855,7 +857,7 @@ export default function BlogsPage() {
                             }}
                             className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-background/50 flex items-center gap-2 transition-colors"
                           >
-                            <Edit2 size={16} />
+                            <Edit size={16} />
                             Edit
                           </button>
 
@@ -877,7 +879,7 @@ export default function BlogsPage() {
                               onClick={() => handlePublish(blog._id)}
                               className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-background/50 flex items-center gap-2 transition-colors"
                             >
-                              <Eye size={16} />
+                              <FileUpIcon size={16} />
                               Publish
                             </button>
                           )}

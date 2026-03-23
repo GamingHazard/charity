@@ -22,7 +22,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Upload, X, Calendar, Target, Users, Loader } from "lucide-react";
+import {
+  Plus,
+  Upload,
+  X,
+  Calendar,
+  Target,
+  Users,
+  Loader,
+  Trash2,
+  Edit,
+} from "lucide-react";
 import Image from "next/image";
 import { apiRequest } from "@/lib/query-client";
 
@@ -52,7 +62,7 @@ export default function CampaignsDashboard() {
   const [statusFilter, setStatusFilter] = useState<
     "all" | "ongoing" | "upcoming" | "completed"
   >("all");
-  const [formData, setFormData] = useState<Campaign>({
+  const [formData, setFormData] = useState<any>({
     _id: "",
     title: "",
     tagline: "",
@@ -136,7 +146,7 @@ export default function CampaignsDashboard() {
       if (editingCampaign) {
         await apiRequest(
           "PUT",
-          `/campaigns/${editingCampaign.id}/update`,
+          `/campaigns/${editingCampaign._id}/update`,
           newCampaign,
         );
       } else {
@@ -164,7 +174,7 @@ export default function CampaignsDashboard() {
     }
   };
 
-  const handleEdit = (campaign: Campaign) => {
+  const handleEdit = (campaign: any) => {
     setEditingCampaign(campaign);
     setFormData({
       title: campaign.title,
@@ -175,14 +185,25 @@ export default function CampaignsDashboard() {
       endDate: campaign.endDate,
       status: campaign.status,
       category: campaign.category,
-      imageUrl: campaign.imageUrl,
+      imageUrl: campaign.image ? campaign.image?.url : "",
+      image: campaign.image || { url: "", public_id: "" },
     });
     setImagePreview(campaign.image?.url || null);
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    setCampaigns(campaigns.filter((c) => c.id !== id));
+  const handleDelete = async (id: string) => {
+    try {
+      setSaving(true);
+      await apiRequest("DELETE", `/campaigns/${id}/delete`);
+      setCampaigns(campaigns.filter((c) => c._id !== id));
+    } catch (error) {
+      console.log("====================================");
+      console.log(error);
+      console.log("====================================");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -261,6 +282,7 @@ export default function CampaignsDashboard() {
                   <div className="space-y-2">
                     <Label htmlFor="title">Campaign Title</Label>
                     <Input
+                      className="bg-background"
                       id="title"
                       value={formData.title}
                       onChange={(e) =>
@@ -274,6 +296,7 @@ export default function CampaignsDashboard() {
                   <div className="space-y-2">
                     <Label htmlFor="tagline">Tagline</Label>
                     <Input
+                      className="bg-background"
                       id="tagline"
                       value={formData.tagline}
                       onChange={(e) =>
@@ -296,6 +319,7 @@ export default function CampaignsDashboard() {
                     placeholder="Detailed campaign description"
                     rows={4}
                     required
+                    className="max-h-96 bg-background min-h-96"
                   />
                 </div>
 
@@ -303,6 +327,7 @@ export default function CampaignsDashboard() {
                   <div className="space-y-2">
                     <Label htmlFor="goal">Fundraising Goal ($)</Label>
                     <Input
+                      className="bg-background"
                       id="goal"
                       type="number"
                       value={formData.goal}
@@ -317,6 +342,7 @@ export default function CampaignsDashboard() {
                   <div className="space-y-2">
                     <Label htmlFor="endDate">End Date</Label>
                     <Input
+                      className="bg-background"
                       id="endDate"
                       type="date"
                       value={formData.endDate}
@@ -327,7 +353,7 @@ export default function CampaignsDashboard() {
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 w-full md:w-1/2">
                   <Label htmlFor="category">Category</Label>
                   <Select
                     value={formData.category}
@@ -336,14 +362,28 @@ export default function CampaignsDashboard() {
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
+                      <SelectValue
+                        className="bg-background"
+                        placeholder="Select category"
+                      />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Education">Education</SelectItem>
-                      <SelectItem value="Nutrition">Nutrition</SelectItem>
-                      <SelectItem value="Health">Health</SelectItem>
-                      <SelectItem value="Environment">Environment</SelectItem>
-                      <SelectItem value="Community">Community</SelectItem>
+
+                    <SelectContent className="bg-background">
+                      <SelectItem className="bg-background" value="Education">
+                        Education
+                      </SelectItem>
+                      <SelectItem className="bg-background" value="Nutrition">
+                        Nutrition
+                      </SelectItem>
+                      <SelectItem className="bg-background" value="Health">
+                        Health
+                      </SelectItem>
+                      <SelectItem className="bg-background" value="Environment">
+                        Environment
+                      </SelectItem>
+                      <SelectItem className="bg-background" value="Community">
+                        Community
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -351,6 +391,7 @@ export default function CampaignsDashboard() {
                 <div className="space-y-2">
                   <Label htmlFor="imageUrl">ImageUrl</Label>
                   <Input
+                    className="bg-background"
                     id="imageUrl"
                     value={formData.imageUrl}
                     onChange={(e) =>
@@ -365,10 +406,16 @@ export default function CampaignsDashboard() {
                   <Label>Campaign Image</Label>
                   <div className="border-2 border-dashed border-border rounded-lg p-6">
                     <div className="text-center">
-                      {imagePreview ? (
+                      {imagePreview ||
+                      formData?.imageUrl ||
+                      formData.image?.url ? (
                         <div className="relative">
                           <Image
-                            src={imagePreview}
+                            src={
+                              imagePreview ||
+                              formData?.imageUrl ||
+                              formData.image?.url
+                            }
                             alt="Campaign preview"
                             width={200}
                             height={150}
@@ -518,7 +565,7 @@ export default function CampaignsDashboard() {
                     </span>
                     <span className="flex items-center gap-1">
                       <Users className="w-4 h-4" />
-                      Raised: ${campaign.raised.toLocaleString()}
+                      Raised: $ {campaign.raised.toLocaleString() || 0.0}
                     </span>
                   </div>
 
@@ -534,14 +581,22 @@ export default function CampaignsDashboard() {
                     size="sm"
                     onClick={() => handleEdit(campaign)}
                   >
-                    Edit
+                    <Edit /> Edit
                   </Button>
                   <Button
                     variant="destructive"
                     size="sm"
-                    onClick={() => handleDelete(campaign.id)}
+                    onClick={() => handleDelete(campaign._id)}
                   >
-                    Delete
+                    {saving ? (
+                      <>
+                        Deleting... <Loader className="animate-spin" />
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="mr-2" /> Delete
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>
