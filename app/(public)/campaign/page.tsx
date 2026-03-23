@@ -14,6 +14,7 @@ import {
   AnimatedContainer,
 } from "@/components/motion/animated-elements";
 import { mockCampaigns, Campaign } from "@/lib/mock-data";
+import Link from "next/link";
 
 function formatCurrency(value: number) {
   return value.toLocaleString(undefined, {
@@ -163,7 +164,9 @@ export default function CampaignPage() {
               </p>
 
               <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4">
-                <Button className="w-full sm:w-auto">Donate Now</Button>
+                <Link href="/donate" className="w-full sm:w-auto">
+                  <Button>Donate Now</Button>
+                </Link>
                 <Button variant="outline" className="w-full sm:w-auto">
                   Share Campaign
                 </Button>
