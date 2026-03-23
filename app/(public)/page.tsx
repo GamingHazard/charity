@@ -313,7 +313,7 @@ export default function Home() {
               </div>
 
               {/* DONATORS */}
-              <div className="  flex border-2 border-border p-2 rounded-full px-5 items-center gap-3 flex-wrap">
+              <div className="  flex border-2 mt-4 border-border p-2 rounded-full px-5 items-center gap-3 flex-wrap">
                 <div className="flex  rounded-full p-1">
                   {donators.map((donator, i) => (
                     <img
@@ -324,7 +324,7 @@ export default function Home() {
                   ))}
                 </div>
 
-                <p className="text-xs sm:text-sm ml-auto text-right">
+                <p className="text-xs  sm:text-sm ml-auto text-right">
                   <span className="text-orange-400 font-bold">
                     $ <AnimatedCounter value={3546} duration={2500} />
                   </span>
@@ -332,6 +332,13 @@ export default function Home() {
                   {donators.length} Donors
                 </p>
               </div>
+
+              <Link
+                href="/contact"
+                className="text-white p-3 flex items-center justify-center rounded-full bg-primary hover:bg-primary/20 font-medium"
+              >
+                Join Our Mission
+              </Link>
             </div>
 
             {/* RIGHT SIDE */}
@@ -583,27 +590,25 @@ export default function Home() {
         <div className="max-w-6xl gap-5 border-b border-muted text-white justify-evenly h-96 flex-1 flex items-center absolute     mx-auto">
           <div className="text-white    gap-4 h-full w-1/3">
             <span className="  items-center w-full ">
-              <span className="flex items-center gap-2">
-                <span className="flex p-2 items-center border-4 border-white justify-center bg-primary rounded-full">
-                  <img
-                    src="https://html.kodesolution.com/2026/hopenest-html/images/resource/about-1-uni-icon.png"
-                    alt="Logo"
-                    className="w-10 h-10"
-                  />
+              <Link
+                style={{ fontFamily: "Quicksand" }}
+                href="/"
+                className={`flex items-center gap-2   mb-5 cursor-pointer  transition-colors `}
+              >
+                <img src="/logo.png" className="w-12 h-12" />
+                <span className="hidden text-center sm:inline-block text-xm">
+                  <p className="font-extrabold text-lg text-primary">
+                    ENSIGO OF LOVE
+                  </p>
+                  <p className="text-xs">We Rise By Lifting Others</p>
                 </span>
-                <h2
-                  style={{ fontFamily: "Quicksand" }}
-                  className="text-white text-xl font-bold"
-                >
-                  Seeds of Love
-                </h2>
-              </span>
+              </Link>
               <p
                 style={{ fontFamily: "Quicksand" }}
                 className="text-sm mt-4  text-muted"
               >
-                It is a long established fact that a reader will be distracted
-                by the readable content of a page when looking at its layout.
+                Empowering communities through education, nutrition, and
+                sustainable development. One seed at a time.
               </p>
             </span>
 

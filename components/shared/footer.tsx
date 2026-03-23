@@ -10,15 +10,19 @@ export function Footer() {
         <div className="grid md:grid-cols-4 gap-8 mb-8">
           {/* About */}
           <div>
-            <h3
+            <Link
               style={{ fontFamily: "Quicksand" }}
-              className="font-bold text-foreground mb-4 flex items-center gap-2"
+              href="/"
+              className={`flex items-center gap-2   mb-5 cursor-pointer  transition-colors `}
             >
-              <span className="w-6 h-6 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-sm">
-                🌱
+              <img src="/logo.png" className="w-12 h-12" />
+              <span className="hidden text-center sm:inline-block text-xm">
+                <p className="font-extrabold text-lg text-primary">
+                  ENSIGO OF LOVE
+                </p>
+                <p className="text-xs">We Rise By Lifting Others</p>
               </span>
-              Seeds of Love
-            </h3>
+            </Link>
             <p
               style={{ fontFamily: "Quicksand" }}
               className="text-foreground/70 text-sm"

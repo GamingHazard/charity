@@ -132,7 +132,7 @@ export default function About() {
   const [visibleCount, setVisibleCount] = useState(4);
 
   return (
-    <main className="min-h-screen relative flex flex-1 flex-col bg-background">
+    <main className="min-h-screen -z-10 relative flex flex-1 flex-col bg-background">
       <Navbar />
       <section className="relative z-10 min-h-screen mb-6 sm:mb-8 md:mb-10 w-full flex items-center justify-center overflow-hidden pt-12 sm:pt-16">
         {/* Background Image */}
@@ -246,7 +246,7 @@ export default function About() {
         </AnimatedContainer>
 
         <AnimatedElement variant="fadeInUp">
-          <section className="py-8 sm:py-12 md:py-16 w-full shadow-lg rounded-md mb-5 px-3 sm:px-4 md:px-8 bg-card border-y border-border">
+          <section className="py-8 z-10 sm:py-12 md:py-16 w-full shadow-lg rounded-md mb-5 px-3 sm:px-4 md:px-8 bg-card border-y border-border">
             <div className="max-w-6xl mx-auto w-full">
               <h2
                 style={{ fontFamily: "Quicksand" }}
@@ -299,7 +299,7 @@ export default function About() {
         </AnimatedElement>
 
         <AnimatedElement variant="fadeInUp">
-          <section className="py-10 sm:py-14 w-full bg-card border-y border-border rounded-md mb-8 px-3 sm:px-4 md:px-8">
+          <section className="py-10 z-10 sm:py-14 w-full bg-card border-y border-border rounded-md mb-8 px-3 sm:px-4 md:px-8">
             <div className="max-w-6xl mx-auto">
               <h2
                 style={{ fontFamily: "Quicksand" }}
@@ -480,7 +480,7 @@ export default function About() {
 
       {/* Testimonials Section */}
       <AnimatedElement variant="fadeInUp">
-        <section className="flex-1 mb-8 sm:mb-10 rounded-md shadow-md bg-card mx-auto w-full py-6 sm:py-8 md:py-10 px-3 sm:px-4 md:px-8 max-w-6xl my-8 sm:my-10 md:my-10">
+        <section className="flex-1 mb-8 z-10  sm:mb-10 rounded-md shadow-md bg-card mx-auto w-full py-6 sm:py-8 md:py-10 px-3 sm:px-4 md:px-8 max-w-6xl my-8 sm:my-10 md:my-10">
           <p
             style={{ fontFamily: "Quicksand" }}
             className="text-xl sm:text-2xl md:text-3xl lg:text-4xl text-center font-bold mx-0 sm:mx-5 md:mx-10 mb-3 sm:mb-4 md:mb-5"
@@ -556,32 +556,32 @@ export default function About() {
 
       <img
         src="/frame1-1.png"
-        className="absolute hidden md:inline-block bottom-0 -left-10 sm:-left-20 w-40 sm:w-60 md:w-80"
+        className="absolute -z-5 hidden md:inline-block bottom-0 -left-10 sm:-left-20 w-40 sm:w-60 md:w-80"
       />
       <img
         src="/layer1-1.png"
-        className="absolute hidden md:inline-block bottom-1/2 right-10 sm:right-16 md:right-20 w-20 sm:w-30 md:w-40 h-20 sm:h-30 md:h-40"
+        className="absolute -z-5 hidden md:inline-block top-1/4 mt-15 right-10 sm:right-16 md:right-20 w-20 sm:w-30 md:w-40 h-20 sm:h-30 md:h-40"
       />
       <img
         src="/layer1-2.png"
-        className="absolute hidden md:inline-block top-3/4 right-0 w-20 sm:w-30 md:w-40 h-20 sm:h-30 md:h-40"
+        className="absolute -z-5 hidden md:inline-block top-1/2 mt-30 right-0 w-20 sm:w-30 md:w-40 h-20 sm:h-30 md:h-40"
       />
       <img
         src="/object1-1.png"
-        className="absolute hidden lg:inline-block top-1/2 left-0 w-[15%] sm:w-[18%] lg:w-[20%] h-[15%] sm:h-[18%] lg:h-[20%]"
+        className="absolute -z-5 hidden lg:inline-block top-1/2 left-0 w-[15%] sm:w-[18%] lg:w-[30%] h-[15%] sm:h-[18%] lg:h-[20%]"
       />
 
       <img
         src="/shape1-2.png"
-        className="absolute hidden md:inline-block bottom-1/5 left-0 w-20 sm:w-25 md:w-30 h-20 sm:h-25 md:h-30"
+        className="absolute -z-5 hidden md:inline-block bottom-1/5 left-0 w-20 sm:w-25 md:w-30 h-20 sm:h-25 md:h-30"
       />
       <img
         src="/shape1-1.png"
-        className="absolute hidden md:inline-block bottom-1/5 right-20 sm:right-30 md:right-40 w-20 sm:w-25 md:w-30 h-20 sm:h-25 md:h-30"
+        className="absolute -z-5 hidden md:inline-block top-1/2 mt-60  right-30 h-20 w-20 sm:w-20 md:w-20"
       />
       <img
         src="/shape1-3.png"
-        className="absolute hidden lg:inline-block bottom-0 right-0 w-[15%] sm:w-[18%] lg:w-[20%] h-[15%] sm:h-[18%] lg:h-[20%]"
+        className="absolute -z-5 hidden lg:inline-block bottom-0 right-0 w-[15%] sm:w-[18%] lg:w-[20%] h-[15%] sm:h-[18%] lg:h-[20%]"
       />
 
       <Footer />
