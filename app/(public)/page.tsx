@@ -514,13 +514,13 @@ export default function Home() {
                         >
                           Join Now
                         </Link>
-                        <Link
+                        {/* <Link
                           href="/contact"
                           style={{ fontFamily: "Quicksand" }}
                           className="bg-accent/20 flex items-center justify-center hover:bg-green-800 hover:text-white text-accent  p-2  text-md cursor-pointer font-bold rounded-lg   "
                         >
                           See Details <ArrowRight />
-                        </Link>
+                        </Link> */}
                       </span>
                     </span>
                     <img
@@ -531,23 +531,6 @@ export default function Home() {
                 </ScrollStackItem>
               ))}
             </ScrollStack>
-            {/* <img
-              src="/event-image.png"
-              className="w-1/2 h-full absolute hidden sm:inline-block -right-50"
-            />
-            <img
-              src="/news-1-shape-1.png"
-              className="w-25 h-25 absolute hidden sm:inline-block top-0 left-0"
-            />
-            <img
-              src="/news-1-shape-2.png"
-              className="w-50 h-50 absolute -z-20 hidden sm:inline-block bottom-0 left-0"
-            />
-            <img
-              src="/news-1-shape-3.png"
-              className="w-25 h-25 absolute -z-20 hidden sm:inline-block top-0 right-0"
-            /> */}
-            {/* <img src='/news-1-shape-4.png' className='w-70 h-70 absolute hidden -z-20 sm:inline-block top-0 right-0' /> */}
           </div>
           <span className="lg:hidden w-full h-120 bg-card grid gap-2 items-center overflow-y-auto">
             {mockEvents.map((event) => (
