@@ -16,7 +16,7 @@ export function Footer() {
               className={`flex items-center gap-2   mb-5 cursor-pointer  transition-colors `}
             >
               <img src="/logo.png" className="w-12 h-12" />
-              <span className="hidden text-center sm:inline-block text-xm">
+              <span className="hidden text-center sm:inline-block text-xs ">
                 <p className="font-extrabold text-lg text-primary">
                   ENSIGO OF LOVE
                 </p>
@@ -101,7 +101,7 @@ export function Footer() {
             >
               <p className="flex items-center gap-2">
                 <Mail className="w-5 h-5 mr-2" />
-                hello@seedsoflove.org
+                ensigooflove@gmail.com
               </p>
               <p className="flex items-center gap-2">
                 <PhoneCall className="w-5 h-5 mr-2" />

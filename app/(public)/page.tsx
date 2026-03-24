@@ -33,8 +33,15 @@ import { AnimatedCounter } from "@/components/motion/animated-counter";
 import ScrollReveal from "@/lib/fontAnimation";
 import { Splide, SplideSlide } from "@splidejs/react-splide";
 import "@splidejs/react-splide/css";
+import { useState, useEffect } from "react";
+import PayButton from "@/lib/flutterWavePayment";
 
 export default function Home() {
+  const [amount, setAmount] = useState("10");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [companyName, setCompanyName] = useState("");
+
   const impactMetrics = [
     {
       label: "Communities Impacted",
@@ -66,11 +73,18 @@ export default function Home() {
     "https://html.kodesolution.com/2026/hopenest-html/images/resource/client-1-4.jpg",
   ];
 
+  const donation = {
+    name: name,
+    email: email,
+    companyName: companyName,
+    amount: amount,
+  };
+
   const quickdonations = [
-    { amount: "$10", label: "Provide a Meal" },
-    { amount: "$25", label: "Support a Child for a Week" },
-    { amount: "$50", label: "Fund Educational Materials" },
-    { amount: "$100", label: "Sponsor a Community Program" },
+    { amount: "10", label: "Provide a Meal" },
+    { amount: "25", label: "Support a Child for a Week" },
+    { amount: "50", label: "Fund Educational Materials" },
+    { amount: "100", label: "Sponsor a Community Program" },
   ];
   const socialMediaLinks = [
     { icon: Facebook, url: "https://www.facebook.com/SeedsOfLove" },
@@ -353,21 +367,29 @@ export default function Home() {
               <form className="space-y-4">
                 <div className="flex flex-col sm:flex-row gap-3">
                   <Input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
                     placeholder="Enter your Names"
                     className="flex-1 bg-card border-0"
                   />
                   <Input
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     placeholder="Enter your Email Address"
                     className="flex-1 bg-card border-0"
                   />
                 </div>
 
                 <Input
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
                   placeholder="Company name (Optional)"
                   className="bg-card border-0"
                 />
 
                 <Input
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
                   placeholder="Amount Donating"
                   className="bg-card border-0"
                 />
@@ -378,9 +400,13 @@ export default function Home() {
                     <Button
                       key={i}
                       variant="outline"
-                      className="border-green-800 text-green-800 hover:bg-green-800 hover:text-white"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setAmount(donation.amount);
+                      }}
+                      className={`border-green-800 ${amount === donation.amount ? "bg-green-800 text-white" : "text-green-800"}  hover:bg-green-800 hover:text-white`}
                     >
-                      {donation.amount}
+                      $ {donation.amount}
                     </Button>
                   ))}
                 </div>
@@ -400,9 +426,11 @@ export default function Home() {
                   </p>
                 </div>
 
-                <Button className="w-full bg-primary hover:bg-accent/90 text-white font-bold py-4 text-lg rounded-lg">
+                {/* <Button className="w-full bg-primary hover:bg-accent/90 text-white font-bold py-4 text-lg rounded-lg">
                   Donate Now
-                </Button>
+                </Button> */}
+
+                <PayButton donation={donation} />
               </form>
             </div>
           </div>

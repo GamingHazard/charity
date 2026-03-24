@@ -531,11 +531,11 @@ export default function CampaignsDashboard() {
         </div>
 
         {/* Campaigns Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid bg-card p-10 flex-1 h-screen w-full grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCampaigns.map((campaign) => (
             <Card
               key={campaign._id}
-              className="overflow-hidden pt-0 flex flex-col"
+              className="overflow-hidden pt-0  h-125 flex flex-col"
             >
               <div className="relative h-48 p-0">
                 <img

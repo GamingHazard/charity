@@ -46,7 +46,7 @@ interface GalleryImage {
   image?: {
     url: string;
     public_id: string;
-    size: string|number;
+    size: string | number;
   };
   createdAt: string;
 }
@@ -65,6 +65,7 @@ export default function GalleryPage() {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const categoryOptions = ["Events", "Education", "Volunteers", "General"];
 
@@ -158,8 +159,16 @@ export default function GalleryPage() {
     setEditData({});
   };
 
-  const handleDelete = (id: string) => {
-    setImages(images.filter((image) => image._id !== id));
+  const handleDelete = async (id: string) => {
+    setDeletingId(id);
+    try {
+      await apiRequest("DELETE", `/gallery/${id}/delete`);
+      setImages(images.filter((image) => image._id !== id));
+    } catch (error) {
+      console.error("Error deleting image:", error);
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const handleToggleFeatured = (id: string) => {
@@ -198,9 +207,9 @@ export default function GalleryPage() {
       };
 
       apiRequest("POST", "/gallery/new", newImage);
-      // setImages([...images, newImage]);
-      // resetNewImageForm();
-      // setShowAddDialog(false);
+
+      resetNewImageForm();
+      setShowAddDialog(false);
     } catch (error) {
     } finally {
       setSaving(false);
@@ -266,7 +275,11 @@ export default function GalleryPage() {
           <p className="text-3xl font-bold text-primary">
             {images
               .reduce(
-                (sum, img) => sum + parseFloat(Number(img.image?.size)),
+                (sum, img) =>
+                  sum +
+                  parseFloat(
+                    img.image?.size.toString().replace("MB", "") || "0",
+                  ),
                 0,
               )
               .toFixed(1)}
@@ -317,7 +330,7 @@ export default function GalleryPage() {
 
       {/* Add Image Dialog */}
       <Dialog open={showAddDialog} onOpenChange={handleDialogOpenChange}>
-        <DialogContent className="w-full max-w-xl">
+        <DialogContent className="w-full bg-card max-w-xl">
           <DialogHeader>
             <DialogTitle>Upload Gallery Image</DialogTitle>
             <DialogDescription>
@@ -589,8 +602,17 @@ export default function GalleryPage() {
                         }}
                         className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50/10 flex items-center gap-2 transition-colors"
                       >
-                        <Trash2 size={14} />
-                        Delete
+                        {deletingId === image._id ? (
+                          <>
+                            Deleting...{" "}
+                            <Loader className="animate-spin" size={12} />
+                          </>
+                        ) : (
+                          <>
+                            <Trash2 size={14} />
+                            Delete
+                          </>
+                        )}
                       </button>
                     </div>
                   )}
