@@ -109,7 +109,8 @@ export default function Contact() {
                       </div>
                       <div>
                         <h4 className="font-semibold text-white">Phone</h4>
-                        <p className="text-accent">+256 7xx-xxx-xxx</p>
+                        <p className="text-accent">+256 705-300-671</p>
+                        <p className="text-accent">+256 705-181-487</p>
                       </div>
                       <div>
                         <h4 className="font-semibold text-white">Office</h4>
@@ -360,18 +361,20 @@ export default function Contact() {
         <div className="space-y-4 p-5">
           <div className="">
             <h4 className="font-semibold text-accent">Email</h4>
-            <p className="text-muted-foreground">hello@seedsoflove.org</p>
+            <p className="text-muted-foreground">ensigooflove@gmail.com</p>
           </div>
           <div>
             <h4 className="font-semibold text-accent">Phone</h4>
-            <p className="text-muted-foreground">+1 (555) 123-4567</p>
+            <p className="text-muted-foreground">+256 705-300-671</p>
+            <p className="text-muted-foreground">+256 705-181-487</p>
           </div>
           <div>
             <h4 className="font-semibold text-accent">Office</h4>
             <p className="text-muted-foreground">
-              123 Main Street
+              Gayaza Rd, Kumukaaga,
               <br />
-              New York, NY 10001
+              Opposite kumbuzi, Kyadondo East, <br />
+              Wakiso District, Uganda
             </p>
           </div>
           <div>
