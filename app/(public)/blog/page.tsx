@@ -10,6 +10,7 @@ import { mockBlogs } from "@/lib/mock-data";
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 
 export default function BlogsPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -167,9 +168,12 @@ export default function BlogsPage() {
             If you have an inspiring story or would like to contribute to our
             blog, we'd love to hear from you.
           </p>
-          <Button className="bg-primary hover:bg-primary/90 text-white px-6 sm:px-8 py-2 sm:py-3 font-semibold rounded-lg text-sm sm:text-base">
+          <Link
+            href="/contact"
+            className="bg-primary hover:bg-primary/90 text-white px-6 sm:px-8 py-2 sm:py-3 font-semibold rounded-lg text-sm sm:text-base"
+          >
             Contact Us
-          </Button>
+          </Link>
         </div>
       </section>
 

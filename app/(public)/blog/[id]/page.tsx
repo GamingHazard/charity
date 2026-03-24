@@ -7,6 +7,7 @@ import { notFound } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import * as React from "react";
 import { useEffect, useState } from "react";
+import { mockBlogs } from "@/lib/mock-data";
 
 export default function BlogDetailPage({
   params,
@@ -15,17 +16,17 @@ export default function BlogDetailPage({
 }) {
   // Unwrap the params Promise using React.use()
   const { id } = React.use(params);
-  const [post, setPost] = useState<any>(null);
+  // const [post, setPost] = useState<any>(null);
 
-  const { data: blog } = useQuery<any[]>({
-    queryKey: ["blogs", `${id}`],
-  });
+  // const { data: blog } = useQuery<any[]>({
+  //   queryKey: ["blogs", `${id}`],
+  // });
 
-  useEffect(() => {
-    if (blog) {
-      setPost(blog);
-    }
-  }, [blog, params]);
+  // useEffect(() => {
+  //   if (blog) {
+  //     setPost(blog);
+  //   }
+  // }, [blog, params]);
   // if (isLoading) {
   //   return <div className="flex-1 w-screen h-screen">Loading...</div>;
   // }
@@ -33,6 +34,8 @@ export default function BlogDetailPage({
   // if (error || !blog) {
   //   notFound();
   // }
+
+  const post: any = mockBlogs.find((p) => p._id === id);
 
   return (
     <main className="min-h-screen flex flex-col bg-background">
