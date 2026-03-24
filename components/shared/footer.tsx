@@ -16,7 +16,7 @@ export function Footer() {
               className={`flex items-center gap-2   mb-5 cursor-pointer  transition-colors `}
             >
               <img src="/logo.png" className="w-12 h-12" />
-              <span className="hidden text-center sm:inline-block text-xs ">
+              <span className=" text-center  text-xs ">
                 <p className="font-extrabold text-lg text-primary">
                   ENSIGO OF LOVE
                 </p>
