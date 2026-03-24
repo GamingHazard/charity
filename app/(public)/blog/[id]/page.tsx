@@ -1,31 +1,46 @@
-import { BlogDetail } from '@/components/public/blog-detail';
-import { Navbar } from '@/components/shared/navbar';
-import { Footer } from '@/components/shared/footer';
-import { mockBlogs } from '@/lib/mock-data';
-import { notFound } from 'next/navigation';
+"use client";
 
-export default async function BlogDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const blog = mockBlogs.find((b) => b._id === id);
+import { BlogDetail } from "@/components/public/blog-detail";
+import { Navbar } from "@/components/shared/navbar";
+import { Footer } from "@/components/shared/footer";
+import { notFound } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import * as React from "react";
+import { useEffect, useState } from "react";
 
-  if (!blog) {
-    notFound();
-  }
+export default function BlogDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>; // params is a Promise
+}) {
+  // Unwrap the params Promise using React.use()
+  const { id } = React.use(params);
+  const [post, setPost] = useState<any>(null);
+
+  const { data: blog } = useQuery<any[]>({
+    queryKey: ["blogs", `${id}`],
+  });
+
+  useEffect(() => {
+    if (blog) {
+      setPost(blog);
+    }
+  }, [blog, params]);
+  // if (isLoading) {
+  //   return <div className="flex-1 w-screen h-screen">Loading...</div>;
+  // }
+
+  // if (error || !blog) {
+  //   notFound();
+  // }
 
   return (
     <main className="min-h-screen flex flex-col bg-background">
       <Navbar />
       <div className="flex-1">
-        <BlogDetail {...blog} />
+        <BlogDetail {...post} />
       </div>
       <Footer />
     </main>
   );
-}
-
-// Optional: Generate static params for better performance
-export function generateStaticParams() {
-  return mockBlogs.map((blog) => ({
-    id: blog._id,
-  }));
 }

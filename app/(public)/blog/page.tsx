@@ -7,33 +7,46 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
 import { mockBlogs } from "@/lib/mock-data";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
+import { useQuery } from "@tanstack/react-query";
 
 export default function BlogsPage() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [posts, setPosts] = useState<any[]>([]);
   const [selectedFilter, setSelectedFilter] = useState("all");
 
-  const filteredBlogs = mockBlogs.filter((blog) => {
-    const matchesSearch =
-      blog.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      blog.excerpt.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      blog.author.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesFilter =
-      selectedFilter === "all" ||
-      selectedFilter === blog.status ||
-      (selectedFilter === "popular" && blog.likes.length > 2);
-
-    return matchesSearch && matchesFilter;
+  const { data: blogData } = useQuery<any[]>({
+    queryKey: ["blogs", "all"],
   });
+
+  useEffect(() => {
+    if (blogData) {
+      setPosts(blogData);
+    }
+  }, [blogData]);
+
+  const filteredBlogs: any[] =
+    posts.filter((blog) => {
+      const matchesSearch =
+        blog.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        blog.excerpt.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        blog.author.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchesFilter =
+        selectedFilter === "all" ||
+        selectedFilter === blog.status ||
+        (selectedFilter === "popular" && blog.likes.length > 2);
+
+      return matchesSearch && matchesFilter;
+    }) || [];
 
   return (
     <main className="min-h-screen flex flex-col bg-background">
       <Navbar />
 
       {/* Hero Section */}
-      <section className="relative py-12 sm:py-16 md:py-24 px-3 sm:px-6 md:px-8 bg-gradient-to-r from-green-900 to-green-800">
+      <section className="relative py-12 sm:py-16 md:py-24 px-3 sm:px-6 md:px-8 bg-linear-to-r from-green-900 to-green-800">
         <Image
           src="https://thumbs.dreamstime.com/b/stock-photo-presents-stack-old-newspapers-placed-rustic-wooden-surface-visibly-aged-yellowed-paper-404835748.jpg"
           alt="Blog background"
@@ -162,3 +175,18 @@ export default function BlogsPage() {
     </main>
   );
 }
+
+// export const blogData = async () => {
+//   const { data: blogData } = useQuery({
+//     queryKey: ["blogs", "all"],
+//   });
+
+//   let posts = null;
+//   useEffect(() => {
+//     if (blogData) {
+//       posts = blogData;
+//     }
+//   }, []);
+
+//   return posts;
+// };

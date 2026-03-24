@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import Image from 'next/image';
-import { Button } from '@/components/ui/button';
-import { Heart, MessageCircle, Eye } from 'lucide-react';
-import { AnimatedElement } from '@/components/motion/animated-elements';
+import Link from "next/link";
+import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { Heart, MessageCircle, Eye } from "lucide-react";
+import { AnimatedElement } from "@/components/motion/animated-elements";
 
 interface BlogCardProps {
   _id: string;
@@ -19,13 +19,24 @@ interface BlogCardProps {
   likes: string[];
   views: string[];
   comments: any[];
+  createdAt: string;
 }
 
-export function BlogCard({ _id, title, excerpt, image, author, date, likes, views, comments }: BlogCardProps) {
-  const formattedDate = new Date(date).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
+export function BlogCard({
+  _id,
+  title,
+  excerpt,
+  image,
+  author,
+  createdAt,
+  likes,
+  views,
+  comments,
+}: BlogCardProps) {
+  const formattedDate = new Date(createdAt).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
   });
 
   return (
@@ -48,22 +59,34 @@ export function BlogCard({ _id, title, excerpt, image, author, date, likes, view
           {/* Content */}
           <div className="p-4 sm:p-6">
             {/* Date */}
-            <p style={{ fontFamily: 'Quicksand' }} className="text-xs sm:text-sm text-muted-foreground mb-2">
+            <p
+              style={{ fontFamily: "Quicksand" }}
+              className="text-xs sm:text-sm text-muted-foreground mb-2"
+            >
               {formattedDate}
             </p>
 
             {/* Title */}
-            <h3 style={{ fontFamily: 'Quicksand' }} className="text-lg sm:text-xl md:text-2xl font-bold text-accent mb-3 line-clamp-2 hover:text-primary transition-colors">
+            <h3
+              style={{ fontFamily: "Quicksand" }}
+              className="text-lg sm:text-xl md:text-2xl font-bold text-accent mb-3 line-clamp-2 hover:text-primary transition-colors"
+            >
               {title}
             </h3>
 
             {/* Excerpt */}
-            <p style={{ fontFamily: 'Quicksand' }} className="text-sm sm:text-base text-muted-foreground mb-4 line-clamp-2">
+            <p
+              style={{ fontFamily: "Quicksand" }}
+              className="text-sm sm:text-base text-muted-foreground mb-4 line-clamp-2"
+            >
               {excerpt}
             </p>
 
             {/* Author */}
-            <p style={{ fontFamily: 'Quicksand' }} className="text-xs sm:text-sm text-muted-foreground mb-4 font-semibold">
+            <p
+              style={{ fontFamily: "Quicksand" }}
+              className="text-xs sm:text-sm text-muted-foreground mb-4 font-semibold"
+            >
               By <span className="text-primary">{author}</span>
             </p>
 
@@ -84,7 +107,10 @@ export function BlogCard({ _id, title, excerpt, image, author, date, likes, view
             </div>
 
             {/* Read More Button */}
-            <Button style={{ fontFamily: 'Quicksand' }} className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-2 sm:py-3 rounded-lg transition-colors">
+            <Button
+              style={{ fontFamily: "Quicksand" }}
+              className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-2 sm:py-3 rounded-lg transition-colors"
+            >
               Read Full Article →
             </Button>
           </div>

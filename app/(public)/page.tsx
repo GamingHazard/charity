@@ -757,7 +757,7 @@ export default function Home() {
                     <PhoneCall />{" "}
                   </span>
                   <span style={{ fontFamily: "Quicksand" }}>
-                    +256 7xx-xxx-xxx
+                    (+256) 705-300-671 / 705-181-487
                   </span>
                 </li>
                 <li className="flex mt-5 items-center gap-2">
@@ -765,7 +765,7 @@ export default function Home() {
                     <Mail />
                   </span>
                   <span style={{ fontFamily: "Quicksand" }}>
-                    info@seedsoflove.org
+                    ensigooflove@gmail.com
                   </span>
                 </li>
               </ul>
