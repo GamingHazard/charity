@@ -23,6 +23,8 @@ export default function BlogsPage() {
   useEffect(() => {
     if (blogData) {
       setPosts(blogData);
+    } else {
+      setPosts(mockBlogs);
     }
   }, [blogData]);
 
