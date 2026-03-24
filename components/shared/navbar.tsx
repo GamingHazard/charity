@@ -2,19 +2,33 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation"; // Import for path detection
 import { Button } from "@/components/ui/button";
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeBtn, setActiveBtn] = useState("");
+  const pathname = usePathname(); // Get current route
 
+  // Update active button based on current path
+  useEffect(() => {
+    // Map path to link label
+    const pathToLabel: Record<string, string> = {
+      "/": "Home",
+      "/about": "About",
+      "/campaign": "Campaigns",
+      "/blog": "Blogs",
+      "/contact": "Contact",
+    };
+    setActiveBtn(pathToLabel[pathname] || "");
+  }, [pathname]);
+
+  // Scroll effect
   useEffect(() => {
     const handleScroll = () => {
-      const scrollTop = window.scrollY;
-      setIsScrolled(scrollTop > 50); // Change at 50px scroll
+      setIsScrolled(window.scrollY > 50);
     };
-
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -24,7 +38,6 @@ export function Navbar() {
     { href: "/about", label: "About" },
     { href: "/campaign", label: "Campaigns" },
     { href: "/blog", label: "Blogs" },
-    // { href: "/get-involved", label: "Get Involved" },
     { href: "/contact", label: "Contact" },
   ];
 
@@ -42,14 +55,18 @@ export function Navbar() {
           <Link
             style={{ fontFamily: "Quicksand" }}
             href="/"
-            className={`flex items-center gap-2     transition-colors ${
+            className={`flex items-center gap-2 transition-colors ${
               isScrolled
                 ? "text-foreground hover:text-primary"
                 : "text-white hover:text-white/80 drop-shadow-lg"
             }`}
           >
-            <img src="/logo.png" className="w-12 h-12" />
-            <span className="  text-center   text-xm">
+            <img
+              src="/logo.png"
+              className="w-12 h-12"
+              alt="Ensigo of Love Logo"
+            />
+            <span className="text-center text-xm">
               <p className="font-extrabold text-lg text-primary">
                 ENSIGO OF LOVE
               </p>
@@ -62,10 +79,14 @@ export function Navbar() {
             {navLinks.map((link) => (
               <Link
                 style={{ fontFamily: "Quicksand" }}
-                onClick={() => setActiveBtn(link.label)}
                 key={link.href}
                 href={link.href}
-                className={`transition-colors ${activeBtn === link.label ? " border-b border-primary" : " "} font-medium ${
+                onClick={() => setActiveBtn(link.label)} // Immediate feedback
+                className={`transition-colors font-medium ${
+                  activeBtn === link.label
+                    ? "border-b-2 border-primary"
+                    : "border-0"
+                } ${
                   isScrolled
                     ? "text-foreground/70 hover:text-foreground"
                     : "text-white/90 hover:text-white drop-shadow-md"
@@ -96,6 +117,7 @@ export function Navbar() {
                 ? "text-foreground hover:text-primary"
                 : "text-white hover:text-white/80 drop-shadow-lg"
             }`}
+            aria-label="Toggle menu"
           >
             <svg
               className="w-6 h-6"
@@ -129,16 +151,27 @@ export function Navbar() {
                 key={link.href}
                 href={link.href}
                 className={`block px-4 py-2 rounded-md transition-colors ${
+                  activeBtn === link.label
+                    ? "border-l-4 border-primary pl-3" // Active indicator for mobile
+                    : ""
+                } ${
                   isScrolled
                     ? "text-foreground/70 hover:text-foreground hover:bg-background"
                     : "text-white/90 hover:text-white hover:bg-white/10"
                 }`}
-                onClick={() => setIsMenuOpen(false)}
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  setActiveBtn(link.label);
+                }}
               >
                 {link.label}
               </Link>
             ))}
-            <Link href="/donate" className="w-full block">
+            <Link
+              href="/donate"
+              className="w-full block"
+              onClick={() => setIsMenuOpen(false)}
+            >
               <Button
                 style={{ fontFamily: "Quicksand" }}
                 className={`w-full mt-2 transition-all ${
