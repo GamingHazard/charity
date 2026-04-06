@@ -65,6 +65,7 @@ interface BlogPost {
   featured?: boolean;
   comments?: Comment[];
   createdAt?: null | string;
+  isFeatured?: boolean;
 }
 
 export default function BlogsPage() {
@@ -218,22 +219,42 @@ export default function BlogsPage() {
     setShowViewDialog(true);
   };
 
-  const handleToggleFeatured = (id: string) => {
-    setBlogs(
+  const handleToggleFeatured = async(id: string) => {
+    try {
+      const res = await apiRequest("PUT", `/blogs/${id}/toggle-featured`);
+      if (res.ok) {
+        setBlogs(
       blogs.map((blog) =>
         blog._id === id ? { ...blog, featured: !blog.featured } : blog,
       ),
     );
+      }
+      
     setOpenMenuId(null);
+    } catch (error) {
+      console.log(error);
+      
+    }
   };
 
-  const handlePublish = (id: string) => {
-    setBlogs(
+  const handlePublish = async(id: string) => {
+    try {
+     
+     const res = await apiRequest("PUT", `/blogs/publish/blog/${id}`);
+
+if (res.ok) {
+   setBlogs(
       blogs.map((blog) =>
         blog._id === id ? { ...blog, status: "published" } : blog,
       ),
     );
-    setOpenMenuId(null);
+}
+    
+   } catch (error) {
+    console.log(error);
+    
+    
+   }finally{setOpenMenuId(null);}
   };
 
   const handleAddComment = (blogId: string) => {
@@ -429,7 +450,7 @@ export default function BlogsPage() {
 
       {/* Add Blog Dialog */}
       <Dialog open={showAddDialog} onOpenChange={handleDialogOpenChange}>
-        <DialogContent className="w-full  max-h-200 overflow-y-auto bg-card max-w-2xl">
+        <DialogContent className="w-full  max-h-160 overflow-y-auto bg-card max-w-2xl">
           <DialogHeader>
             <DialogTitle>Create New Blog Post</DialogTitle>
             <DialogDescription>
@@ -613,7 +634,7 @@ export default function BlogsPage() {
                 <>
                   Saving... <Loader className="animate-spin" />
                 </>
-              ) : editData ? (
+              ) : editData && editData._id ? (
                 "Update Post"
               ) : (
                 "Add Blog Post"
@@ -768,7 +789,8 @@ export default function BlogsPage() {
           )}
         </DialogContent>
       </Dialog>
-      <Card className="overflow-hidden h-screen">
+      {blogs && filteredBlogs.length > 0 && (
+        <Card className="overflow-hidden h-screen">
         <div className="overflow-x-auto flex-1">
           <table className="w-full">
             <thead className="bg-background border-b border-border">
@@ -799,7 +821,7 @@ export default function BlogsPage() {
                   key={blog._id}
                   className="border-b border-border hover:bg-background/50"
                 >
-                  <td className="px-6 py-4 text-foreground">{blog.title}</td>
+                  <td className="px-6 py-4 truncate line-clamp-1 text-sm text-foreground">{blog.title}</td>
                   <td className="px-6 py-4 text-foreground/70">
                     {blog.author}
                   </td>
@@ -868,13 +890,17 @@ export default function BlogsPage() {
                           {/* Set Featured */}
                           <button
                             onClick={() => handleToggleFeatured(blog._id)}
-                            className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-background/50 flex items-center gap-2 transition-colors"
+                            className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 transition-colors ${                              blog.isFeatured
+                                ? "text-yellow-400 fill-yellow-400 hover:bg-yellow-50/10"
+                                : "text-foreground hover:bg-background/50"
+                            } `}
                           >
                             <Star
                               size={16}
-                              fill={blog.featured ? "currentColor" : "none"}
+                              // fill={blog.isFeatured ? "yellow" : "none"}
+                              className={`${blog.isFeatured ? 'text-yellow-400 fill-yellow-400':''}`}
                             />
-                            {blog.featured ? "Unfeature" : "Set Featured"}
+                            {blog.isFeatured ? "Unfeature" : "Set Featured"}
                           </button>
 
                           {/* Publish (only for drafts) */}
@@ -919,14 +945,24 @@ export default function BlogsPage() {
           </table>
         </div>
       </Card>
+      )}
 
-      {/* {filteredBlogs.length === 0 && (
+      {blogs.length === 0 && (
         <Card className="p-8 text-center">
+         <span className="flex items-center justify-center w-full"> <img src="/no-news.png" className="w-100 h-120 align-middle text-center justify-self-center" alt="" /></span>
           <p className="text-foreground/70">
-            No blog posts found matching your filters
+            No blog posts found. Click "New Blog Post" to create your first one!
           </p>
         </Card>
-      )} */}
+      )}
+      {blogs.length > 0 && filteredBlogs.length === 0 && (
+        <Card className="p-8 text-center">
+         <span className="flex items-center justify-center w-full"> <img src="/no-campaign.png" className="w-100 h-120 align-middle text-center justify-self-center" alt="" /></span>
+          <p className="text-foreground/70">
+            No blog posts found matching your filters. Try adjusting your search or filter criteria.
+          </p>
+        </Card>
+      )}
     </div>
   );
 }

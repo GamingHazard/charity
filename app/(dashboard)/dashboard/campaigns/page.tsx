@@ -32,7 +32,14 @@ import {
   Loader,
   Trash2,
   Edit,
+  ChevronDown,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import Image from "next/image";
 import { apiRequest } from "@/lib/query-client";
 
@@ -82,6 +89,7 @@ export default function CampaignsDashboard() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [saving, setSaving] = useState<boolean>(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const {
     data: campaignData,
@@ -132,13 +140,8 @@ export default function CampaignsDashboard() {
         endDate: formData.endDate,
         status: formData.status,
         category: formData.category,
-        image: imageData
-          ? {
-              url: imageData.secure_url,
-              public_id: imageData.public_id,
-            }
-          : editingCampaign?.image ||
-            formData.image || { url: formData.imageUrl || "", public_id: "" },
+        image: imageData || { url: formData.imageUrl || "", public_id: "" }
+           
       };
 
       if (editingCampaign && editingCampaign._id) {
@@ -194,13 +197,29 @@ export default function CampaignsDashboard() {
 
   const handleDelete = async (id: string) => {
     try {
-      setSaving(true);
+      setDeletingId(id);
       await apiRequest("DELETE", `/campaigns/${id}/delete`);
       setCampaigns(campaigns.filter((c) => c._id !== id));
     } catch (error) {
       console.log("====================================");
       console.log(error);
       console.log("====================================");
+    } finally {
+       setDeletingId(null);
+    }
+  };
+
+  const handleStatusChange = async (id: string, newStatus: "ongoing" | "completed") => {
+    try {
+      setSaving(true);
+      await apiRequest("PUT", `/campaigns/${id}/status`, { status: newStatus });
+      setCampaigns(
+        campaigns.map((c) =>
+          c._id === id ? { ...c, status: newStatus } : c
+        )
+      );
+    } catch (error) {
+      console.log("Error updating status:", error);
     } finally {
       setSaving(false);
     }
@@ -531,7 +550,8 @@ export default function CampaignsDashboard() {
         </div>
 
         {/* Campaigns Grid */}
-        <div className="grid bg-card p-10 flex-1 h-screen w-full grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {!isLoading && campaigns.length > 0 && (
+          <div className="grid bg-card p-10 flex-1 h-screen w-full grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCampaigns.map((campaign) => (
             <Card
               key={campaign._id}
@@ -539,7 +559,7 @@ export default function CampaignsDashboard() {
             >
               <div className="relative h-48 p-0">
                 <img
-                  src={campaign.image?.url}
+                  src={campaign.image?.url || '/no-images3.png'}
                   alt={campaign.title}
                   className="object-cover"
                 />
@@ -597,7 +617,7 @@ export default function CampaignsDashboard() {
                     size="sm"
                     onClick={() => handleDelete(campaign._id)}
                   >
-                    {saving ? (
+                    {deletingId === campaign._id ? (
                       <>
                         Deleting... <Loader className="animate-spin" />
                       </>
@@ -607,11 +627,55 @@ export default function CampaignsDashboard() {
                       </>
                     )}
                   </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <ChevronDown className="w-4 h-4" />
+                        Status
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() =>
+                          handleStatusChange(campaign._id, "ongoing")
+                        }
+                      >
+                        🔄 Ongoing
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() =>
+                          handleStatusChange(campaign._id, "completed")
+                        }
+                      >
+                        ✅ Completed
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
             </Card>
           ))}
         </div>
+        )}
+
+        {!isLoading && campaigns.length === 0 && (
+          <Card className="p-8 text-center">
+            <span className="flex items-center justify-center w-full"> <img src="/no-campaign.png" className="w-100 h-120 align-middle text-center justify-self-center" alt="" /></span> 
+            <p className="text-foreground/70">
+              No campaigns found. Click "Add Campaign" to create your first one!
+            </p>
+
+          </Card>
+        )}
+
+        {!isLoading && campaigns.length > 0 && filteredCampaigns.length === 0 && (
+          <Card className="p-8 text-center">
+           <span className="flex items-center justify-center w-full"> <img src="/no-campaign.png" className="w-100 h-120 align-middle text-center justify-self-center" alt="" /></span>
+            <p className="text-foreground/70">
+              No campaigns found matching your filters. Try adjusting your search or filter criteria.
+            </p>
+          </Card>
+        )}
       </div>
     </main>
   );

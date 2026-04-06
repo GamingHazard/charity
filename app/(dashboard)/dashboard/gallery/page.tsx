@@ -144,12 +144,20 @@ export default function GalleryPage() {
     setShowEditDialog(true);
   };
 
-  const handleSave = (id: string) => {
-    setImages(
+  const handleSave = async(id: string) => {
+    try {
+      const res = await apiRequest("PUT", `/gallery/${id}/update`, editData);
+      if (res.ok) {
+        setImages(
       images.map((image) =>
         image._id === id ? { ...image, ...editData } : image,
       ),
     );
+      }
+    } catch (error) {
+      console.log(error);
+      
+    }
     setEditingId(null);
     setEditData({});
   };
@@ -545,7 +553,8 @@ export default function GalleryPage() {
       </Dialog>
 
       {/* Images Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {images && images.length > 0 && (
+         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredImages.map((image) => (
           <div
             key={image?._id}
@@ -637,12 +646,21 @@ export default function GalleryPage() {
           </div>
         ))}
       </div>
+     )}
 
-      {filteredImages.length === 0 && (
+      {images.length > 0 && filteredImages.length === 0 && (
         <Card className="p-8 text-center">
-          <ImageIcon size={48} className="mx-auto text-foreground/30 mb-4" />
+          <span className="flex items-center justify-center w-full"> <img src="/no-images.png" className="w-100 h-120 align-middle text-center justify-self-center" alt="" /></span>
           <p className="text-foreground/70">
             No images found matching your filters
+          </p>
+        </Card>
+      )}
+      {images.length === 0 && (
+        <Card className="p-8 text-center">
+          <span className="flex items-center justify-center w-full"> <img src="/no-images3.png" className="w-120 h-120 align-middle text-center justify-self-center" alt="" /></span>
+          <p className="text-foreground/70">
+            No images found  yet. Click "Upload Image" to add your first gallery image!
           </p>
         </Card>
       )}

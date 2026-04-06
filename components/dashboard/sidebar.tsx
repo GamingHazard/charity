@@ -14,7 +14,7 @@ const sidebarItems = [
   { href: "/dashboard/campaigns", label: "Campaigns", icon: "🎯" },
   // { href: "/dashboard/analytics", label: "Analytics", icon: "📈" },
   // { href: "/dashboard/content", label: "Content", icon: "📝" },
-  { href: "/dashboard/settings", label: "Settings", icon: "⚙️" },
+  // { href: "/dashboard/settings", label: "Settings", icon: "⚙️" },
 ];
 
 export function DashboardSidebar() {
@@ -28,8 +28,8 @@ export function DashboardSidebar() {
           href="/"
           className="flex items-center gap-2 font-bold text-lg text-foreground"
         >
-          <span className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground">
-            🌱
+          <span className="w-8 h-8 bg-transparent rounded-full flex items-center justify-center text-primary-foreground">
+             <img src="/logo.png" alt="Seeds of Love" />
           </span>
           Seeds of Love
         </Link>

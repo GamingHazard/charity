@@ -98,19 +98,19 @@ export default function Home() {
 
       <Hero />
       <Marquee className="bg-white gap-3 flex items-center justify-evenly">
-        <a href="https://btm.ug/">
+        <a target="_blank" href="https://btm.ug/">
           <img
             src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRGqs4wL9zZB2_C6S3uHd7HrmvHapPu3NeM8w&s"
             className="w-40   h-30 shadow-lg mr-5 border-r-2 border-l-2 border-green-800"
           />
         </a>
-        <a href="https://faithlifeministries-ug.vercel.app/" target="_blank">
+        <a target="_blank" href="https://faithlifeministries-ug.vercel.app/">
           <img
             src="https://res.cloudinary.com/ghost150/image/upload/v1761738140/FAITHLIFE_LOGO_z9xkpt.png"
             className="w-40   h-30 shadow-lg mr-5  border-green-800"
           />
         </a>
-        <a href="#">
+        <a target="_blank" href="#">
           <img
             src="https://pbs.twimg.com/profile_images/1818999907979538432/lQW2Lplg_400x400.jpg"
             className="w-40   h-30 shadow-lg mr-5  border-green-800"

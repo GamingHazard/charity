@@ -107,7 +107,10 @@ export default function EventsPage() {
       location: "",
       description: "",
       imageUrl: "",
-      imageFile: null,
+      image: {
+        url: "",
+        public_id: "",
+      },
     });
     if (imagePreview) {
       URL.revokeObjectURL(imagePreview);
@@ -231,8 +234,19 @@ export default function EventsPage() {
 
       if (editData && editData._id) {
         await apiRequest("PUT", `/events/${editData._id}/update`, newEvent);
+        setEvents(
+          events.map((event:any) =>
+            event._id === editData._id ? { ...event, ...newEvent } : event,
+          ),
+        )
       } else {
-        await apiRequest("POST", "/events/new", newEvent);
+        const res = await apiRequest("POST", "/events/new", newEvent);
+        if (res.ok) {
+          const data = await res.json();
+          setEvents([...events, data]);
+        } else {
+          return;
+        }
       }
 
       resetNewEventForm();
@@ -385,7 +399,7 @@ export default function EventsPage() {
 
       {/* Add Event Dialog */}
       <Dialog open={showAddDialog} onOpenChange={handleDialogOpenChange}>
-        <DialogContent className="w-full  bg-card max-h-200 overflow-y-auto max-w-2xl">
+        <DialogContent className="w-full  bg-card max-h-160 overflow-y-auto max-w-2xl">
           <DialogHeader>
             <DialogTitle>Create New Event</DialogTitle>
             <DialogDescription>
@@ -418,7 +432,7 @@ export default function EventsPage() {
               }
             >
               <SelectTrigger className="bg-background border-border">
-                <SelectValue placeholder="Topic" />
+                <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
                 {categoryOptions.map((category) => (
@@ -580,7 +594,7 @@ export default function EventsPage() {
                   Creating... <Loader className="animate-spin" />
                 </>
               ) : (
-                "Create Event"
+                <>{editingId ? "Update Event" : "Create Event"}</>
               )}
             </Button>
           </DialogFooter>
@@ -694,7 +708,8 @@ export default function EventsPage() {
       </Dialog>
 
       {/* Events Table */}
-      <Card className="overflow-hidden h-screen">
+      {!isLoading && events.length > 0 && (
+         <Card className="overflow-hidden h-screen">
         <div className="overflow-x-auto flex-1">
           <table className="w-full">
             <thead className="bg-background border-b border-border">
@@ -729,22 +744,22 @@ export default function EventsPage() {
                   key={event._id}
                   className="border-b border-border hover:bg-background/50"
                 >
-                  <td className="px-6 py-4 text-foreground">{event.title}</td>
+                  <td className="px-6 py-4 text-foreground  truncate line-clamp-2">{event.title}</td>
                   <td className="px-6 py-4 text-foreground/70">
-                    <div className="flex items-center gap-2">
-                      <Calendar size={14} />
+                    <div className="flex items-center text-xs gap-2">
+                      {/* <Calendar size={14} /> */}
                       {event.date}
                     </div>
                   </td>
                   <td className="px-6 py-4 text-foreground/70">
-                    <div className="flex items-center gap-2">
-                      <Clock size={14} />
+                    <div className="flex text-xs items-center gap-2">
+                      {/* <Clock size={14} /> */}
                       {event.time}
                     </div>
                   </td>
                   <td className="px-6 py-4 text-foreground/70">
-                    <div className="flex items-center gap-2">
-                      <MapPin size={14} />
+                    <div className="flex truncate line-clamp-2 flex-wrap text-sm items-center gap-2">
+                      {/* <MapPin size={14} /> */}
                       {event.location}
                     </div>
                   </td>
@@ -844,12 +859,21 @@ export default function EventsPage() {
           </table>
         </div>
       </Card>
+     )}
 
-      {filteredEvents.length === 0 && (
+      { events.length>0 && filteredEvents.length === 0 && (
         <Card className="p-8 text-center">
-          <Calendar size={48} className="mx-auto text-foreground/30 mb-4" />
+           <span className="text-3xl w-full flex items-center justify-center"><img src="/no-campaign.png" className="w-100 h-120" alt="" /></span>
           <p className="text-foreground/70">
             No events found matching your filters
+          </p>
+        </Card>
+      )}
+      { events.length === 0 && (
+        <Card className="p-8 text-center">
+           <span className="text-3xl w-full flex items-center justify-center"><img src="/no-events.png" className="w-100 h-120" alt="" /></span>
+          <p className="text-foreground/70">
+            No events found , start by creating a new event
           </p>
         </Card>
       )}

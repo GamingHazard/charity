@@ -658,7 +658,8 @@ export default function StaffPage() {
 
       {/* Staff/Volunteers Table */}
       {(activeTab === "staff" || activeTab === "volunteers") && (
-        <Card className="overflow-hidden h-screen">
+        staff.length > 0 && (
+          <Card className="overflow-hidden h-screen">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-background border-b border-border">
@@ -806,6 +807,7 @@ export default function StaffPage() {
             </table>
           </div>
         </Card>
+        )
       )}
 
       {/* Newsletter Subscribers Table */}
@@ -889,14 +891,15 @@ export default function StaffPage() {
       )}
 
       {/* Empty State */}
-      {((activeTab !== "subscribers" && filteredStaff.length === 0) ||
-        (activeTab === "subscribers" && filteredSubscribers.length === 0)) && (
+      {((activeTab !== "subscribers" && staff.length===0 && filteredStaff.length === 0) ||
+        (activeTab === "subscribers" && subscribers.length === 0)) && (
         <Card className="p-8 text-center">
-          <Users size={48} className="mx-auto text-foreground/30 mb-4" />
+           
+          <span className="flex items-center justify-center"><img src="/no-staff.avif" className="w-60 h-60" alt="" /></span>
           <p className="text-foreground/70">
             {activeTab === "subscribers"
-              ? "No subscribers found matching your search"
-              : `No ${activeTab} members found matching your search`}
+              ? "No subscribers found  "
+              : `No ${activeTab} members found, start by adding a new ${activeTab === "staff" ? "staff member" : "volunteer"}!`}
           </p>
         </Card>
       )}
