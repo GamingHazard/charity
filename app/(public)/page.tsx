@@ -35,13 +35,46 @@ import { Splide, SplideSlide } from "@splidejs/react-splide";
 import "@splidejs/react-splide/css";
 import { useState, useEffect } from "react";
 import PayButton from "@/lib/flutterWavePayment";
-
+import { useQuery } from "@tanstack/react-query";
 export default function Home() {
   const [amount, setAmount] = useState("10");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [companyName, setCompanyName] = useState("");
+  const [posts, setPosts] = useState([]);
+  const [events, setEvents] = useState([]);
+  const [images, setImages] = useState([]);
+  const[campaign, setCampaign] = useState(null);
 
+
+  const { data: campaignsData, isLoading: campaignsLoading } = useQuery<any[]>({
+    queryKey: ["campaigns",'all'],
+  })
+  const { data: gallerydata, isLoading: galleryLoading } = useQuery<any[]>({
+    queryKey: ["gallery",'all'],
+  })
+  const { data: postsData, isLoading: postsLoading } = useQuery<any[]>({
+    queryKey: ["blogs",'all'],
+  })
+  const { data: eventsData, isLoading: eventsLoading } = useQuery<any[]>({
+    queryKey: ["events",'all'],
+  })
+
+  useEffect(() => {
+    if (campaignsData) {
+      setCampaign(campaignsData[0] || null);
+    }
+    if (gallerydata) { 
+      setImages((gallerydata as any[]));
+    }
+
+    if (postsData) {
+      setPosts(postsData || []);
+    }
+    if (eventsData) {
+      setEvents((eventsData as any[]));
+    }
+  }, [campaignsData, gallerydata, postsData, eventsData]);
   const impactMetrics = [
     {
       label: "Communities Impacted",
@@ -57,7 +90,7 @@ export default function Home() {
     { label: "transparency", value: "15+", img: "/counter-icon-1-4.png" },
   ];
 
-  const galleryImages = [
+  const images = [
     { src: "/donation-image.jpg", alt: "Community outreach program" },
     { src: "/event-image.png", alt: "Educational workshop" },
     { src: "/volunter-bg.jpg", alt: "Volunteer activities" },
@@ -159,17 +192,17 @@ export default function Home() {
               }}
               className="gallery-slider"
             >
-              {galleryImages.map((image, index) => (
+              {images.map((image:any, index:number) => (
                 <SplideSlide key={index}>
                   <div className="relative h-64 sm:h-80 rounded-lg overflow-hidden shadow-lg group">
                     <img
-                      src={image.src}
-                      alt={image.alt}
+                      src={image?.image?.url }
+                      alt={image.title}
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                       <p className="text-white text-center px-4 font-medium">
-                        {image.alt}
+                        {image.title}
                       </p>
                     </div>
                   </div>

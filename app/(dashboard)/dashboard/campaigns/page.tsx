@@ -38,6 +38,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Image from "next/image";
@@ -551,103 +552,133 @@ export default function CampaignsDashboard() {
 
         {/* Campaigns Grid */}
         {!isLoading && campaigns.length > 0 && (
-          <div className="grid bg-card p-10 flex-1 h-screen w-full grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredCampaigns.map((campaign) => (
             <Card
               key={campaign._id}
-              className="overflow-hidden pt-0  h-125 flex flex-col"
+              className="group overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-card/50 backdrop-blur-sm hover:bg-card/80 pt-0"
             >
-              <div className="relative h-48 p-0">
+              {/* Image Section with Overlay */}
+              <div className="relative  h-1/2 overflow-hidden">
                 <img
                   src={campaign.image?.url || '/no-images3.png'}
                   alt={campaign.title}
-                  className="object-cover"
+                  className="w-full h-full object-fill group-hover:scale-105 transition-transform duration-500"
                 />
+                <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent" />
+
+                {/* Status Badge */}
                 <div className="absolute top-4 right-4">
                   <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(campaign.status)}`}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold backdrop-blur-sm border ${
+                      campaign.status === 'ongoing'
+                        ? 'bg-emerald-500/90 text-white border-emerald-400/50'
+                        : campaign.status === 'upcoming'
+                        ? 'bg-blue-500/90 text-white border-blue-400/50'
+                        : 'bg-gray-500/90 text-white border-gray-400/50'
+                    }`}
                   >
-                    {campaign.status}
+                    {campaign.status === 'ongoing' && '🔄'}
+                    {campaign.status === 'upcoming' && '⏰'}
+                    {campaign.status === 'completed' && '✅'}
+                    <span className="ml-1 capitalize">{campaign.status}</span>
+                  </span>
+                </div>
+
+                {/* Category Badge */}
+                <div className="absolute top-4 left-4">
+                  <span className="px-2 py-1 bg-white/20 backdrop-blur-sm text-white text-xs font-medium rounded-full border border-white/30">
+                    {campaign.category}
                   </span>
                 </div>
               </div>
 
-              <div className="py-12 px-4">
-                <div className="flex items-start justify-between mb-2">
-                  <h3 className="text-lg font-semibold text-foreground">
+              {/* Content Section */}
+              <div className="p-6 flex flex-col flex-1">
+                {/* Title and Tagline */}
+                <div className="mb-4">
+                  <h3 className="text-xl font-bold text-foreground mb-2 line-clamp-2 group-hover:text-primary transition-colors">
                     {campaign.title}
                   </h3>
-                  <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
-                    {campaign.category}
-                  </span>
+                  <p className="text-muted-foreground text-sm line-clamp-2">
+                    {campaign.tagline}
+                  </p>
                 </div>
 
-                <p className="text-sm text-muted-foreground mb-4">
-                  {campaign.tagline}
-                </p>
-
-                <div className="space-y-3 mb-4">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="flex items-center gap-1">
-                      <Target className="w-4 h-4" />
-                      Goal: ${campaign.goal.toLocaleString()}
+                {/* Progress Section */}
+                <div className="mb-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-medium text-foreground">
+                      ${campaign.raised?.[0] ? parseFloat(campaign.raised[0]).toLocaleString() : '0'} raised
                     </span>
-                    <span className="flex items-center gap-1">
-                      <Users className="w-4 h-4" />
-                      Raised: $ {campaign.raised.toLocaleString() || 0.0}
+                    <span className="text-sm text-muted-foreground">
+                      ${parseFloat(campaign.goal).toLocaleString()} goal
                     </span>
                   </div>
-
-                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                    <Calendar className="w-4 h-4" />
-                    Ends: {new Date(campaign.endDate).toLocaleDateString()}
+                  <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        campaign.status === 'completed'
+                          ? 'bg-emerald-500'
+                          : campaign.status === 'ongoing'
+                          ? 'bg-primary'
+                          : 'bg-muted-foreground/50'
+                      }`}
+                      style={{ width: `${Math.min(((campaign.raised?.[0] ? parseFloat(campaign.raised[0]) : 0) / parseFloat(campaign.goal)) * 100, 100)}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between items-center mt-1">
+                    <span className="text-xs text-muted-foreground">
+                      {Math.min(((campaign.raised?.[0] ? parseFloat(campaign.raised[0]) : 0) / parseFloat(campaign.goal)) * 100, 100).toFixed(1)}% funded
+                    </span>
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      {new Date(campaign.endDate).toLocaleDateString()}
+                    </span>
                   </div>
                 </div>
 
-                <div className="flex gap-2">
+                {/* Action Buttons */}
+                <div className="flex gap-2 mt-auto pt-4 border-t border-border/50">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleEdit(campaign)}
+                    className="flex-1 hover:bg-primary hover:text-primary-foreground transition-colors"
                   >
-                    <Edit /> Edit
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDelete(campaign._id)}
-                  >
-                    {deletingId === campaign._id ? (
-                      <>
-                        Deleting... <Loader className="animate-spin" />
-                      </>
-                    ) : (
-                      <>
-                        <Trash2 className="mr-2" /> Delete
-                      </>
-                    )}
+                    <Edit className="w-4 h-4 mr-1" />
+                    Edit
                   </Button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="hover:bg-accent hover:text-accent-foreground transition-colors"
+                      >
                         <ChevronDown className="w-4 h-4" />
-                        Status
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent align="end" className="w-40">
                       <DropdownMenuItem
-                        onClick={() =>
-                          handleStatusChange(campaign._id, "ongoing")
-                        }
+                        onClick={() => handleStatusChange(campaign._id, "ongoing")}
+                        className="text-green-700 focus:text-green-700"
                       >
-                        🔄 Ongoing
+                        🔄 Mark Ongoing
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() =>
-                          handleStatusChange(campaign._id, "completed")
-                        }
+                        onClick={() => handleStatusChange(campaign._id, "completed")}
+                        className="text-blue-700 focus:text-blue-700"
                       >
-                        ✅ Completed
+                        ✅ Mark Completed
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => handleDelete(campaign._id)}
+                        className="text-red-700 focus:text-red-700"
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

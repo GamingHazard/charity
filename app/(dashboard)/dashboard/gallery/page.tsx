@@ -214,8 +214,12 @@ export default function GalleryPage() {
         },
       };
 
-      apiRequest("POST", "/gallery/new", newImage);
+     const res = await apiRequest("POST", "/gallery/new", newImage);
 
+     if (res.ok) {
+      const data = await res.json();
+      setImages([...images, data?.newGalleryItem]);
+     }
       resetNewImageForm();
       setShowAddDialog(false);
     } catch (error) {

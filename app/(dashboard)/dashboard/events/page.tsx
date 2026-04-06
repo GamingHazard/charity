@@ -243,7 +243,7 @@ export default function EventsPage() {
         const res = await apiRequest("POST", "/events/new", newEvent);
         if (res.ok) {
           const data = await res.json();
-          setEvents([...events, data]);
+          setEvents([...events, data?.newEvent]);
         } else {
           return;
         }
