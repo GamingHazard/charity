@@ -52,6 +52,8 @@ export function useCounterAnimation({
       if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
       }
+      // Allow re-animation if component re-mounts
+      hasAnimated.current = false;
     };
   }, [isInView, end, duration]);
 

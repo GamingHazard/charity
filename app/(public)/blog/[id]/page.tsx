@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import * as React from "react";
 import { useEffect, useState } from "react";
 import { mockBlogs } from "@/lib/mock-data";
+import { BlogDetailPageSkeleton } from "@/components/blog/blog-skeleton-loaders";
 
 export default function BlogDetailPage({
   params,
@@ -16,30 +17,42 @@ export default function BlogDetailPage({
 }) {
   // Unwrap the params Promise using React.use()
   const { id } = React.use(params);
-  // const [post, setPost] = useState<any>(null);
+  const [post, setPost] = useState<any>(null);
 
-  // const { data: blog } = useQuery<any[]>({
-  //   queryKey: ["blogs", `${id}`],
-  // });
+  const {
+    data: blog,
+    isLoading,
+    error,
+  } = useQuery<any[]>({
+    queryKey: ["blogs", `${id}`],
+  });
 
-  // useEffect(() => {
-  //   if (blog) {
-  //     setPost(blog);
-  //   }
-  // }, [blog, params]);
-  // if (isLoading) {
-  //   return <div className="flex-1 w-screen h-screen">Loading...</div>;
-  // }
+  useEffect(() => {
+    if (blog) {
+      setPost(blog);
+    }
+  }, [blog, params]);
+  if (isLoading) {
+    return (
+      <main className="min-h-screen flex flex-col bg-background">
+        {/* <Navbar /> */}
+        <div className="flex-1">
+          <BlogDetailPageSkeleton />
+        </div>
+        <Footer />
+      </main>
+    );
+  }
 
-  // if (error || !blog) {
-  //   notFound();
-  // }
+  if (error || !blog) {
+    notFound();
+  }
 
-  const post: any = mockBlogs.find((p) => p._id === id);
+  // const post: any = mockBlogs.find((p) => p._id === id);
 
   return (
     <main className="min-h-screen flex flex-col bg-background">
-      <Navbar />
+      {/* <Navbar /> */}
       <div className="flex-1">
         <BlogDetail {...post} />
       </div>

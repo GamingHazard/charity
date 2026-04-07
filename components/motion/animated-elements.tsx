@@ -1,8 +1,11 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { motion } from 'framer-motion';
-import { scrollAnimationVariants, AnimationVariant } from '@/hooks/use-scroll-animation';
+import React from "react";
+import { motion } from "framer-motion";
+import {
+  scrollAnimationVariants,
+  AnimationVariant,
+} from "@/hooks/use-scroll-animation";
 
 interface AnimatedElementProps {
   children: React.ReactNode;
@@ -13,23 +16,23 @@ interface AnimatedElementProps {
 }
 
 /**
- * Animated element component - wraps children with scroll-triggered animations
- * Use this for individual elements that should animate on scroll
+ * Optimized animated element component - wraps children with scroll-triggered animations
+ * Performance improvements: once: true to prevent re-triggering, efficient variants
  */
 export const AnimatedElement: React.FC<AnimatedElementProps> = ({
   children,
-  variant = 'fadeInUp',
+  variant = "fadeInUp",
   delay = 0,
-  className = '',
+  className = "",
   ...props
 }) => {
   const variantConfig = scrollAnimationVariants[variant];
-  
+
   return (
     <motion.div
       initial="hidden"
       whileInView="visible"
-      viewport={{ once: false, amount: 0.3 }}
+      viewport={{ once: true, amount: 0.3, margin: "0px 0px -100px 0px" }} // once: true prevents re-triggering
       variants={{
         hidden: variantConfig.hidden,
         visible: {
@@ -37,11 +40,12 @@ export const AnimatedElement: React.FC<AnimatedElementProps> = ({
           transition: {
             duration: (variantConfig.visible.transition as any).duration || 0.6,
             delay,
-            ease: 'easeOut',
+            ease: "easeOut",
           },
         },
       }}
       className={className}
+      style={{ willChange: "transform, opacity" }} // Optimize for GPU acceleration
       {...props}
     >
       {children}
@@ -50,7 +54,7 @@ export const AnimatedElement: React.FC<AnimatedElementProps> = ({
 };
 
 /**
- * Stagger container for multiple children - staggered animations
+ * Optimized stagger container - reduced observers by using a single container
  */
 interface AnimatedContainerProps {
   children: React.ReactNode;
@@ -61,7 +65,7 @@ interface AnimatedContainerProps {
 
 export const AnimatedContainer: React.FC<AnimatedContainerProps> = ({
   children,
-  className = '',
+  className = "",
   staggerDelay = 0.2,
   ...props
 }) => {
@@ -69,7 +73,7 @@ export const AnimatedContainer: React.FC<AnimatedContainerProps> = ({
     <motion.div
       initial="hidden"
       whileInView="visible"
-      viewport={{ once: false, amount: 0.2 }}
+      viewport={{ once: true, amount: 0.2, margin: "0px 0px -50px 0px" }} // once: true
       variants={{
         hidden: { opacity: 0 },
         visible: {
@@ -81,6 +85,7 @@ export const AnimatedContainer: React.FC<AnimatedContainerProps> = ({
         },
       }}
       className={className}
+      style={{ willChange: "opacity" }}
       {...props}
     >
       {children}
@@ -99,7 +104,7 @@ interface AnimatedCardProps extends React.HTMLAttributes<HTMLDivElement> {
 export const AnimatedCard: React.FC<AnimatedCardProps> = ({
   children,
   delay = 0,
-  className = '',
+  className = "",
   ...props
 }) => {
   return (
@@ -126,14 +131,14 @@ interface ParallaxProps {
 export const Parallax: React.FC<ParallaxProps> = ({
   children,
   offset = -50,
-  className = '',
+  className = "",
 }) => {
   return (
     <motion.div
       initial={{ y: 0 }}
       whileInView={{ y: offset }}
       viewport={{ once: false }}
-      transition={{ duration: 0.6, ease: 'easeOut' }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
       className={className}
     >
       {children}

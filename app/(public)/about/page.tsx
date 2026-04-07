@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { HandHeart, Medal, ShieldCheckIcon } from "lucide-react";
+import { HandHeart, Medal, ShieldCheckIcon, ArrowRight } from "lucide-react";
 import {
   AnimatedElement,
   AnimatedContainer,
@@ -19,21 +19,21 @@ export default function About() {
     {
       title: "Compassion",
       description:
-        "We believe in treating every person with dignity and respect while maintaining the highest standards of accountability.",
+        "We approach every child with genuine empathy, understanding their unique circumstances and providing support that addresses both immediate needs and long-term potential.",
       icon: HandHeart,
       color: "red",
     },
     {
-      title: "Intergrity",
+      title: "Integrity",
       description:
-        "We believe in treating every person with dignity and respect while maintaining the highest standards of accountability.",
+        "We maintain unwavering honesty in our operations, transparent reporting, and ethical decision-making that builds lasting trust with communities and donors.",
       icon: ShieldCheckIcon,
       color: "green",
     },
     {
-      title: "Exellence",
+      title: "Excellence",
       description:
-        "We believe in treating every person with dignity and respect while maintaining the highest standards of accountability.",
+        "We pursue the highest standards in program delivery, continuously improving our methods to maximize impact and ensure sustainable, measurable results.",
       icon: Medal,
       color: "yellow",
     },
@@ -145,101 +145,211 @@ export default function About() {
         />
 
         {/* Overlay */}
-        <div className="absolute inset-0 bg-green-900/70"></div>
+        <div className="absolute inset-0 bg-green-900/75"></div>
 
         {/* Content */}
         <AnimatedElement variant="fadeInDown">
           <div className="relative z-10 w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
-            <div className="flex flex-col items-center gap-6 sm:gap-8 md:gap-12">
-              {/* Left: Text */}
-              <div className="w-full text-center lg:text-left space-y-4 sm:space-y-6 lg:space-y-8">
-                <div className="space-y-2 sm:space-y-3 lg:space-y-4">
-                  <h1
-                    style={{ fontFamily: "Quicksand" }}
-                    className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-white text-balance leading-tight drop-shadow-lg"
-                  >
-                    About us
-                  </h1>
-                  <p
-                    style={{ fontFamily: "Quicksand" }}
-                    className="text-sm sm:text-base md:text-lg lg:text-xl text-white/90 max-w-3xl mx-auto lg:mx-0 text-balance drop-shadow-md"
-                  >
-                    Founded in 2015, Seeds of Love Foundation has been dedicated
-                    to nurturing growth and opportunity in underserved
-                    communities around the world.
+            <div className="flex flex-col items-center gap-8 sm:gap-10 md:gap-12">
+              {/* Logo and Organization Name */}
+              <div className="text-center">
+                <Link href="/" className="inline-flex items-center gap-3 mb-6">
+                  <img src="/logo.png" className="w-16 h-16 sm:w-20 sm:h-20" />
+                  <div className="text-left">
+                    <p className="text-2xl sm:text-3xl font-bold text-white">
+                      ENSIGO OF LOVE
+                    </p>
+                    <p className="text-sm sm:text-base text-white/80">
+                      We Rise By Lifting Others
+                    </p>
+                  </div>
+                </Link>
+              </div>
+
+              {/* Main Heading */}
+              <div className="text-center space-y-4 sm:space-y-6">
+                <h1
+                  style={{ fontFamily: "Quicksand" }}
+                  className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white text-balance leading-tight drop-shadow-lg"
+                >
+                  Transforming Lives,
+                  <br />
+                  Building Futures
+                </h1>
+                <p
+                  style={{ fontFamily: "Quicksand" }}
+                  className="text-lg sm:text-xl md:text-2xl text-white/90 max-w-4xl mx-auto text-balance drop-shadow-md"
+                >
+                  Since 2015, we've been nurturing growth and opportunity in
+                  underserved communities through education, nutrition, and
+                  sustainable development.
+                </p>
+              </div>
+
+              {/* Key Stats */}
+              <div className="flex flex-wrap justify-center gap-6 sm:gap-8 md:gap-12">
+                <div className="text-center">
+                  <div className="text-3xl sm:text-4xl md:text-5xl font-bold text-orange-400 mb-1">
+                    <AnimatedCounter value={2015} duration={2000} />
+                  </div>
+                  <p className="text-white/80 text-sm sm:text-base font-medium">
+                    Founded
                   </p>
                 </div>
+                <div className="text-center">
+                  <div className="text-3xl sm:text-4xl md:text-5xl font-bold text-orange-400 mb-1">
+                    <AnimatedCounter value={200} duration={2000} suffix="+" />
+                  </div>
+                  <p className="text-white/80 text-sm sm:text-base font-medium">
+                    Lives Transformed
+                  </p>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl sm:text-4xl md:text-5xl font-bold text-orange-400 mb-1">
+                    <AnimatedCounter value={20} duration={2000} suffix="+" />
+                  </div>
+                  <p className="text-white/80 text-sm sm:text-base font-medium">
+                    Communities Served
+                  </p>
+                </div>
+              </div>
+
+              {/* Mission Statement */}
+              <div className="max-w-3xl mx-auto text-center">
+                <p
+                  style={{ fontFamily: "Quicksand" }}
+                  className="text-lg sm:text-xl text-white/95 leading-relaxed drop-shadow-md"
+                >
+                  We compassionately serve and uplift vulnerable children by
+                  providing inclusive care, protection, and essential support
+                  systems that address both immediate and long-term needs.
+                </p>
+              </div>
+
+              {/* Call-to-Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mt-8">
+                <Link href="/get-involved">
+                  <Button
+                    size="lg"
+                    className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                  >
+                    Get Involved Today
+                    <ArrowRight className="ml-2 w-5 h-5" />
+                  </Button>
+                </Link>
+                <Link href="#impact">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="border-2 border-white text-white hover:bg-white hover:text-green-900 px-8 py-4 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
+                  >
+                    See Our Impact
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
         </AnimatedElement>
 
+        {/* Decorative Elements - Simplified */}
         <img
           src="/circle-left.png"
-          className="absolute hidden md:inline-block -left-40 sm:-left-60 md:-left-70 top-10 sm:top-16 md:top-20 -mr-4"
+          className="absolute hidden lg:inline-block -left-40 top-10 w-40 opacity-20"
         />
         <img
           src="/object-1-2.png"
-          className="absolute hidden md:inline-block bottom-0 "
+          className="absolute hidden lg:inline-block bottom-0 right-10 w-60 opacity-20"
         />
       </section>
 
       <section className="flex-1 z-10 px-3 sm:px-4 md:px-8 max-w-6xl mx-auto w-full">
         <AnimatedContainer staggerDelay={0.2}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 mb-8 md:mb-12">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 md:gap-10 mb-8 md:mb-12">
             <AnimatedElement variant="slideInLeft">
-              <Card className="p-4 sm:p-6 bg-card border-border">
-                <h2
-                  style={{ fontFamily: "Quicksand" }}
-                  className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mb-3 sm:mb-4"
-                >
-                  Our Mission
-                </h2>
+              <Card className="p-6 sm:p-8 bg-card border-border hover:shadow-xl transition-all duration-300 group">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="p-3 bg-green-100 rounded-full group-hover:bg-green-200 transition-colors">
+                    <HandHeart className="w-8 h-8 text-green-600" />
+                  </div>
+                  <h2
+                    style={{ fontFamily: "Quicksand" }}
+                    className="text-2xl sm:text-3xl font-bold text-foreground"
+                  >
+                    Our Mission
+                  </h2>
+                </div>
                 <p
                   style={{ fontFamily: "Quicksand" }}
-                  className="text-sm sm:text-base text-foreground/70 leading-relaxed"
+                  className="text-base sm:text-lg text-foreground/80 leading-relaxed mb-4"
                 >
-                  To compassionately serve and uplift needy and vulnerable
-                  children by providing inclusive care, protection, and
-                  essential support systems that address both immediate and
-                  long-term needs. We are committed to building a brighter
-                  future for orphans by ensuring access to proper nutrition,
-                  quality care, and opportunities for growth and development.
-                  Our mission promotes the holistic well-being of children by
-                  supporting their physical, emotional, and social development.
-                  We advocate for environmental health, sustainable food
-                  security, and improved sanitation to create safe and healthy
-                  communities. Through dedicated outreach and strong
-                  partnerships, we work to strengthen families and empower
-                  communities. We strive to restore dignity, inspire hope, and
-                  equip every child with the foundation for a meaningful and
-                  fulfilling life.
+                  To compassionately serve and uplift vulnerable children by
+                  providing inclusive care, protection, and essential support
+                  systems that address both immediate and long-term needs.
                 </p>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-sm text-foreground/70">
+                      Education & Learning
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-sm text-foreground/70">
+                      Nutrition & Health
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-sm text-foreground/70">
+                      Family Support
+                    </span>
+                  </div>
+                </div>
               </Card>
             </AnimatedElement>
 
             <AnimatedElement variant="slideInRight">
-              <Card className="p-4 sm:p-6 bg-card border-border">
-                <h2
-                  style={{ fontFamily: "Quicksand" }}
-                  className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mb-3 sm:mb-4"
-                >
-                  Our Vision
-                </h2>
+              <Card className="p-6 sm:p-8 bg-card border-border hover:shadow-xl transition-all duration-300 group">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="p-3 bg-orange-100 rounded-full group-hover:bg-orange-200 transition-colors">
+                    <Medal className="w-8 h-8 text-orange-600" />
+                  </div>
+                  <h2
+                    style={{ fontFamily: "Quicksand" }}
+                    className="text-2xl sm:text-3xl font-bold text-foreground"
+                  >
+                    Our Vision
+                  </h2>
+                </div>
                 <p
                   style={{ fontFamily: "Quicksand" }}
-                  className="text-sm sm:text-base text-foreground/70 leading-relaxed"
+                  className="text-base sm:text-lg text-foreground/80 leading-relaxed mb-4"
                 >
                   To nurture a generation of children who are deeply grounded in
                   spiritual values, academically empowered, and socially
-                  confident to thrive in every sphere of life. To provide
-                  quality education that opens doors to opportunity, growth, and
-                  lasting impact. To build a supportive community where every
-                  child is valued, guided, and encouraged to succeed. Through
-                  meaningful sponsorship and outreach, we seek to transform
-                  lives and create hope. Our vision is to raise responsible,
-                  capable, and purpose-driven leaders for a better future.
+                  confident to thrive in every sphere of life.
                 </p>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                    <span className="text-sm text-foreground/70">
+                      Empowered Leaders
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                    <span className="text-sm text-foreground/70">
+                      Sustainable Communities
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                    <span className="text-sm text-foreground/70">
+                      Lasting Change
+                    </span>
+                  </div>
+                </div>
               </Card>
             </AnimatedElement>
           </div>
@@ -375,7 +485,10 @@ export default function About() {
       </section>
 
       <AnimatedElement variant="slideInUp">
-        <section className="flex-1 mb-8 sm:mb-10 z-10 rounded-md shadow-md bg-card mx-auto w-full py-6 sm:py-8 md:py-10 px-3 sm:px-4 md:px-8 max-w-6xl my-8 sm:my-10 md:my-10">
+        <section
+          id="impact"
+          className="flex-1 mb-8 sm:mb-10 z-10 rounded-md shadow-md bg-card mx-auto w-full py-6 sm:py-8 md:py-10 px-3 sm:px-4 md:px-8 max-w-6xl my-8 sm:my-10 md:my-10"
+        >
           <p
             style={{ fontFamily: "Quicksand" }}
             className="text-xl sm:text-2xl md:text-3xl lg:text-4xl text-center font-bold mx-0 sm:mx-5 md:mx-10 mb-3 sm:mb-4 md:mb-5"
@@ -554,34 +667,14 @@ export default function About() {
         </section>
       </AnimatedElement>
 
+      {/* Subtle decorative elements */}
       <img
         src="/frame1-1.png"
-        className="absolute -z-5 hidden md:inline-block bottom-0 -left-10 sm:-left-20 w-40 sm:w-60 md:w-80"
-      />
-      <img
-        src="/layer1-1.png"
-        className="absolute -z-5 hidden md:inline-block top-1/4 mt-15 right-10 sm:right-16 md:right-20 w-20 sm:w-30 md:w-40 h-20 sm:h-30 md:h-40"
-      />
-      <img
-        src="/layer1-2.png"
-        className="absolute -z-5 hidden md:inline-block top-1/2 mt-30 right-0 w-20 sm:w-30 md:w-40 h-20 sm:h-30 md:h-40"
+        className="absolute -z-5 hidden xl:inline-block bottom-10 left-10 w-32 opacity-10"
       />
       <img
         src="/object1-1.png"
-        className="absolute -z-5 hidden lg:inline-block top-1/2 left-0 w-[15%] sm:w-[18%] lg:w-[30%] h-[15%] sm:h-[18%] lg:h-[20%]"
-      />
-
-      <img
-        src="/shape1-2.png"
-        className="absolute -z-5 hidden md:inline-block bottom-1/5 left-0 w-20 sm:w-25 md:w-30 h-20 sm:h-25 md:h-30"
-      />
-      <img
-        src="/shape1-1.png"
-        className="absolute -z-5 hidden md:inline-block top-1/2 mt-60  right-30 h-20 w-20 sm:w-20 md:w-20"
-      />
-      <img
-        src="/shape1-3.png"
-        className="absolute -z-5 hidden lg:inline-block bottom-0 right-0 w-[15%] sm:w-[18%] lg:w-[20%] h-[15%] sm:h-[18%] lg:h-[20%]"
+        className="absolute -z-5 hidden xl:inline-block top-1/3 right-10 w-24 opacity-10"
       />
 
       <Footer />

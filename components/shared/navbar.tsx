@@ -24,12 +24,18 @@ export function Navbar() {
     setActiveBtn(pathToLabel[pathname] || "");
   }, [pathname]);
 
-  // Scroll effect
+  // Scroll effect - THROTTLED to prevent excessive re-renders
   useEffect(() => {
+    let ticking = false;
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        setIsScrolled(window.scrollY > 50);
+        ticking = false;
+      });
     };
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 

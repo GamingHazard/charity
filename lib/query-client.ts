@@ -111,18 +111,19 @@ export const getQueryFn: <T>(options: {
   };
 
 
-// ✅ React Query Global Config
+// ✅ React Query Global Config - OPTIMIZED for performance
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       queryFn: getQueryFn({ on401: "throw" }),
-      refetchInterval: 5000,
-      refetchOnWindowFocus: false,
-      staleTime: 10000,
-      retry: true,
+      staleTime: 5 * 60 * 1000,  // 5 minutes (was 10 seconds)
+      gcTime: 10 * 60 * 1000,    // 10 minutes (formerly cacheTime)
+      refetchOnWindowFocus: false, // Don't refetch on window focus
+      refetchInterval: false,     // No automatic refetching (was 5000ms)
+      retry: 1,                   // Reduce retry attempts (was true = 3 attempts)
     },
     mutations: {
-      retry: true,
+      retry: 1,  // Reduce mutation retries
     },
   },
 });

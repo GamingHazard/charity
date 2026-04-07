@@ -2,6 +2,16 @@
 
 import { Hero } from "@/components/public/hero";
 import { ImpactMetrics } from "@/components/public/impact-metrics";
+import { CampaignPreview } from "@/components/public/campaign-preview";
+import { CampaignSkeleton } from "@/components/public/campaign-skeleton";
+import { ProgramsSection } from "@/components/public/programs-section";
+import { AboutPreview } from "@/components/public/about-preview";
+import { Testimonials } from "@/components/public/testimonials";
+import { GallerySkeleton } from "@/components/public/gallery-skeleton";
+import { GetInvolvedSection } from "@/components/public/get-involved-section";
+import { EventsSkeleton } from "@/components/public/events-skeleton";
+import { BlogCard } from "@/components/public/blog-card";
+import { NewsSkeleton } from "@/components/public/news-skeleton";
 import { Navbar } from "@/components/shared/navbar";
 import { Footer } from "@/components/shared/footer";
 import Marquee from "react-fast-marquee";
@@ -43,38 +53,41 @@ export default function Home() {
   const [companyName, setCompanyName] = useState("");
   const [posts, setPosts] = useState([]);
   const [events, setEvents] = useState([]);
-  const [images, setImages] = useState([]);
-  const[campaign, setCampaign] = useState(null);
-
+  const [gallery, setGallery] = useState([]);
+  const [campaign, setCampaign] = useState(null);
 
   const { data: campaignsData, isLoading: campaignsLoading } = useQuery<any[]>({
-    queryKey: ["campaigns",'all'],
-  })
-  const { data: gallerydata, isLoading: galleryLoading } = useQuery<any[]>({
-    queryKey: ["gallery",'all'],
-  })
+    queryKey: ["campaigns", "all"],
+  });
+  const { data: galleryData, isLoading: galleryLoading } = useQuery<any[]>({
+    queryKey: ["gallery", "all"],
+  });
   const { data: postsData, isLoading: postsLoading } = useQuery<any[]>({
-    queryKey: ["blogs",'all'],
-  })
+    queryKey: ["blogs", "all"],
+  });
   const { data: eventsData, isLoading: eventsLoading } = useQuery<any[]>({
-    queryKey: ["events",'all'],
-  })
+    queryKey: ["events", "all"],
+  });
 
   useEffect(() => {
     if (campaignsData) {
-      setCampaign(campaignsData[0] || null);
+      // Filter for ongoing campaigns and take the first one
+      const ongoingCampaigns = campaignsData.filter(
+        (campaign: any) => campaign.status === "ongoing",
+      );
+      setCampaign(ongoingCampaigns[0] || null);
     }
-    if (gallerydata) { 
-      setImages((gallerydata as any[]));
+    if (galleryData) {
+      setGallery(galleryData || []);
     }
 
     if (postsData) {
       setPosts(postsData || []);
     }
     if (eventsData) {
-      setEvents((eventsData as any[]));
+      setEvents(eventsData as any[]);
     }
-  }, [campaignsData, gallerydata, postsData, eventsData]);
+  }, [campaignsData, galleryData, postsData, eventsData]);
   const impactMetrics = [
     {
       label: "Communities Impacted",
@@ -150,68 +163,79 @@ export default function Home() {
           />
         </a>
       </Marquee>
+
+      <ProgramsSection />
+
+      <AboutPreview />
+
       <ImpactMetrics />
 
-      {/* Gallery Section */}
-      <AnimatedElement variant="fadeInUp">
-        <section className="py-16 px-4 sm:px-6 lg:px-8 bg-background">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-12">
-              <h2
-                style={{ fontFamily: "Quicksand" }}
-                className="text-3xl sm:text-4xl font-bold text-foreground mb-4"
-              >
-                Our Impact in Action
-              </h2>
-              <p
-                style={{ fontFamily: "Quicksand" }}
-                className="text-lg text-muted-foreground max-w-2xl mx-auto"
-              >
-                See the difference we're making in communities around the world
-                through our programs and initiatives.
-              </p>
-            </div>
+      <Testimonials />
 
-            <Splide
-              options={{
-                type: "loop",
-                perPage: 4,
-                perMove: 1,
-                gap: "1rem",
-                autoplay: true,
-                interval: 3000,
-                pauseOnHover: true,
-                breakpoints: {
-                  768: {
-                    perPage: 2,
+      {/* Gallery Section */}
+      {galleryLoading ? (
+        <GallerySkeleton />
+      ) : (
+        <AnimatedElement variant="fadeInUp">
+          <section className="py-16 px-4 sm:px-6 lg:px-8 bg-background">
+            <div className="max-w-6xl mx-auto">
+              <div className="text-center mb-12">
+                <h2
+                  style={{ fontFamily: "Quicksand" }}
+                  className="text-3xl sm:text-4xl font-bold text-foreground mb-4"
+                >
+                  Our Impact in Action
+                </h2>
+                <p
+                  style={{ fontFamily: "Quicksand" }}
+                  className="text-lg text-muted-foreground max-w-2xl mx-auto"
+                >
+                  See the difference we're making in communities around the
+                  world through our programs and initiatives.
+                </p>
+              </div>
+
+              <Splide
+                options={{
+                  type: "loop",
+                  perPage: 4,
+                  perMove: 1,
+                  gap: "1rem",
+                  autoplay: true,
+                  interval: 3000,
+                  pauseOnHover: true,
+                  breakpoints: {
+                    768: {
+                      perPage: 2,
+                    },
+                    640: {
+                      perPage: 1,
+                    },
                   },
-                  640: {
-                    perPage: 1,
-                  },
-                },
-              }}
-              className="gallery-slider"
-            >
-              {images.map((image:any, index:number) => (
-                <SplideSlide key={index}>
-                  <div className="relative h-64 sm:h-80 rounded-lg overflow-hidden shadow-lg group">
-                    <img
-                      src={image?.image?.url }
-                      alt={image.title}
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                      <p className="text-white text-center px-4 font-medium">
-                        {image.title}
-                      </p>
+                }}
+                className="gallery-slider"
+              >
+                {gallery.map((image: any, index: number) => (
+                  <SplideSlide key={index}>
+                    <div className="relative h-64 sm:h-80 rounded-lg overflow-hidden shadow-lg group">
+                      <img
+                        src={image?.image?.url}
+                        alt={image.title}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                        <p className="text-white text-center px-4 font-medium">
+                          {image.title}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </SplideSlide>
-              ))}
-            </Splide>
-          </div>
-        </section>
-      </AnimatedElement>
+                  </SplideSlide>
+                ))}
+              </Splide>
+            </div>
+          </section>
+        </AnimatedElement>
+      )}
 
       {/* Volunteer section */}
       <AnimatedElement variant="fadeInUp">
@@ -277,13 +301,11 @@ export default function Home() {
             </Link>
           </section>
 
-          <AnimatedContainer staggerDelay={0.15}>
+          <AnimatedContainer staggerDelay={0.1}>
             <span className="w-full    grid mt-20 sm:flex gap-2 items-center justify-center sm:mt-30 sm:justify-center h-auto sm:h-60 ">
               {impactMetrics.map((metric, i) => (
-                <AnimatedElement
+                <div
                   key={i}
-                  variant="scaleIn"
-                  delay={i * 0.1}
                   className="flex flex-col items-center justify-center mx-10"
                 >
                   <span className="flex items-center w-full gap-3">
@@ -306,12 +328,21 @@ export default function Home() {
                       </p>
                     </span>
                   </span>
-                </AnimatedElement>
+                </div>
               ))}
             </span>
           </AnimatedContainer>
         </section>
       </AnimatedElement>
+
+      {/* Campaign Section */}
+      {campaignsLoading ? (
+        <CampaignSkeleton />
+      ) : (
+        campaign && <CampaignPreview campaign={campaign} />
+      )}
+
+      <GetInvolvedSection />
 
       {/* Donations */}
       <AnimatedElement variant="slideInUp">
@@ -471,162 +502,222 @@ export default function Home() {
       </AnimatedElement>
 
       {/* Upcoming Events */}
-      <AnimatedElement variant="fadeInUp">
-        <section className="p-4  sm:px-5 bg-white relative mt-14 md:px-8">
-          <h1 style={{ fontFamily: "Quicksand" }} className="text-sm     ">
-            Our Events
-          </h1>
-          <h2
-            style={{ fontFamily: "Quicksand" }}
-            className="text-3xl sm:text-5xl font-bold text-accent  mb-2"
-          >
-            Be Part of our Upcoming Events
-          </h2>
-          <p
-            style={{ fontFamily: "Quicksand" }}
-            className="mb-10 text-muted-foreground"
-          >
-            (Scroll 'UP' the events to view more!)
-          </p>
+      {eventsLoading ? (
+        <EventsSkeleton />
+      ) : (
+        <AnimatedElement variant="fadeInUp">
+          <section className="p-4  sm:px-5 bg-white relative mt-14 md:px-8">
+            <h1 style={{ fontFamily: "Quicksand" }} className="text-sm     ">
+              Our Events
+            </h1>
+            <h2
+              style={{ fontFamily: "Quicksand" }}
+              className="text-3xl sm:text-5xl font-bold text-accent  mb-2"
+            >
+              Be Part of our Upcoming Events
+            </h2>
+            <p
+              style={{ fontFamily: "Quicksand" }}
+              className="mb-10 text-muted-foreground"
+            >
+              (Scroll 'UP' the events to view more!)
+            </p>
 
-          <div className="w-full hidden flex-1 bg-background relative z-10 sm:mx-auto p-0  rounded-md h-auto sm:h-120 sm:flex items-center  ">
-            <ScrollStack className=" relative">
-              {mockEvents.map((event) => (
-                <ScrollStackItem key={event._id}>
-                  <span className=" text-wrap  items-center justify-evenly grid p-2 sm:w-20 rounded-full h-full bg-primary/10">
-                    <span className="w-15 h-15 flex items-center justify-center   rounded-full bg-primary">
-                      <CalendarClock size={30} className="text-white" />
-                    </span>
-                    <p
-                      style={{ fontFamily: "Quicksand" }}
-                      className="text-xs font-bold text-primary"
-                    >
-                      {event.date}
-                    </p>
-                  </span>
-
-                  <span className="flex-1 flex items-center h-full gap-6 px-5">
-                    <span className="w-[75%] h-full  ">
-                      <p
-                        style={{ fontFamily: "Quicksand" }}
-                        className=" xl:text-2xl text-accent font-bold"
-                      >
-                        {event.title}
-                      </p>
-                      <p
-                        style={{ fontFamily: "Quicksand" }}
-                        className="text-md truncate line-clamp-2 text-wrap text-muted-foreground"
-                      >
-                        {event.description}
-                      </p>
-                      <p
-                        style={{ fontFamily: "Quicksand" }}
-                        className="text-xs  mt-4 font-semibold text-accent"
-                      >
-                        <b className="text-primary">Topic:</b> {event.topic}
-                      </p>
-                      <p
-                        style={{ fontFamily: "Quicksand" }}
-                        className="text-xs  font-semibold text-accent"
-                      >
-                        <b className="text-primary">Time:</b> {event.time}
-                      </p>
-                      <p
-                        style={{ fontFamily: "Quicksand" }}
-                        className="text-xs  xl:mb-3 font-semibold text-accent"
-                      >
-                        <b className="text-primary">Location:</b>{" "}
-                        {event.location.address}
-                      </p>
-
-                      <span className="flex   gap-3">
-                        <Link
-                          href="/contact"
-                          style={{ fontFamily: "Quicksand" }}
-                          className="bg-primary/20 hover:bg-green-800 hover:text-white text-primary  p-2  text-lg cursor-pointer font-bold rounded-lg   "
-                        >
-                          Join Now
-                        </Link>
-                        {/* <Link
-                          href="/contact"
-                          style={{ fontFamily: "Quicksand" }}
-                          className="bg-accent/20 flex items-center justify-center hover:bg-green-800 hover:text-white text-accent  p-2  text-md cursor-pointer font-bold rounded-lg   "
-                        >
-                          See Details <ArrowRight />
-                        </Link> */}
+            <div className="w-full hidden flex-1 bg-background relative z-10 sm:mx-auto p-0  rounded-md h-auto sm:h-120 sm:flex items-center  ">
+              <ScrollStack className=" relative">
+                {mockEvents.map((event) => (
+                  <ScrollStackItem key={event._id}>
+                    <span className=" text-wrap  items-center justify-evenly grid p-2 sm:w-20 rounded-full h-full bg-primary/10">
+                      <span className="w-15 h-15 flex items-center justify-center   rounded-full bg-primary">
+                        <CalendarClock size={30} className="text-white" />
                       </span>
+                      <p
+                        style={{ fontFamily: "Quicksand" }}
+                        className="text-xs font-bold text-primary"
+                      >
+                        {event.date}
+                      </p>
                     </span>
-                    <img
-                      src={`${event.image.url}`}
-                      className="w-flex h-full rounded-md "
-                    />
+
+                    <span className="flex-1 flex items-center h-full gap-6 px-5">
+                      <span className="w-[75%] h-full  ">
+                        <p
+                          style={{ fontFamily: "Quicksand" }}
+                          className=" xl:text-2xl text-accent font-bold"
+                        >
+                          {event.title}
+                        </p>
+                        <p
+                          style={{ fontFamily: "Quicksand" }}
+                          className="text-md truncate line-clamp-2 text-wrap text-muted-foreground"
+                        >
+                          {event.description}
+                        </p>
+                        <p
+                          style={{ fontFamily: "Quicksand" }}
+                          className="text-xs  mt-4 font-semibold text-accent"
+                        >
+                          <b className="text-primary">Topic:</b> {event.topic}
+                        </p>
+                        <p
+                          style={{ fontFamily: "Quicksand" }}
+                          className="text-xs  font-semibold text-accent"
+                        >
+                          <b className="text-primary">Time:</b> {event.time}
+                        </p>
+                        <p
+                          style={{ fontFamily: "Quicksand" }}
+                          className="text-xs  xl:mb-3 font-semibold text-accent"
+                        >
+                          <b className="text-primary">Location:</b>{" "}
+                          {event.location.address}
+                        </p>
+
+                        <span className="flex   gap-3">
+                          <Link
+                            href="/contact"
+                            style={{ fontFamily: "Quicksand" }}
+                            className="bg-primary/20 hover:bg-green-800 hover:text-white text-primary  p-2  text-lg cursor-pointer font-bold rounded-lg   "
+                          >
+                            Join Now
+                          </Link>
+                          {/* <Link
+                            href="/contact"
+                            style={{ fontFamily: "Quicksand" }}
+                            className="bg-accent/20 flex items-center justify-center hover:bg-green-800 hover:text-white text-accent  p-2  text-md cursor-pointer font-bold rounded-lg   "
+                          >
+                            See Details <ArrowRight />
+                          </Link> */}
+                        </span>
+                      </span>
+                      <img
+                        src={`${event.image.url}`}
+                        className="w-flex h-full rounded-md "
+                      />
+                    </span>
+                  </ScrollStackItem>
+                ))}
+              </ScrollStack>
+            </div>
+            <span className="lg:hidden w-full h-120 bg-card grid gap-2 items-center overflow-y-auto">
+              {events.map((event) => (
+                <div
+                  key={event._id}
+                  className="w-80 lg:hidden  bg-background relative z-10 sm:mx-auto my-10   rounded-md  h-auto pb-2      mt-10"
+                >
+                  <img
+                    src={`${event.image.url}`}
+                    className="w-full h-58 rounded-md   object-cover"
+                  />
+                  <p
+                    style={{ fontFamily: "Quicksand" }}
+                    className="text-lg truncate line-clamp-2 mt-4 px-3 text-left font-bold"
+                  >
+                    {event.title}
+                  </p>
+                  <p
+                    style={{ fontFamily: "Quicksand" }}
+                    className="text-sm truncate  text-wrap line-clamp-3 text-muted-foreground px-3 text-left  "
+                  >
+                    {event.description}
+                  </p>
+                  <span
+                    style={{ fontFamily: "Quicksand" }}
+                    className="text-sm px-3 my-4 font-semibold text-accent"
+                  >
+                    <b className="text-primary">Topic:</b> {event.topic}
+                  </span>{" "}
+                  <br />
+                  <span
+                    style={{ fontFamily: "Quicksand" }}
+                    className="text-sm px-3 my-4 font-semibold text-accent"
+                  >
+                    <b className="text-primary">Date:</b> {event.date}
                   </span>
-                </ScrollStackItem>
+                  <br />
+                  <span
+                    style={{ fontFamily: "Quicksand" }}
+                    className="text-sm px-3 my-4 font-semibold text-accent"
+                  >
+                    <b className="text-primary">Time:</b> {event.time}
+                  </span>
+                  <br />
+                  <span
+                    style={{ fontFamily: "Quicksand" }}
+                    className="text-sm truncate text-wrap line-clamp-2 px-3  mt-2 font-semibold text-accent"
+                  >
+                    <b className="text-primary">Location:</b>{" "}
+                    {event.location.address}
+                  </span>
+                  <br />
+                  <Button
+                    style={{ fontFamily: "Quicksand" }}
+                    className="bg-primary/20 hover:bg-green-800 hover:text-white text-primary  text-lg cursor-pointer font-bold rounded-lg    w-[90%] ml-4"
+                  >
+                    Join Now
+                  </Button>
+                </div>
               ))}
-            </ScrollStack>
-          </div>
-          <span className="lg:hidden w-full h-120 bg-card grid gap-2 items-center overflow-y-auto">
-            {mockEvents.map((event) => (
-              <div
-                key={event._id}
-                className="w-80 lg:hidden  bg-background relative z-10 sm:mx-auto my-10   rounded-md  h-auto pb-2      mt-10"
-              >
-                <img
-                  src={`${event.image.url}`}
-                  className="w-full h-58 rounded-md   object-cover"
-                />
+            </span>
+          </section>
+        </AnimatedElement>
+      )}
+
+      {/* Latest News Section */}
+      {postsLoading ? (
+        <NewsSkeleton />
+      ) : (
+        <AnimatedElement variant="fadeInUp">
+          <section className="py-16 px-4 sm:px-6 lg:px-8 bg-background">
+            <div className="max-w-6xl mx-auto">
+              <div className="text-center mb-12">
+                <h2
+                  style={{ fontFamily: "Quicksand" }}
+                  className="text-3xl sm:text-4xl font-bold text-foreground mb-4"
+                >
+                  Latest News & Updates
+                </h2>
                 <p
                   style={{ fontFamily: "Quicksand" }}
-                  className="text-lg truncate line-clamp-2 mt-4 px-3 text-left font-bold"
+                  className="text-lg text-muted-foreground max-w-2xl mx-auto"
                 >
-                  {event.title}
+                  Stay informed about our latest activities, success stories,
+                  and community impact.
                 </p>
-                <p
-                  style={{ fontFamily: "Quicksand" }}
-                  className="text-sm truncate  text-wrap line-clamp-3 text-muted-foreground px-3 text-left  "
-                >
-                  {event.description}
-                </p>
-                <span
-                  style={{ fontFamily: "Quicksand" }}
-                  className="text-sm px-3 my-4 font-semibold text-accent"
-                >
-                  <b className="text-primary">Topic:</b> {event.topic}
-                </span>{" "}
-                <br />
-                <span
-                  style={{ fontFamily: "Quicksand" }}
-                  className="text-sm px-3 my-4 font-semibold text-accent"
-                >
-                  <b className="text-primary">Date:</b> {event.date}
-                </span>
-                <br />
-                <span
-                  style={{ fontFamily: "Quicksand" }}
-                  className="text-sm px-3 my-4 font-semibold text-accent"
-                >
-                  <b className="text-primary">Time:</b> {event.time}
-                </span>
-                <br />
-                <span
-                  style={{ fontFamily: "Quicksand" }}
-                  className="text-sm truncate text-wrap line-clamp-2 px-3  mt-2 font-semibold text-accent"
-                >
-                  <b className="text-primary">Location:</b>{" "}
-                  {event.location.address}
-                </span>
-                <br />
-                <Button
-                  style={{ fontFamily: "Quicksand" }}
-                  className="bg-primary/20 hover:bg-green-800 hover:text-white text-primary  text-lg cursor-pointer font-bold rounded-lg    w-[90%] ml-4"
-                >
-                  Join Now
-                </Button>
               </div>
-            ))}
-          </span>
-        </section>
-      </AnimatedElement>
+
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {posts.slice(0, 3).map((post: any) => (
+                  <BlogCard
+                    key={post._id}
+                    _id={post._id}
+                    title={post.title}
+                    excerpt={post.excerpt}
+                    image={post.image}
+                    author={post.author}
+                    date={post.date}
+                    likes={post.likes}
+                    views={post.views}
+                    comments={post.comments}
+                    createdAt={post.createdAt}
+                  />
+                ))}
+              </div>
+
+              <div className="text-center mt-8">
+                <Link href="/blog">
+                  <Button
+                    style={{ fontFamily: "Quicksand" }}
+                    className="bg-primary hover:bg-primary/90 text-white px-8 py-3"
+                  >
+                    View All News →
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </section>
+        </AnimatedElement>
+      )}
 
       {/* Footer */}
       <footer className=" hidden mt-5 sm:flex shadow-lg relative  justify-center items-center flex-1 bg-pink-400">

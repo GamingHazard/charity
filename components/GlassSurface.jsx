@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useId } from 'react';
+import { useEffect, useRef, useState, useId, useCallback } from 'react';
 
 const useDarkMode = () => {
   const [isDark, setIsDark] = useState(false);
@@ -55,6 +55,10 @@ const GlassSurface = ({
 
   const isDarkMode = useDarkMode();
 
+  // CACHE SVG GENERATION - Prevent heavy regeneration on every resize
+  const lastSizeRef = useRef({ width: 0, height: 0 });
+  const cachedSvgRef = useRef('');
+
   const generateDisplacementMap = () => {
     const rect = containerRef.current?.getBoundingClientRect();
     const actualWidth = rect?.width || 400;
@@ -83,9 +87,18 @@ const GlassSurface = ({
     return `data:image/svg+xml,${encodeURIComponent(svgContent)}`;
   };
 
-  const updateDisplacementMap = () => {
-    feImageRef.current?.setAttribute('href', generateDisplacementMap());
-  };
+  const updateDisplacementMap = useCallback(() => {
+    const rect = containerRef.current?.getBoundingClientRect();
+    const width = Math.round(rect?.width || 400);
+    const height = Math.round(rect?.height || 200);
+
+    // Only regenerate if size actually changed
+    if (lastSizeRef.current.width !== width || lastSizeRef.current.height !== height) {
+      lastSizeRef.current = { width, height };
+      cachedSvgRef.current = generateDisplacementMap();
+      feImageRef.current?.setAttribute('href', cachedSvgRef.current);
+    }
+  }, [borderWidth, borderRadius, redGradId, blueGradId, mixBlendMode, brightness, opacity, blur]);
 
   useEffect(() => {
     updateDisplacementMap();
@@ -119,20 +132,6 @@ const GlassSurface = ({
     yChannel,
     mixBlendMode
   ]);
-
-  useEffect(() => {
-    if (!containerRef.current) return;
-
-    const resizeObserver = new ResizeObserver(() => {
-      setTimeout(updateDisplacementMap, 0);
-    });
-
-    resizeObserver.observe(containerRef.current);
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, []);
 
   useEffect(() => {
     if (!containerRef.current) return;

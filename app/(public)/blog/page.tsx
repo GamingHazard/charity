@@ -24,8 +24,6 @@ export default function BlogsPage() {
   useEffect(() => {
     if (blogData) {
       setPosts(blogData);
-    } else {
-      setPosts(mockBlogs);
     }
   }, [blogData]);
 
@@ -125,8 +123,8 @@ export default function BlogsPage() {
           {/* Blog Grid */}
           {filteredBlogs.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-              {filteredBlogs.map((blog) => (
-                <BlogCard key={blog._id} {...blog} />
+              {filteredBlogs.map((blog, index) => (
+                <BlogCard key={blog._id || index} {...blog} />
               ))}
             </div>
           ) : (

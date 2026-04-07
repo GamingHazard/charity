@@ -12,9 +12,12 @@ import {
   Loader,
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import React from "react";
 import { apiRequest } from "@/lib/query-client";
 import { v4 as uuidv4 } from "uuid";
 import { Input } from "../ui/input";
+import { useBlogToast } from "@/hooks/use-blog-toast";
+import { set } from "react-hook-form";
 
 interface BlogDetailProps {
   _id: string;
@@ -52,13 +55,15 @@ export function BlogDetail({
   shares,
 }: BlogDetailProps) {
   const [allLikes, setAllLikes] = useState(likes || []);
-  const [likeCount, setLikeCount] = useState(likes?.length);
+  const [allShares, setAllShares] = useState(shares || []);
   const [comment, setComment] = useState("");
   const [name, setName] = useState("");
   const [userId, setUserId] = useState("");
   const [liking, setLiking] = useState(false);
+  const [sharing, setSharing] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [displayComments, setDisplayComments] = useState(comments);
+  const blogToast = useBlogToast();
 
   const formattedDate = new Date(createdAt).toLocaleDateString("en-US", {
     year: "numeric",
@@ -68,7 +73,10 @@ export function BlogDetail({
 
   useEffect(() => {
     createUserId();
-  }, []);
+    setAllLikes(likes || []);
+    setAllShares(shares || []);
+    setDisplayComments(comments);
+  }, [likes, shares, comments]);
 
   const createUserId = async () => {
     try {
@@ -85,10 +93,29 @@ export function BlogDetail({
     } catch (error) {}
   };
   const handleLike = async () => {
+    if (!userId) return;
+
     try {
       setLiking(true);
-      await apiRequest("POST", `/blogs/${_id}/toggle-like`, { uuid: userId });
+      const res = await apiRequest("POST", `/blogs/${_id}/toggle-like`, {
+        uuid: userId,
+      });
+
+      if (res.ok) {
+        // Toggle like: add if not present, remove if present
+        if (allLikes.includes(userId)) {
+          setAllLikes(allLikes.filter((id: string) => id !== userId));
+          blogToast.unliked();
+        } else {
+          setAllLikes([...allLikes, userId]);
+          blogToast.liked();
+        }
+      } else {
+        blogToast.likeError();
+      }
     } catch (error) {
+      console.error("Error toggling like:", error);
+      blogToast.likeError();
     } finally {
       setLiking(false);
     }
@@ -105,23 +132,65 @@ export function BlogDetail({
         uuid: userId,
       };
 
-      await apiRequest("POST", `/comments/new`, payLoad);
-      setComment("");
-      setName("");
+      const res = await apiRequest("POST", `/comments/new`, payLoad);
+      if (res.ok) {
+        setComment("");
+        setName("");
+        blogToast.commentPosted();
+      } else {
+        blogToast.commentError();
+      }
     } catch (error) {
+      console.error("Error adding comment:", error);
+      blogToast.commentError();
     } finally {
       setProcessing(false);
     }
   };
   const handleShareLog = async () => {
+    if (!userId) return;
+
+    // If already shared, just copy the URL
+    if (allShares.includes(userId)) {
+      try {
+        const url = typeof window !== "undefined" ? window.location.href : "";
+        await navigator.clipboard.writeText(url);
+        blogToast.linkCopied();
+      } catch (error) {
+        console.error("Error copying to clipboard:", error);
+        blogToast.copyError();
+      }
+      return;
+    }
+
+    // First share - log it and add to shares array
     try {
-      await apiRequest("POST", `/blogs/${_id}/log-share`, { uuid: userId });
-      setComment("");
-      setName("");
+      setSharing(true);
+      const res = await apiRequest("POST", `/blogs/${_id}/log-share`, {
+        uuid: userId,
+      });
+
+      if (res.ok) {
+        // Add user to shares array (one-time only)
+        setAllShares([...allShares, userId]);
+
+        // Copy URL to clipboard
+        try {
+          const url = typeof window !== "undefined" ? window.location.href : "";
+          await navigator.clipboard.writeText(url);
+          blogToast.shared();
+        } catch (clipboardError) {
+          console.error("Error copying to clipboard:", clipboardError);
+          blogToast.copyError();
+        }
+      } else {
+        blogToast.shareError();
+      }
     } catch (error) {
-      console.log("====================================");
-      console.log(error);
-      console.log("====================================");
+      console.error("Error logging share:", error);
+      blogToast.shareError();
+    } finally {
+      setSharing(false);
     }
   };
 
@@ -141,15 +210,17 @@ export function BlogDetail({
       </div>
 
       {/* Hero Image */}
-      <div className="relative w-full h-64 sm:h-96 md:h-[500px] bg-muted">
-        <Image
-          src={image?.url}
-          alt={title}
-          fill
-          className="object-cover"
-          priority
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+      <div className="relative w-full h-64 sm:h-96 md:h-125 bg-muted">
+        {image?.url && (
+          <Image
+            src={image.url}
+            alt={title}
+            fill
+            className="object-cover"
+            priority
+          />
+        )}
+        <div className="absolute inset-0 bg-linear-to-t from-black/40 to-transparent"></div>
       </div>
 
       {/* Content Container */}
@@ -202,7 +273,7 @@ export function BlogDetail({
               </span>
               <span className="flex items-center gap-1">
                 <Heart size={16} className="text-primary" />
-                <span>{allLikes?.length} likes</span>
+                <span>{likes?.length} likes</span>
               </span>
               <span className="flex items-center gap-1">
                 <MessageCircle size={16} className="text-primary" />
@@ -222,7 +293,12 @@ export function BlogDetail({
               key={index}
               className="text-sm sm:text-base md:text-lg text-foreground leading-relaxed mb-6 text-justify"
             >
-              {paragraph}
+              {paragraph.split("\n\n").map((line, lineIndex, arr) => (
+                <React.Fragment key={lineIndex}>
+                  {line}
+                  {lineIndex < arr.length - 1 && <br />}
+                </React.Fragment>
+              ))}
             </p>
           ))}
         </div>
@@ -233,31 +309,39 @@ export function BlogDetail({
             <div className="flex gap-3 w-full sm:w-auto">
               <Button
                 onClick={handleLike}
+                disabled={liking}
                 variant="outline"
                 className={`flex-1 sm:flex-none flex items-center gap-2 ${
-                  likes?.includes(`${localStorage.getItem("uuid")}`)
+                  allLikes?.includes(userId)
                     ? "bg-primary/10 border-primary text-primary"
                     : ""
                 }`}
               >
                 <Heart
                   size={18}
-                  fill={
-                    likes?.includes(`${localStorage.getItem("uuid")}`)
-                      ? "currentColor"
-                      : "none"
-                  }
+                  fill={allLikes?.includes(userId) ? "currentColor" : "none"}
                 />
-                <span className="text-xs sm:text-sm">{likeCount} Likes</span>
+                <span className="text-xs sm:text-sm">
+                  {allLikes?.length} Likes
+                </span>
               </Button>
               <Button
                 onClick={handleShareLog}
+                disabled={sharing}
                 variant="outline"
-                className="flex-1 sm:flex-none flex items-center gap-2"
+                className={`flex-1 sm:flex-none flex items-center gap-2 ${
+                  allShares?.includes(userId)
+                    ? "bg-primary/10 border-primary text-primary"
+                    : ""
+                }`}
               >
-                <Share2 size={18} />
+                <Share2
+                  size={18}
+                  fill={allShares?.includes(userId) ? "currentColor" : "none"}
+                />
                 <span className="text-xs sm:text-sm hidden sm:inline">
-                  Shares ({shares?.length})
+                  {allShares?.includes(userId) ? "Shared" : "Share"} (
+                  {allShares?.length})
                 </span>
               </Button>
             </div>

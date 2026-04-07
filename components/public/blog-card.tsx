@@ -3,8 +3,11 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Heart, MessageCircle, Eye } from "lucide-react";
+import { Heart, MessageCircle, Eye, User2 } from "lucide-react";
 import { AnimatedElement } from "@/components/motion/animated-elements";
+import { apiRequest } from "@/lib/query-client";
+import { useState, useEffect } from "react";
+import { v4 as uuidv4 } from "uuid";
 
 interface BlogCardProps {
   _id: string;
@@ -38,15 +41,36 @@ export function BlogCard({
     month: "long",
     day: "numeric",
   });
+  const [userId, setUserId] = useState<string | null>(null);
+  useEffect(() => {
+    const storedUserId = localStorage.getItem("userId");
+    if (storedUserId) {
+      setUserId(storedUserId);
+    } else {
+      const newUserId = uuidv4();
+      localStorage.setItem("userId", newUserId);
+      setUserId(newUserId);
+    }
+  }, []);
+  const logView = async () => {
+    try {
+      const res = await apiRequest("POST", `/blogs/${_id}/log-view`, {
+        uuid: userId,
+      });
+      if (!res.ok) {
+        console.error("Failed to log view");
+      }
+    } catch (error) {}
+  };
 
   return (
-    <Link href={`/blog/${_id}`}>
+    <Link onClick={logView} href={`/blog/${_id}`}>
       <AnimatedElement variant="scaleIn">
         <div className="bg-card hover:shadow-2xl transition-all duration-300 rounded-lg overflow-hidden cursor-pointer transform hover:-translate-y-1">
           {/* Image Container */}
           <div className="relative w-full h-48 sm:h-56 md:h-64 overflow-hidden bg-muted">
             <Image
-              src={image.url}
+              src={image.url || "/no-images3.png"}
               alt={title}
               fill
               className="object-cover hover:scale-105 transition-transform duration-300"
@@ -85,24 +109,25 @@ export function BlogCard({
             {/* Author */}
             <p
               style={{ fontFamily: "Quicksand" }}
-              className="text-xs sm:text-sm text-muted-foreground mb-4 font-semibold"
+              className="text-xs flex gap-2 sm:text-sm text-muted-foreground mb-4 font-semibold"
             >
-              By <span className="text-primary">{author}</span>
+              <User2 size={16} className="text-muted-foreground " />{" "}
+              <span className="text-primary">{author}</span>
             </p>
 
             {/* Stats */}
             <div className="flex items-center gap-3 sm:gap-4 mb-4 text-xs sm:text-sm text-muted-foreground">
               <span className="flex items-center gap-1">
                 <Eye size={16} className="text-primary" />
-                {views.length}
+                {views?.length}
               </span>
               <span className="flex items-center gap-1">
                 <Heart size={16} className="text-primary" />
-                {likes.length}
+                {likes?.length}
               </span>
               <span className="flex items-center gap-1">
                 <MessageCircle size={16} className="text-primary" />
-                {comments.length}
+                {comments?.length}
               </span>
             </div>
 
