@@ -5,67 +5,73 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function EventsSkeleton() {
   return (
     <section className="p-4 sm:px-5 bg-white relative mt-14 md:px-8">
-      <Skeleton className="h-6 w-24 mb-4" />
-      <Skeleton className="h-12 w-96 mb-2" />
-      <Skeleton className="h-6 w-80 mb-10" />
+      <div className="max-w-7xl mx-auto">
+        {/* Header Skeletons */}
+        <Skeleton className="h-4 w-20 mb-3" />
+        <Skeleton className="h-10 w-80 mb-3" />
+        <Skeleton className="h-5 w-64 mb-10" />
 
-      <div className="w-full hidden flex-1 bg-background relative z-10 sm:mx-auto p-0 rounded-md h-auto sm:h-120 sm:flex items-center">
-        <div className="relative w-full h-120">
+        {/* Desktop Events Skeleton */}
+        <div className="w-full hidden lg:flex bg-background relative z-10 p-4 rounded-lg h-96 items-center gap-6 overflow-hidden">
           {Array.from({ length: 3 }).map((_, index) => (
             <div
               key={index}
-              className="absolute flex items-center h-full gap-6 px-5 bg-card rounded-md shadow-md"
-              style={{
-                left: `${index * 320}px`,
-                width: "300px",
-              }}
+              className="flex-shrink-0 bg-white rounded-lg shadow-md p-4 flex items-center gap-4 h-full"
+              style={{ minWidth: "500px" }}
             >
               {/* Date/Icon section */}
-              <div className="text-wrap items-center justify-evenly grid p-2 sm:w-20 rounded-full h-full bg-primary/10">
-                <Skeleton className="w-15 h-15 rounded-full bg-primary mx-auto" />
-                <Skeleton className="h-4 w-12 mx-auto" />
+              <div className="flex flex-col items-center justify-center p-4 bg-primary/10 rounded-full flex-shrink-0">
+                <Skeleton className="w-12 h-12 rounded-full mb-2" />
+                <Skeleton className="h-3 w-12" />
               </div>
 
               {/* Content section */}
-              <div className="flex-1 flex items-center h-full gap-6 px-5">
-                <div className="w-[75%] h-full">
-                  <Skeleton className="h-6 w-full mb-2" />
-                  <Skeleton className="h-4 w-full mb-1" />
-                  <Skeleton className="h-4 w-full mb-1" />
-                  <Skeleton className="h-4 w-3/4 mb-4" />
-                  <Skeleton className="h-4 w-20 mb-2" />
-                  <Skeleton className="h-4 w-24 mb-2" />
-                  <Skeleton className="h-4 w-32 mb-4" />
-                  <div className="flex gap-3">
-                    <Skeleton className="h-8 w-20" />
-                    <Skeleton className="h-8 w-24" />
-                  </div>
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-6 w-3/4" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6" />
+                <div className="space-y-1 pt-2">
+                  <Skeleton className="h-3 w-1/2" />
+                  <Skeleton className="h-3 w-1/2" />
+                  <Skeleton className="h-3 w-2/3" />
                 </div>
-                <Skeleton className="w-32 h-full rounded-md" />
+                <Skeleton className="h-9 w-24 mt-3" />
+              </div>
+
+              {/* Image section */}
+              <Skeleton className="w-32 h-24 rounded-md flex-shrink-0" />
+            </div>
+          ))}
+        </div>
+
+        {/* Mobile Events Skeleton */}
+        <div className="lg:hidden grid gap-6 sm:grid-cols-2">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div
+              key={index}
+              className="bg-background rounded-lg shadow-md overflow-hidden"
+            >
+              {/* Image */}
+              <Skeleton className="w-full h-48" />
+
+              {/* Content */}
+              <div className="p-4 space-y-3">
+                <Skeleton className="h-6 w-3/4" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6" />
+
+                <div className="space-y-2 pt-2">
+                  <Skeleton className="h-3 w-1/2" />
+                  <Skeleton className="h-3 w-1/2" />
+                  <Skeleton className="h-3 w-2/3" />
+                  <Skeleton className="h-3 w-3/4" />
+                </div>
+
+                <Skeleton className="h-10 w-full mt-3" />
               </div>
             </div>
           ))}
         </div>
-      </div>
-
-      {/* Mobile events skeleton */}
-      <div className="lg:hidden w-full h-120 bg-card grid gap-2 items-center overflow-y-auto mt-4">
-        {Array.from({ length: 3 }).map((_, index) => (
-          <div
-            key={index}
-            className="w-80 bg-background relative z-10 my-10 rounded-md h-auto pb-2 mt-10"
-          >
-            <Skeleton className="w-full h-58 rounded-md mb-4" />
-            <Skeleton className="h-6 w-3/4 mx-3 mb-2" />
-            <Skeleton className="h-4 w-full mx-3 mb-1" />
-            <Skeleton className="h-4 w-full mx-3 mb-1" />
-            <Skeleton className="h-4 w-2/3 mx-3 mb-4" />
-            <Skeleton className="h-4 w-24 mx-3 mb-2" />
-            <Skeleton className="h-4 w-20 mx-3 mb-2" />
-            <Skeleton className="h-4 w-32 mx-3 mb-4" />
-            <Skeleton className="h-8 w-24 mx-auto" />
-          </div>
-        ))}
       </div>
     </section>
   );

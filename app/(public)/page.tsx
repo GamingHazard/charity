@@ -176,65 +176,67 @@ export default function Home() {
       {galleryLoading ? (
         <GallerySkeleton />
       ) : (
-        <AnimatedElement variant="fadeInUp">
-          <section className="py-16 px-4 sm:px-6 lg:px-8 bg-background">
-            <div className="max-w-6xl mx-auto">
-              <div className="text-center mb-12">
-                <h2
-                  style={{ fontFamily: "Quicksand" }}
-                  className="text-3xl sm:text-4xl font-bold text-foreground mb-4"
-                >
-                  Our Impact in Action
-                </h2>
-                <p
-                  style={{ fontFamily: "Quicksand" }}
-                  className="text-lg text-muted-foreground max-w-2xl mx-auto"
-                >
-                  See the difference we're making in communities around the
-                  world through our programs and initiatives.
-                </p>
-              </div>
+        gallery.length > 0 && (
+          <AnimatedElement variant="fadeInUp">
+            <section className="py-16 px-4 sm:px-6 lg:px-8 bg-background">
+              <div className="max-w-6xl mx-auto">
+                <div className="text-center mb-12">
+                  <h2
+                    style={{ fontFamily: "Quicksand" }}
+                    className="text-3xl sm:text-4xl font-bold text-foreground mb-4"
+                  >
+                    Our Impact in Action
+                  </h2>
+                  <p
+                    style={{ fontFamily: "Quicksand" }}
+                    className="text-lg text-muted-foreground max-w-2xl mx-auto"
+                  >
+                    See the difference we're making in communities around the
+                    world through our programs and initiatives.
+                  </p>
+                </div>
 
-              <Splide
-                options={{
-                  type: "loop",
-                  perPage: 4,
-                  perMove: 1,
-                  gap: "1rem",
-                  autoplay: true,
-                  interval: 3000,
-                  pauseOnHover: true,
-                  breakpoints: {
-                    768: {
-                      perPage: 2,
+                <Splide
+                  options={{
+                    type: "loop",
+                    perPage: 4,
+                    perMove: 1,
+                    gap: "1rem",
+                    autoplay: true,
+                    interval: 3000,
+                    pauseOnHover: true,
+                    breakpoints: {
+                      768: {
+                        perPage: 2,
+                      },
+                      640: {
+                        perPage: 1,
+                      },
                     },
-                    640: {
-                      perPage: 1,
-                    },
-                  },
-                }}
-                className="gallery-slider"
-              >
-                {gallery.map((image: any, index: number) => (
-                  <SplideSlide key={index}>
-                    <div className="relative h-64 sm:h-80 rounded-lg overflow-hidden shadow-lg group">
-                      <img
-                        src={image?.image?.url}
-                        alt={image.title}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                        <p className="text-white text-center px-4 font-medium">
-                          {image.title}
-                        </p>
+                  }}
+                  className="gallery-slider"
+                >
+                  {gallery.map((image: any, index: number) => (
+                    <SplideSlide key={index}>
+                      <div className="relative h-64 sm:h-80 rounded-lg overflow-hidden shadow-lg group">
+                        <img
+                          src={image?.image?.url}
+                          alt={image.title}
+                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                          <p className="text-white text-center px-4 font-medium">
+                            {image.title}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  </SplideSlide>
-                ))}
-              </Splide>
-            </div>
-          </section>
-        </AnimatedElement>
+                    </SplideSlide>
+                  ))}
+                </Splide>
+              </div>
+            </section>
+          </AnimatedElement>
+        )
       )}
 
       {/* Volunteer section */}
@@ -505,218 +507,247 @@ export default function Home() {
       {eventsLoading ? (
         <EventsSkeleton />
       ) : (
-        <AnimatedElement variant="fadeInUp">
-          <section className="p-4  sm:px-5 bg-white relative mt-14 md:px-8">
-            <h1 style={{ fontFamily: "Quicksand" }} className="text-sm     ">
-              Our Events
-            </h1>
-            <h2
-              style={{ fontFamily: "Quicksand" }}
-              className="text-3xl sm:text-5xl font-bold text-accent  mb-2"
-            >
-              Be Part of our Upcoming Events
-            </h2>
-            <p
-              style={{ fontFamily: "Quicksand" }}
-              className="mb-10 text-muted-foreground"
-            >
-              (Scroll 'UP' the events to view more!)
-            </p>
+        events.length > 0 && (
+          <AnimatedElement variant="fadeInUp">
+            <section className="p-4 sm:px-5 bg-white relative mt-14 md:px-8">
+              <div className="max-w-7xl mx-auto">
+                <h1 style={{ fontFamily: "Quicksand" }} className="text-sm">
+                  Our Events
+                </h1>
+                <h2
+                  style={{ fontFamily: "Quicksand" }}
+                  className="text-3xl sm:text-5xl font-bold text-accent mb-2"
+                >
+                  Be Part of our Upcoming Events
+                </h2>
+                <p
+                  style={{ fontFamily: "Quicksand" }}
+                  className="mb-10 text-muted-foreground"
+                >
+                  Scroll up the events to view more!
+                </p>
 
-            <div className="w-full hidden flex-1 bg-background relative z-10 sm:mx-auto p-0  rounded-md h-auto sm:h-120 sm:flex items-center  ">
-              <ScrollStack className=" relative">
-                {mockEvents.map((event) => (
-                  <ScrollStackItem key={event._id}>
-                    <span className=" text-wrap  items-center justify-evenly grid p-2 sm:w-20 rounded-full h-full bg-primary/10">
-                      <span className="w-15 h-15 flex items-center justify-center   rounded-full bg-primary">
-                        <CalendarClock size={30} className="text-white" />
-                      </span>
-                      <p
-                        style={{ fontFamily: "Quicksand" }}
-                        className="text-xs font-bold text-primary"
+                {/* Desktop Events - ScrollStack */}
+                <div className="w-full hidden lg:flex bg-background relative z-10 mx-auto p-4 rounded-md h-120 items-center">
+                  <ScrollStack className="relative w-full">
+                    {events.map((event: any, index: number) => (
+                      <ScrollStackItem
+                        key={event._id || index}
+                        className="bg-white rounded-lg shadow-md p-4"
                       >
-                        {event.date}
-                      </p>
-                    </span>
+                        <div className="flex items-center gap-4 h-full">
+                          {/* Date/Icon Section */}
+                          <div className="flex flex-col items-center justify-center p-4 bg-primary/10 rounded-full min-w-20">
+                            <div className="w-12 h-12 flex items-center justify-center rounded-full bg-primary mb-2">
+                              <CalendarClock size={24} className="text-white" />
+                            </div>
+                            <p
+                              style={{ fontFamily: "Quicksand" }}
+                              className="text-xs font-bold text-primary text-center"
+                            >
+                              {event.date}
+                            </p>
+                          </div>
 
-                    <span className="flex-1 flex items-center h-full gap-6 px-5">
-                      <span className="w-[75%] h-full  ">
-                        <p
+                          {/* Content Section */}
+                          <div className="flex-1 flex items-center gap-6">
+                            <div className="flex-1">
+                              <h3
+                                style={{ fontFamily: "Quicksand" }}
+                                className="text-xl font-bold text-accent mb-2"
+                              >
+                                {event.title}
+                              </h3>
+                              <p
+                                style={{ fontFamily: "Quicksand" }}
+                                className="text-sm text-muted-foreground mb-3 line-clamp-2"
+                              >
+                                {event.description}
+                              </p>
+                              <div className="space-y-1 text-xs font-semibold text-accent">
+                                <p>
+                                  <span className="text-primary font-bold">
+                                    Topic:
+                                  </span>{" "}
+                                  {event.topic}
+                                </p>
+                                <p>
+                                  <span className="text-primary font-bold">
+                                    Time:
+                                  </span>{" "}
+                                  {event.time}
+                                </p>
+                                <p>
+                                  <span className="text-primary font-bold">
+                                    Location:
+                                  </span>{" "}
+                                  {event.location.address}
+                                </p>
+                              </div>
+                              <div className="mt-4">
+                                <Link
+                                  href="/contact"
+                                  style={{ fontFamily: "Quicksand" }}
+                                  className="inline-block bg-primary/20 hover:bg-green-800 hover:text-white text-primary px-4 py-2 text-sm font-bold rounded-lg transition-colors"
+                                >
+                                  Join Now
+                                </Link>
+                              </div>
+                            </div>
+
+                            {/* Image Section */}
+                            <div className="w-32 h-24 flex-shrink-0">
+                              <img
+                                src={
+                                  event.image?.url || "/placeholder-event.jpg"
+                                }
+                                alt={event.title}
+                                className="w-full h-full object-cover rounded-md"
+                                onError={(e) => {
+                                  e.currentTarget.src =
+                                    "/placeholder-event.jpg";
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </ScrollStackItem>
+                    ))}
+                  </ScrollStack>
+                </div>
+
+                {/* Mobile Events - Grid Layout */}
+                <div className="lg:hidden grid gap-6 sm:grid-cols-2">
+                  {events.map((event: any, index: number) => (
+                    <div
+                      key={event._id || index}
+                      className="bg-background rounded-lg shadow-md overflow-hidden"
+                    >
+                      <div className="h-48 overflow-hidden">
+                        <img
+                          src={event.image?.url || "/placeholder-event.jpg"}
+                          alt={event.title}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = "/placeholder-event.jpg";
+                          }}
+                        />
+                      </div>
+
+                      <div className="p-4">
+                        <h3
                           style={{ fontFamily: "Quicksand" }}
-                          className=" xl:text-2xl text-accent font-bold"
+                          className="text-lg font-bold text-accent mb-2 line-clamp-2"
                         >
                           {event.title}
-                        </p>
+                        </h3>
+
                         <p
                           style={{ fontFamily: "Quicksand" }}
-                          className="text-md truncate line-clamp-2 text-wrap text-muted-foreground"
+                          className="text-sm text-muted-foreground mb-3 line-clamp-3"
                         >
                           {event.description}
                         </p>
-                        <p
-                          style={{ fontFamily: "Quicksand" }}
-                          className="text-xs  mt-4 font-semibold text-accent"
-                        >
-                          <b className="text-primary">Topic:</b> {event.topic}
-                        </p>
-                        <p
-                          style={{ fontFamily: "Quicksand" }}
-                          className="text-xs  font-semibold text-accent"
-                        >
-                          <b className="text-primary">Time:</b> {event.time}
-                        </p>
-                        <p
-                          style={{ fontFamily: "Quicksand" }}
-                          className="text-xs  xl:mb-3 font-semibold text-accent"
-                        >
-                          <b className="text-primary">Location:</b>{" "}
-                          {event.location.address}
-                        </p>
 
-                        <span className="flex   gap-3">
-                          <Link
-                            href="/contact"
-                            style={{ fontFamily: "Quicksand" }}
-                            className="bg-primary/20 hover:bg-green-800 hover:text-white text-primary  p-2  text-lg cursor-pointer font-bold rounded-lg   "
-                          >
-                            Join Now
-                          </Link>
-                          {/* <Link
-                            href="/contact"
-                            style={{ fontFamily: "Quicksand" }}
-                            className="bg-accent/20 flex items-center justify-center hover:bg-green-800 hover:text-white text-accent  p-2  text-md cursor-pointer font-bold rounded-lg   "
-                          >
-                            See Details <ArrowRight />
-                          </Link> */}
-                        </span>
-                      </span>
-                      <img
-                        src={`${event.image.url}`}
-                        className="w-flex h-full rounded-md "
-                      />
-                    </span>
-                  </ScrollStackItem>
-                ))}
-              </ScrollStack>
-            </div>
-            <span className="lg:hidden w-full h-120 bg-card grid gap-2 items-center overflow-y-auto">
-              {events.map((event) => (
-                <div
-                  key={event._id}
-                  className="w-80 lg:hidden  bg-background relative z-10 sm:mx-auto my-10   rounded-md  h-auto pb-2      mt-10"
-                >
-                  <img
-                    src={`${event.image.url}`}
-                    className="w-full h-58 rounded-md   object-cover"
-                  />
-                  <p
-                    style={{ fontFamily: "Quicksand" }}
-                    className="text-lg truncate line-clamp-2 mt-4 px-3 text-left font-bold"
-                  >
-                    {event.title}
-                  </p>
-                  <p
-                    style={{ fontFamily: "Quicksand" }}
-                    className="text-sm truncate  text-wrap line-clamp-3 text-muted-foreground px-3 text-left  "
-                  >
-                    {event.description}
-                  </p>
-                  <span
-                    style={{ fontFamily: "Quicksand" }}
-                    className="text-sm px-3 my-4 font-semibold text-accent"
-                  >
-                    <b className="text-primary">Topic:</b> {event.topic}
-                  </span>{" "}
-                  <br />
-                  <span
-                    style={{ fontFamily: "Quicksand" }}
-                    className="text-sm px-3 my-4 font-semibold text-accent"
-                  >
-                    <b className="text-primary">Date:</b> {event.date}
-                  </span>
-                  <br />
-                  <span
-                    style={{ fontFamily: "Quicksand" }}
-                    className="text-sm px-3 my-4 font-semibold text-accent"
-                  >
-                    <b className="text-primary">Time:</b> {event.time}
-                  </span>
-                  <br />
-                  <span
-                    style={{ fontFamily: "Quicksand" }}
-                    className="text-sm truncate text-wrap line-clamp-2 px-3  mt-2 font-semibold text-accent"
-                  >
-                    <b className="text-primary">Location:</b>{" "}
-                    {event.location.address}
-                  </span>
-                  <br />
-                  <Button
-                    style={{ fontFamily: "Quicksand" }}
-                    className="bg-primary/20 hover:bg-green-800 hover:text-white text-primary  text-lg cursor-pointer font-bold rounded-lg    w-[90%] ml-4"
-                  >
-                    Join Now
-                  </Button>
+                        <div className="space-y-1 text-xs font-semibold text-accent mb-4">
+                          <p>
+                            <span className="text-primary font-bold">
+                              Topic:
+                            </span>{" "}
+                            {event.topic}
+                          </p>
+                          <p>
+                            <span className="text-primary font-bold">
+                              Date:
+                            </span>{" "}
+                            {event.date}
+                          </p>
+                          <p>
+                            <span className="text-primary font-bold">
+                              Time:
+                            </span>{" "}
+                            {event.time}
+                          </p>
+                          <p className="line-clamp-2">
+                            <span className="text-primary font-bold">
+                              Location:
+                            </span>{" "}
+                            {event.location.address}
+                          </p>
+                        </div>
+
+                        <Button
+                          asChild
+                          className="w-full bg-primary/20 hover:bg-green-800 hover:text-white text-primary font-bold"
+                        >
+                          <Link href="/contact">Join Now</Link>
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </span>
-          </section>
-        </AnimatedElement>
+              </div>
+            </section>
+          </AnimatedElement>
+        )
       )}
 
       {/* Latest News Section */}
       {postsLoading ? (
         <NewsSkeleton />
       ) : (
-        <AnimatedElement variant="fadeInUp">
-          <section className="py-16 px-4 sm:px-6 lg:px-8 bg-background">
-            <div className="max-w-6xl mx-auto">
-              <div className="text-center mb-12">
-                <h2
-                  style={{ fontFamily: "Quicksand" }}
-                  className="text-3xl sm:text-4xl font-bold text-foreground mb-4"
-                >
-                  Latest News & Updates
-                </h2>
-                <p
-                  style={{ fontFamily: "Quicksand" }}
-                  className="text-lg text-muted-foreground max-w-2xl mx-auto"
-                >
-                  Stay informed about our latest activities, success stories,
-                  and community impact.
-                </p>
-              </div>
-
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {posts.slice(0, 3).map((post: any) => (
-                  <BlogCard
-                    key={post._id}
-                    _id={post._id}
-                    title={post.title}
-                    excerpt={post.excerpt}
-                    image={post.image}
-                    author={post.author}
-                    date={post.date}
-                    likes={post.likes}
-                    views={post.views}
-                    comments={post.comments}
-                    createdAt={post.createdAt}
-                  />
-                ))}
-              </div>
-
-              <div className="text-center mt-8">
-                <Link href="/blog">
-                  <Button
+        posts.length > 0 && (
+          <AnimatedElement variant="fadeInUp">
+            <section className="py-16 px-4 sm:px-6 lg:px-8 bg-background">
+              <div className="max-w-6xl mx-auto">
+                <div className="text-center mb-12">
+                  <h2
                     style={{ fontFamily: "Quicksand" }}
-                    className="bg-primary hover:bg-primary/90 text-white px-8 py-3"
+                    className="text-3xl sm:text-4xl font-bold text-foreground mb-4"
                   >
-                    View All News →
-                  </Button>
-                </Link>
+                    Latest News & Updates
+                  </h2>
+                  <p
+                    style={{ fontFamily: "Quicksand" }}
+                    className="text-lg text-muted-foreground max-w-2xl mx-auto"
+                  >
+                    Stay informed about our latest activities, success stories,
+                    and community impact.
+                  </p>
+                </div>
+
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {posts.slice(0, 3).map((post: any) => (
+                    <BlogCard
+                      key={post._id}
+                      _id={post._id}
+                      title={post.title}
+                      excerpt={post.excerpt}
+                      image={post.image}
+                      author={post.author}
+                      date={post.date}
+                      likes={post.likes}
+                      views={post.views}
+                      comments={post.comments}
+                      createdAt={post.createdAt}
+                    />
+                  ))}
+                </div>
+
+                <div className="text-center mt-8">
+                  <Link href="/blog">
+                    <Button
+                      style={{ fontFamily: "Quicksand" }}
+                      className="bg-primary hover:bg-primary/90 text-white px-8 py-3"
+                    >
+                      View All News →
+                    </Button>
+                  </Link>
+                </div>
               </div>
-            </div>
-          </section>
-        </AnimatedElement>
+            </section>
+          </AnimatedElement>
+        )
       )}
 
       {/* Footer */}
