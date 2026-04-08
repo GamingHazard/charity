@@ -533,24 +533,24 @@ export default function Home() {
                     {events.map((event: any, index: number) => (
                       <ScrollStackItem
                         key={event._id || index}
-                        className="bg-white rounded-lg shadow-md p-4"
+                        className="bg-white flex rounded-lg shadow-md p-4"
                       >
-                        <div className="flex items-center gap-4 h-full">
+                        <div className="flex items-center w-full gap-4 h-full">
                           {/* Date/Icon Section */}
-                          <div className="flex flex-col items-center justify-center p-4 bg-primary/10 rounded-full min-w-20">
-                            <div className="w-12 h-12 flex items-center justify-center rounded-full bg-primary mb-2">
-                              <CalendarClock size={24} className="text-white" />
+                          <div className="flex flex-col h-full relative  p-4 bg-primary/10 rounded-full min-w-20">
+                            <div className="  flex p-2 items-center justify-center rounded-full bg-primary mb-2">
+                              <CalendarClock size={50} className="text-white" />
                             </div>
                             <p
                               style={{ fontFamily: "Quicksand" }}
-                              className="text-xs font-bold text-primary text-center"
+                              className="text-sm font-bold right-3  absolute bottom-10 text-primary text-center"
                             >
                               {event.date}
                             </p>
                           </div>
 
                           {/* Content Section */}
-                          <div className="flex-1 flex items-center gap-6">
+                          <div className="flex-1 flex h-full    items-center gap-6">
                             <div className="flex-1">
                               <h3
                                 style={{ fontFamily: "Quicksand" }}
@@ -596,7 +596,7 @@ export default function Home() {
                             </div>
 
                             {/* Image Section */}
-                            <div className="w-32 h-24 flex-shrink-0">
+                            <div className="w-2/5 h-full  shrink-0">
                               <img
                                 src={
                                   event.image?.url || "/placeholder-event.jpg"

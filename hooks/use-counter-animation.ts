@@ -5,12 +5,14 @@ interface UseCounterAnimationProps {
   end: number;
   duration?: number;
   decimals?: number;
+  delay?: number;
 }
 
 export function useCounterAnimation({
   end,
   duration = 2000,
   decimals = 0,
+  delay = 0,
 }: UseCounterAnimationProps) {
   const [count, setCount] = useState(0);
   const ref = useRef(null);
@@ -21,41 +23,43 @@ export function useCounterAnimation({
     if (!isInView || hasAnimated.current) return;
 
     hasAnimated.current = true;
-    let startTime: number | null = null;
-    let animationFrameId: number;
 
-    const animate = (currentTime: number) => {
-      if (startTime === null) {
-        startTime = currentTime;
-      }
+    const startAnimation = () => {
+      let startTime: number | null = null;
+      let animationFrameId: number;
 
-      const elapsed = currentTime - startTime;
-      const progress = Math.min(elapsed / duration, 1);
+      const animate = (currentTime: number) => {
+        if (startTime === null) {
+          startTime = currentTime;
+        }
 
-      // Easing function for smooth animation
-      const easeOutQuad = (t: number) => t * (2 - t);
-      const easedProgress = easeOutQuad(progress);
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
 
-      const currentCount = Math.floor(end * easedProgress);
-      setCount(currentCount);
+        // Easing function for smooth animation
+        const easeOutQuad = (t: number) => t * (2 - t);
+        const easedProgress = easeOutQuad(progress);
 
-      if (progress < 1) {
-        animationFrameId = requestAnimationFrame(animate);
-      } else {
-        setCount(end);
-      }
+        const currentCount = Math.floor(end * easedProgress);
+        setCount(currentCount);
+
+        if (progress < 1) {
+          animationFrameId = requestAnimationFrame(animate);
+        } else {
+          setCount(end);
+        }
+      };
+
+      animationFrameId = requestAnimationFrame(animate);
     };
 
-    animationFrameId = requestAnimationFrame(animate);
-
-    return () => {
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-      }
-      // Allow re-animation if component re-mounts
-      hasAnimated.current = false;
-    };
-  }, [isInView, end, duration]);
+    if (delay > 0) {
+      const timeoutId = setTimeout(startAnimation, delay);
+      return () => clearTimeout(timeoutId);
+    } else {
+      startAnimation();
+    }
+  }, [isInView, end, duration, delay]);
 
   return { count, ref };
 }

@@ -52,17 +52,11 @@ export function ProgramsSection() {
                 </span>
               </span>
               <span className="flex-1   h-full">
-                <img
-                  src="https://html.kodesolution.com/2026/hopenest-html/images/resource/about-1-1.jpg"
-                  className="rounded-md w-full h-auto"
-                />
+                <img src="/img5.jpeg" className="rounded-md w-full h-auto" />
               </span>
             </span>
             <span className="w-full  felx-1">
-              <img
-                src="https://html.kodesolution.com/2026/hopenest-html/images/resource/about-1-2.jpg"
-                className="rounded-md w-full h-full"
-              />
+              <img src="/img.jpeg" className="rounded-md w-full h-full" />
             </span>
           </div>
 

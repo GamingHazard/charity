@@ -137,7 +137,7 @@ export const Parallax: React.FC<ParallaxProps> = ({
     <motion.div
       initial={{ y: 0 }}
       whileInView={{ y: offset }}
-      viewport={{ once: false }}
+      viewport={{ once: true }}
       transition={{ duration: 0.6, ease: "easeOut" }}
       className={className}
     >

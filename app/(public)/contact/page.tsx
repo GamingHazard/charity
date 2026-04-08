@@ -92,7 +92,7 @@ export default function Contact() {
                     onChange={handleChange}
                     required
                     placeholder="Your full name"
-                    className="w-full"
+                    className="w-full bg-background"
                   />
                 </div>
                 <div>
@@ -106,7 +106,7 @@ export default function Contact() {
                     onChange={handleChange}
                     required
                     placeholder="your.email@example.com"
-                    className="w-full"
+                    className="w-full bg-background"
                   />
                 </div>
               </div>
@@ -122,7 +122,7 @@ export default function Contact() {
                   onChange={handleChange}
                   required
                   placeholder="How can we help you?"
-                  className="w-full"
+                  className="w-full bg-background"
                 />
               </div>
 
@@ -223,11 +223,11 @@ export default function Contact() {
                 </p>
                 <Button
                   variant="outline"
-                  className="border-accent text-accent hover:bg-accent hover:text-accent-foreground"
+                  className="border-accent cursor-pointer text-accent bg-white hover:bg-accent/10 hover:text-accent-foreground"
                 >
                   <img
                     src="/whats-app.png"
-                    className="w-5 h-5 mr-2"
+                    className="w-10 h-10 mr-2"
                     alt="WhatsApp"
                   />
                   Chat with Us
