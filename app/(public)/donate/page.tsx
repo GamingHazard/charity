@@ -231,12 +231,12 @@ export default function SponsorBrowsePage() {
                   {mockSponsorshipProfiles.length} profiles.
                 </p>
               </div>
-              <div className="rounded-3xl border border-border bg-card px-5 py-3 text-sm text-foreground shadow-sm">
+              {/* <div className="rounded-3xl border border-border bg-card px-5 py-3 text-sm text-foreground shadow-sm">
                 <p className="text-muted-foreground">Active filters</p>
                 <p className="mt-2 text-sm font-semibold text-foreground">
                   {selectedAgeGroup}, {selectedFamilyStatus}
                 </p>
-              </div>
+              </div> */}
             </div>
 
             <AnimatedContainer className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
