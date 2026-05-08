@@ -4,12 +4,14 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation"; // Import for path detection
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/auth-context";
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeBtn, setActiveBtn] = useState("");
   const pathname = usePathname(); // Get current route
+  const { isAuthenticated } = useAuth();
 
   // Update active button based on current path
   useEffect(() => {
@@ -101,6 +103,20 @@ export function Navbar() {
                 {link.label}
               </Link>
             ))}
+            {isAuthenticated && (
+              <Link href="/dashboard" className="inline-block">
+                <Button
+                  style={{ fontFamily: "Quicksand" }}
+                  className={`transition-all mr-2 ${
+                    isScrolled
+                      ? "bg-secondary hover:bg-secondary/90 text-secondary-foreground"
+                      : "bg-white/20 hover:bg-white/30 text-white backdrop-blur-sm border border-white/30"
+                  }`}
+                >
+                  Dashboard
+                </Button>
+              </Link>
+            )}
             <Link href="/donate" className="inline-block">
               <Button
                 style={{ fontFamily: "Quicksand" }}
@@ -173,6 +189,24 @@ export function Navbar() {
                 {link.label}
               </Link>
             ))}
+            {isAuthenticated && (
+              <Link
+                href="/dashboard"
+                className="w-full block"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <Button
+                  style={{ fontFamily: "Quicksand" }}
+                  className={`w-full mt-2 transition-all ${
+                    isScrolled
+                      ? "bg-secondary hover:bg-secondary/90 text-secondary-foreground"
+                      : "bg-white/20 hover:bg-white/30 text-white backdrop-blur-sm border border-white/30"
+                  }`}
+                >
+                  Dashboard
+                </Button>
+              </Link>
+            )}
             <Link
               href="/donate"
               className="w-full block"

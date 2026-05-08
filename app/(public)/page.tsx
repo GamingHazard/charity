@@ -78,14 +78,14 @@ export default function Home() {
       setCampaign(ongoingCampaigns[0] || null);
     }
     if (galleryData) {
-      setGallery(galleryData || []);
+      setGallery((galleryData as any) || []);
     }
 
     if (postsData) {
-      setPosts(postsData || []);
+      setPosts((postsData as any) || []);
     }
     if (eventsData) {
-      setEvents(eventsData as any[]);
+      setEvents((eventsData as any) || []);
     }
   }, [campaignsData, galleryData, postsData, eventsData]);
   const impactMetrics = [

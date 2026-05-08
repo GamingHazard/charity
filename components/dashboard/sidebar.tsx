@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 
 const sidebarItems = [
   { href: "/dashboard", label: "Dashboard", icon: "📊" },
+  { href: "/dashboard/children", label: "Children", icon: "🧒" },
+  { href: "/dashboard/sponsorships", label: "Sponsorships", icon: "💝" },
   // { href: "/dashboard/programs", label: "Programs", icon: "📚" },
   // { href: "/dashboard/donations", label: "Donations", icon: "💰" },
   { href: "/dashboard/staff", label: "Staff & Volunteers", icon: "👥" },
@@ -29,7 +31,7 @@ export function DashboardSidebar() {
           className="flex items-center gap-2 font-bold text-lg text-foreground"
         >
           <span className="w-8 h-8 bg-transparent rounded-full flex items-center justify-center text-primary-foreground">
-             <img src="/logo.png" alt="Seeds of Love" />
+            <img src="/logo.png" alt="Seeds of Love" />
           </span>
           Seeds of Love
         </Link>

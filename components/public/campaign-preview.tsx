@@ -66,7 +66,7 @@ export function CampaignPreview({ campaign }: CampaignPreviewProps) {
           <div className="bg-background rounded-2xl shadow-lg overflow-hidden">
             <div className="grid lg:grid-cols-2 gap-0">
               {/* Campaign Image */}
-              <div className="relative h-64 lg:h-full min-h-[300px]">
+              <div className="relative h-64 lg:h-full min-h-75">
                 <img
                   src={campaign.image.url}
                   alt={campaign.title}

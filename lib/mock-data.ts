@@ -53,6 +53,339 @@ export interface Campaign {
   donations: string[];
 }
 
+export interface PaymentRecord {
+  id: string;
+  date: string;
+  amount: number;
+  method: string;
+  status: "Completed" | "Pending" | "Failed";
+  receiptId: string;
+  note: string;
+}
+
+export interface Donor {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  location: string;
+}
+
+export interface SponsorshipRecord {
+  _id: string;
+  childId: string;
+  childName: string;
+  donor: Donor;
+  plan: string;
+  monthlyAmount: number;
+  status: "Active" | "Pending" | "Paused" | "Completed";
+  startDate: string;
+  lastPayment: string;
+  totalPaid: number;
+  payments: PaymentRecord[];
+  notes: string;
+}
+
+export interface SponsorshipProfile {
+  _id: string;
+  name: string;
+  firstName: string;
+  secondName: string;
+  givenName: string;
+  gender: "Male" | "Female";
+  dateOfBirth: string;
+  age: number;
+  ageGroup: "0-5" | "6-12" | "13-18";
+  class: string;
+  nationality: string;
+  familyStatus: "Total Orphans" | "Single Parent";
+  numberOfParents: 0 | 1 | 2;
+  guardianNames: string[];
+  image: {
+    url: string;
+    public_id: string;
+  };
+  story: string;
+  background: string;
+  hobbies: string[];
+  interests: string[];
+  school: string;
+  location: string;
+  needs: string[];
+  monthlyNeed: string;
+  progress: number;
+  sponsorshipStatus: string;
+}
+
+export const mockSponsorshipProfiles: SponsorshipProfile[] = [
+  {
+    _id: "kid-1",
+    name: "Amina",
+    firstName: "Amina",
+    secondName: "Komagum",
+    givenName: "Amina",
+    gender: "Female",
+    dateOfBirth: "2018-03-15",
+    age: 8,
+    ageGroup: "6-12",
+    class: "Primary 3",
+    nationality: "Ugandan",
+    familyStatus: "Single Parent",
+    numberOfParents: 1,
+    guardianNames: ["Juliana Komagum (Mother)"],
+    image: {
+      url: "https://thumbs.dreamstime.com/b/african-child-girl-years-old-local-beach-dar-es-salaam-nikon-d-57401857.jpg",
+      public_id: "sponsorship/amina"
+    },
+    story: "Amina loves reading and dreams of becoming a teacher. She lives with her mother and younger brother and needs support for school fees and supplies.",
+    background: "Amina is a bright and curious learner who excels in her studies. Despite her family's financial challenges, she maintains a positive attitude and helps her mother with household chores. She wants to study hard to become a teacher and give back to her community.",
+    hobbies: ["Reading", "Storytelling", "Drawing"],
+    interests: ["Reading", "Drawing", "Math"],
+    school: "St. Mary’s Primary School",
+    location: "Kampala, Uganda",
+    needs: ["Education", "Basic needs", "Health & Nutrition support"],
+    monthlyNeed: "$50/month",
+    progress: 42,
+    sponsorshipStatus: "Available"
+  },
+  {
+    _id: "kid-2",
+    name: "David",
+    firstName: "David",
+    secondName: "Omusu",
+    givenName: "David",
+    gender: "Male",
+    dateOfBirth: "2014-06-20",
+    age: 12,
+    ageGroup: "6-12",
+    class: "Primary 6",
+    nationality: "Ugandan",
+    familyStatus: "Total Orphans",
+    numberOfParents: 0,
+    guardianNames: ["Uncle Thomas Omusu"],
+    image: {
+      url: "https://thumbs.dreamstime.com/b/african-child-2693809.jpg",
+      public_id: "sponsorship/david"
+    },
+    story: "David is bright and hardworking. He hopes to continue school after losing both parents and needs a sponsor to keep his education on track.",
+    background: "David lost both parents five years ago and is being raised by his uncle. Despite this hardship, he shows remarkable resilience and academic strength. He spends his afternoons helping with farming and caring for younger siblings. David dreams of becoming a scientist and contributing to his community's development.",
+    hobbies: ["Football", "Science experiments", "Writing stories"],
+    interests: ["Science", "Football", "Writing"],
+    school: "Hope Children’s School",
+    location: "Mukono, Uganda",
+    needs: ["Education", "Basic needs", "Health & Nutrition support"],  monthlyNeed: "$60/month",
+    progress: 33,
+    sponsorshipStatus: "Available"
+  },
+  {
+    _id: "kid-3",
+    name: "Lillian",
+    firstName: "Lillian",
+    secondName: "Nakazi",
+    givenName: "Lillian",
+    gender: "Female",
+    dateOfBirth: "2021-02-10",
+    age: 5,
+    ageGroup: "0-5",
+    class: "Primary 1",
+    nationality: "Ugandan",
+    familyStatus: "Single Parent",
+    numberOfParents: 1,
+    guardianNames: ["Moses Nakazi (Father)"],
+    image: {
+      url: "https://thumbs.dreamstime.com/b/cute-african-girl-flower-hair-close-up-portrait-little-child-braids-orange-standing-outdoors-against-green-63503699.jpg",
+      public_id: "sponsorship/lillian"
+    },
+    story: "Lillian is a joyful preschooler who loves songs and stories. She lives with her father and needs help to access early learning and meals.",
+    background: "Lillian is a cheerful and energetic child who brings joy to everyone around her. Her mother passed away three years ago, and her father works as a casual laborer to provide for the family. Despite their limited means, Lillian attends preschool with great enthusiasm. She has a natural talent for music and loves to sing traditional songs.",
+    hobbies: ["Singing", "Painting", "Playing with friends"],
+    interests: ["Singing", "Stories", "Painting"],
+    school: "Bright Beginnings Preschool",
+    location: "Jinja, Uganda",
+    needs: ["Education", "Basic needs", "Health & Nutrition support"],
+    monthlyNeed: "$45/month",
+    progress: 58,
+    sponsorshipStatus: "Available"
+  },
+  {
+    _id: "kid-4",
+    name: "Samuel",
+    firstName: "Samuel",
+    secondName: "Kiprotich",
+    givenName: "Samuel",
+    gender: "Male",
+    dateOfBirth: "2011-01-05",
+    age: 15,
+    ageGroup: "13-18",
+    class: "Senior 3",
+    nationality: "Ugandan",
+    familyStatus: "Total Orphans",
+    numberOfParents: 0,
+    guardianNames: ["Grandmother Rose Kiplagat"],
+    image: {
+      url: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSajvAiV-qlyAIZBTwsFZVJt0wkY0w0k6WeWA&s",
+      public_id: "sponsorship/samuel"
+    },
+    story: "Samuel is determined to finish secondary school despite hardship. He enjoys science and plans to become an engineer.",
+    background: "Samuel has shown exceptional promise despite losing both parents at age 7. He is now in secondary school and consistently earns high marks in mathematics and science. Living with his elderly grandmother, Samuel balances his studies with helping in the farm and taking care of younger cousins. His dream is to study engineering and build water systems for rural communities.",
+    hobbies: ["Reading science books", "Basketball", "Learning programming"],
+    interests: ["Science", "Basketball", "Coding"],
+    school: "National High School",
+    location: "Wakiso, Uganda",
+    needs: ["Education", "Basic needs", "Health & Nutrition support"],  monthlyNeed: "$70/month",
+    progress: 27,
+    sponsorshipStatus: "Available"
+  },
+  {
+    _id: "kid-5",
+    name: "Grace",
+    firstName: "Grace",
+    secondName: "Okumu",
+    givenName: "Grace",
+    gender: "Female",
+    dateOfBirth: "2016-08-22",
+    age: 10,
+    ageGroup: "6-12",
+    class: "Primary 5",
+    nationality: "Ugandan",
+    familyStatus: "Single Parent",
+    numberOfParents: 1,
+    guardianNames: ["Miriam Okumu (Mother)"],
+    image: {
+      url: "https://t3.ftcdn.net/jpg/03/11/48/70/360_F_311487027_oIFZmgqD5Xv1T7jrKRcXMUJEfrTOZcRD.jpg",
+      public_id: "sponsorship/grace"
+    },
+    story: "Grace is active and kind. She needs support for school fees and nutrition so she can continue her education happily.",
+    background: "Grace is known for her infectious smile and kind heart. Her father was a fisherman who passed away when she was three years old. Now her mother works as a housemaid to support Grace and her two younger siblings. Grace is the class captain and volunteers as a peer tutor for younger students. She believes education is the key to a better future.",
+    hobbies: ["Soccer", "Traditional dancing", "Reading adventure stories"],
+    interests: ["Dancing", "Soccer", "Reading"],
+    school: "Kampala Day School",
+    location: "Kampala, Uganda",
+    needs: ["Education", "Basic needs", "Health & Nutrition support"],  monthlyNeed: "$55/month",
+    progress: 49,
+    sponsorshipStatus: "Available"
+  }
+];
+
+export const mockSponsorshipRecords: SponsorshipRecord[] = [
+  {
+    _id: "sponsorship-1",
+    childId: "kid-1",
+    childName: "Amina",
+    donor: {
+      id: "donor-1",
+      name: "Grace Harper",
+      email: "grace.harper@example.com",
+      phone: "+256 701 234 567",
+      location: "Kampala, Uganda",
+    },
+    plan: "School Sponsorship",
+    monthlyAmount: 50,
+    status: "Active",
+    startDate: "2025-08-01",
+    lastPayment: "2026-04-01",
+    totalPaid: 800,
+    payments: [
+      {
+        id: "payment-1",
+        date: "2026-04-01",
+        amount: 50,
+        method: "Mobile Money",
+        status: "Completed",
+        receiptId: "REC-1001",
+        note: "Monthly school fee",
+      },
+      {
+        id: "payment-2",
+        date: "2026-03-01",
+        amount: 50,
+        method: "Mobile Money",
+        status: "Completed",
+        receiptId: "REC-0987",
+        note: "Monthly school fee",
+      },
+    ],
+    notes: "Sponsor is committed to the full school year support plan.",
+  },
+  {
+    _id: "sponsorship-2",
+    childId: "kid-2",
+    childName: "David",
+    donor: {
+      id: "donor-2",
+      name: "John Carter",
+      email: "john.carter@example.com",
+      phone: "+256 701 987 654",
+      location: "Mukono, Uganda",
+    },
+    plan: "Education & Food Support",
+    monthlyAmount: 60,
+    status: "Active",
+    startDate: "2025-10-15",
+    lastPayment: "2026-04-10",
+    totalPaid: 1080,
+    payments: [
+      {
+        id: "payment-3",
+        date: "2026-04-10",
+        amount: 60,
+        method: "Bank Transfer",
+        status: "Completed",
+        receiptId: "REC-1102",
+        note: "April sponsorship installment",
+      },
+      {
+        id: "payment-4",
+        date: "2026-03-10",
+        amount: 60,
+        method: "Bank Transfer",
+        status: "Completed",
+        receiptId: "REC-1063",
+        note: "March sponsorship installment",
+      },
+    ],
+    notes: "Donor prefers quarterly progress updates.",
+  },
+  {
+    _id: "sponsorship-3",
+    childId: "kid-4",
+    childName: "Samuel",
+    donor: {
+      id: "donor-3",
+      name: "Mariam Ochieng",
+      email: "mariam.ochieng@example.com",
+      phone: "+256 704 321 098",
+      location: "Wakiso, Uganda",
+    },
+    plan: "Secondary School Support",
+    monthlyAmount: 70,
+    status: "Pending",
+    startDate: "2026-01-05",
+    lastPayment: "2026-01-05",
+    totalPaid: 140,
+    payments: [
+      {
+        id: "payment-5",
+        date: "2026-01-05",
+        amount: 70,
+        method: "Cash",
+        status: "Completed",
+        receiptId: "REC-1040",
+        note: "First sponsorship installment",
+      },
+      {
+        id: "payment-6",
+        date: "2025-12-05",
+        amount: 70,
+        method: "Cash",
+        status: "Completed",
+        receiptId: "REC-1031",
+        note: "Initial pledge payment",
+      },
+    ],
+    notes: "Pending renewal confirmation for the next term.",
+  },
+];
 
 export const mockEvents: Event[] = [
   {
