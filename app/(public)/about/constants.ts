@@ -55,13 +55,13 @@ export const IMPACT_METRICS = [
   {
     id: "children",
     label: "Children Supported",
-    value: 5000,
+    value: 100,
     description: "Lives transformed through education and support programs",
   },
   {
     id: "schools",
     label: "School Partnerships",
-    value: 45,
+    value: 10,
     description: "Educational institutions we collaborate with",
   },
   {
