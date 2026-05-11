@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,8 +19,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Plus, Edit, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Plus,
+  Edit,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+  Upload,
+  X,
+  Loader,
+} from "lucide-react";
 import { mockSponsorshipProfiles, SponsorshipProfile } from "@/lib/mock-data";
+import { uploadImageToCloudinary } from "@/lib/cloudinary-upload";
+import { apiRequest } from "@/lib/query-client";
+import { log } from "console";
+import { useQuery } from "@tanstack/react-query";
 
 const initialFormState = {
   _id: "",
@@ -37,7 +50,10 @@ const initialFormState = {
   familyStatus: "Single Parent" as "Single Parent" | "Total Orphans",
   numberOfParents: 1 as 0 | 1 | 2,
   guardianNamesInput: "",
-  imageUrl: "",
+  image: {
+    url: "",
+    public_id: "",
+  },
   story: "",
   background: "",
   hobbiesInput: "",
@@ -64,20 +80,39 @@ function getStatusBadgeClass(status: string) {
 }
 
 export default function ChildrenDashboard() {
-  const [children, setChildren] = useState<SponsorshipProfile[]>(
-    mockSponsorshipProfiles,
-  );
+  const {
+    data: Profiles,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["children", "profiles"],
+  });
+
+  const [children, setChildren] = useState<SponsorshipProfile[]>([]);
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [wizardStep, setWizardStep] = useState(1);
   const [editingChild, setEditingChild] = useState<SponsorshipProfile | null>(
     null,
   );
-  const [formState, setFormState] = useState<FormState>(initialFormState);
+  const [formState, setFormState] = useState<FormState>(
+    editingChild ? { ...initialFormState, ...editingChild } : initialFormState,
+  );
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<
     "all" | "Available" | "Sponsored"
   >("all");
   const [formError, setFormError] = useState("");
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string>("");
+
+  useEffect(() => {
+    if (Profiles) {
+      setChildren(Profiles as SponsorshipProfile[]);
+    }
+  }, [Profiles]);
 
   const filteredChildren = useMemo(() => {
     return children.filter((child) => {
@@ -96,6 +131,57 @@ export default function ChildrenDashboard() {
     setFormError("");
     setWizardStep(1);
     setEditingChild(null);
+    setImagePreview("");
+  };
+
+  const handleImageUpload = async (file: File) => {
+    try {
+      setIsUploadingImage(true);
+      setFormError("");
+      const result = await uploadImageToCloudinary(file);
+
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+
+      // Set the image URL from Cloudinary response
+      setFormState((prevState) => ({
+        ...prevState,
+        image: {
+          url: result.secure_url,
+          public_id: result.public_id,
+        },
+      }));
+    } catch (error) {
+      setFormError(
+        error instanceof Error ? error.message : "Failed to upload image",
+      );
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const handleImageInputChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      handleImageUpload(file);
+    }
+  };
+
+  const removeImage = () => {
+    setFormState((prevState) => ({
+      ...prevState,
+      image: {
+        url: "",
+        public_id: "",
+      },
+    }));
+    setImagePreview("");
   };
 
   const openNewProfile = () => {
@@ -119,24 +205,49 @@ export default function ChildrenDashboard() {
       nationality: child.nationality,
       familyStatus: child.familyStatus,
       numberOfParents: child.numberOfParents,
-      guardianNamesInput: child.guardianNames.join(", "),
-      imageUrl: child.image.url,
+      guardianNamesInput: child.guardianNames.includes(", ")
+        ? child.guardianNames.split(", ").join(", ")
+        : child.guardianNames,
+      image: {
+        url: child.image.url,
+        public_id: child.image.public_id,
+      },
       story: child.story,
       background: child.background,
-      hobbiesInput: child.hobbies.join(", "),
-      interestsInput: child.interests.join(", "),
+      hobbiesInput: child.hobbies.includes(", ")
+        ? child.hobbies.split(", ").join(", ")
+        : child.hobbies,
+      interestsInput: child.interests.includes(", ")
+        ? child.interests.split(", ").join(", ")
+        : child.interests,
       school: child.school,
       location: child.location,
-      needsInput: child.needs.join(", "),
+      needsInput: child.needs.includes(", ")
+        ? child.needs.split(", ").join(", ")
+        : child.needs,
       monthlyNeed: child.monthlyNeed,
       progress: child.progress,
       sponsorshipStatus: child.sponsorshipStatus,
     });
+    setImagePreview(child.image.url);
     setIsDialogOpen(true);
   };
 
-  const handleDeleteProfile = (id: string) => {
-    setChildren(children.filter((child) => child._id !== id));
+  const handleDeleteProfile = async (id: string) => {
+    try {
+      setDeleting(true);
+      const res = await apiRequest("DELETE", `/children/profile/${id}/delete`);
+      if (!res.ok) {
+        throw new Error("Failed to delete child profile");
+      }
+      setChildren(children.filter((child) => child._id !== id));
+    } catch (error) {
+      console.log("====================================");
+      console.log(error);
+      console.log("====================================");
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const validateStep = () => {
@@ -159,7 +270,7 @@ export default function ChildrenDashboard() {
     }
 
     if (wizardStep === 3) {
-      if (!formState.story.trim() || !formState.monthlyNeed.trim()) {
+      if (!formState.story.trim()) {
         setFormError("Please add the child’s story and monthly support needs.");
         return false;
       }
@@ -181,69 +292,111 @@ export default function ChildrenDashboard() {
     setWizardStep((current) => Math.max(current - 1, 1));
   };
 
-  const handleSaveProfile = () => {
+  const handleSaveProfile = async () => {
     if (!validateStep()) {
       return;
     }
+    setLoading(true);
+    try {
+      let data: any = null;
+      let newProfile: SponsorshipProfile = {} as SponsorshipProfile;
+      let res = null;
 
-    const payload: SponsorshipProfile = {
-      _id: editingChild ? editingChild._id : `kid-${Date.now()}`,
-      name:
-        formState.name.trim() ||
-        `${formState.firstName.trim()} ${formState.secondName.trim()}`,
-      firstName: formState.firstName.trim(),
-      secondName: formState.secondName.trim(),
-      givenName: formState.givenName.trim() || formState.firstName.trim(),
-      gender: formState.gender,
-      dateOfBirth: formState.dateOfBirth,
-      age: Number(formState.age) || 0,
-      ageGroup: formState.ageGroup,
-      class: formState.class,
-      nationality: formState.nationality,
-      familyStatus: formState.familyStatus,
-      numberOfParents: formState.numberOfParents,
-      guardianNames: formState.guardianNamesInput
-        .split(",")
-        .map((item) => item.trim())
-        .filter(Boolean),
-      image: {
-        url:
-          formState.imageUrl ||
-          "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=80",
-        public_id: "dashboard-child-image",
-      },
-      story: formState.story.trim(),
-      background: formState.background.trim(),
-      hobbies: formState.hobbiesInput
-        .split(",")
-        .map((item) => item.trim())
-        .filter(Boolean),
-      interests: formState.interestsInput
-        .split(",")
-        .map((item) => item.trim())
-        .filter(Boolean),
-      school: formState.school.trim(),
-      location: formState.location.trim(),
-      needs: formState.needsInput
-        .split(",")
-        .map((item) => item.trim())
-        .filter(Boolean),
-      monthlyNeed: formState.monthlyNeed.trim(),
-      progress: Number(formState.progress) || 0,
-      sponsorshipStatus: formState.sponsorshipStatus,
-    };
+      const payload: any = {
+        firstName: formState.firstName.trim(),
+        secondName: formState.secondName.trim(),
+        givenName: formState.givenName.trim() || formState.firstName.trim(),
+        gender: formState.gender,
+        dateOfBirth: formState.dateOfBirth,
+        age: Number(formState.age) || 0,
+        ageGroup: formState.ageGroup,
+        class: formState.class,
+        nationality: formState.nationality,
+        familyStatus: formState.familyStatus,
+        numberOfParents: formState.numberOfParents,
+        guardianNames: formState.guardianNamesInput
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean),
+        image: {
+          url: formState.image.url || "",
+          public_id: formState.image.public_id || "",
+        },
+        story: formState.story.trim(),
+        background: formState.background.trim(),
+        hobbies: formState.hobbiesInput
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean),
+        interests: formState.interestsInput
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean),
+        school: formState.school.trim(),
+        location: formState.location.trim(),
+        needs: formState.needsInput
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean),
+        monthlyNeed: formState.monthlyNeed,
 
-    setChildren((current) => {
+        sponsorshipStatus: formState.sponsorshipStatus,
+      };
       if (editingChild) {
-        return current.map((child) =>
-          child._id === editingChild._id ? payload : child,
+        payload._id = editingChild._id;
+        res = await apiRequest(
+          "PUT",
+          `/children/profile/${editingChild._id}/update`,
+          payload,
         );
+      } else {
+        res = await apiRequest("POST", `/children/profile/new`, payload);
       }
-      return [payload, ...current];
-    });
+      data = await res.json();
 
-    setIsDialogOpen(false);
-    resetForm();
+      newProfile = {
+        ...data.profile,
+        _id: editingChild ? editingChild._id : data.profile._id,
+        name:
+          formState.name.trim() ||
+          `${formState.firstName.trim()} ${formState.secondName.trim()}`,
+        guardianNames: data.profile.guardianNames
+          .split(",")
+          .map((item: string) => item.trim())
+          .filter(Boolean),
+        hobbies: formState.hobbiesInput
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean),
+        interests: formState.interestsInput
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean),
+        needs: formState.needsInput
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean),
+        sponsor: data.profile.sponsor || null,
+      };
+
+      setChildren((current) => {
+        if (editingChild) {
+          return current.map((child) =>
+            child._id === editingChild._id ? payload : child,
+          );
+        }
+        return [newProfile, ...current];
+      });
+
+      setIsDialogOpen(false);
+      resetForm();
+    } catch (error) {
+      console.log("====================================");
+      console.log(error);
+      console.log("====================================");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const stepContent = () => {
@@ -254,6 +407,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2">
               <Label htmlFor="firstName">First name</Label>
               <Input
+                className="bg-white"
                 id="firstName"
                 value={formState.firstName}
                 onChange={(event) =>
@@ -264,6 +418,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2">
               <Label htmlFor="secondName">Second name</Label>
               <Input
+                className="bg-white"
                 id="secondName"
                 value={formState.secondName}
                 onChange={(event) =>
@@ -274,6 +429,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2">
               <Label htmlFor="givenName">Preferred name</Label>
               <Input
+                className="bg-white"
                 id="givenName"
                 value={formState.givenName}
                 onChange={(event) =>
@@ -292,7 +448,7 @@ export default function ChildrenDashboard() {
                   })
                 }
               >
-                <SelectTrigger id="gender">
+                <SelectTrigger className="bg-white" id="gender">
                   <SelectValue>{formState.gender}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -304,6 +460,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2">
               <Label htmlFor="dateOfBirth">Date of birth</Label>
               <Input
+                className="bg-white"
                 id="dateOfBirth"
                 type="date"
                 value={formState.dateOfBirth}
@@ -318,6 +475,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2">
               <Label htmlFor="age">Age</Label>
               <Input
+                className="bg-white"
                 id="age"
                 type="number"
                 min={0}
@@ -341,7 +499,7 @@ export default function ChildrenDashboard() {
                   })
                 }
               >
-                <SelectTrigger id="ageGroup">
+                <SelectTrigger className="bg-white" id="ageGroup">
                   <SelectValue>{formState.ageGroup}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -354,6 +512,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2">
               <Label htmlFor="class">Class</Label>
               <Input
+                className="bg-white"
                 id="class"
                 value={formState.class}
                 onChange={(event) =>
@@ -364,6 +523,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2">
               <Label htmlFor="nationality">Nationality</Label>
               <Input
+                className="bg-white"
                 id="nationality"
                 value={formState.nationality}
                 onChange={(event) =>
@@ -385,7 +545,7 @@ export default function ChildrenDashboard() {
                   })
                 }
               >
-                <SelectTrigger id="familyStatus">
+                <SelectTrigger className="bg-white" id="familyStatus">
                   <SelectValue>{formState.familyStatus}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -405,7 +565,7 @@ export default function ChildrenDashboard() {
                   })
                 }
               >
-                <SelectTrigger id="numberOfParents">
+                <SelectTrigger className="bg-white" id="numberOfParents">
                   <SelectValue>{String(formState.numberOfParents)}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -423,6 +583,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="guardianNamesInput">Guardian names</Label>
               <Input
+                className="bg-white"
                 id="guardianNamesInput"
                 placeholder="Example: Jane Doe (Mother), John Doe (Father)"
                 value={formState.guardianNamesInput}
@@ -437,6 +598,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2">
               <Label htmlFor="school">School</Label>
               <Input
+                className="bg-white"
                 id="school"
                 value={formState.school}
                 onChange={(event) =>
@@ -447,6 +609,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2">
               <Label htmlFor="location">Location</Label>
               <Input
+                className="bg-white"
                 id="location"
                 value={formState.location}
                 onChange={(event) =>
@@ -457,6 +620,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="needsInput">Needs</Label>
               <Input
+                className="bg-white"
                 id="needsInput"
                 placeholder="Example: Education, Nutrition, Health"
                 value={formState.needsInput}
@@ -468,6 +632,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2">
               <Label htmlFor="hobbiesInput">Hobbies</Label>
               <Input
+                className="bg-white"
                 id="hobbiesInput"
                 placeholder="Example: Reading, Drawing"
                 value={formState.hobbiesInput}
@@ -482,6 +647,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2">
               <Label htmlFor="interestsInput">Interests</Label>
               <Input
+                className="bg-white"
                 id="interestsInput"
                 placeholder="Example: Science, Soccer"
                 value={formState.interestsInput}
@@ -501,6 +667,7 @@ export default function ChildrenDashboard() {
                 onChange={(event) =>
                   setFormState({ ...formState, story: event.target.value })
                 }
+                className="bg-white"
               />
             </div>
           </div>
@@ -521,6 +688,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2">
               <Label htmlFor="monthlyNeed">Monthly support</Label>
               <Input
+                className="bg-white"
                 id="monthlyNeed"
                 value={formState.monthlyNeed}
                 onChange={(event) =>
@@ -531,22 +699,7 @@ export default function ChildrenDashboard() {
                 }
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="progress">Progress (%)</Label>
-              <Input
-                id="progress"
-                type="number"
-                min={0}
-                max={100}
-                value={formState.progress}
-                onChange={(event) =>
-                  setFormState({
-                    ...formState,
-                    progress: Number(event.target.value),
-                  })
-                }
-              />
-            </div>
+
             <div className="space-y-2">
               <Label htmlFor="sponsorshipStatus">Sponsorship status</Label>
               <Select
@@ -555,7 +708,7 @@ export default function ChildrenDashboard() {
                   setFormState({ ...formState, sponsorshipStatus: value })
                 }
               >
-                <SelectTrigger id="sponsorshipStatus">
+                <SelectTrigger className="bg-white" id="sponsorshipStatus">
                   <SelectValue>{formState.sponsorshipStatus}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -564,16 +717,64 @@ export default function ChildrenDashboard() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="imageUrl">Profile image URL</Label>
-              <Input
-                id="imageUrl"
-                placeholder="Paste a stable image URL"
-                value={formState.imageUrl}
-                onChange={(event) =>
-                  setFormState({ ...formState, imageUrl: event.target.value })
-                }
-              />
+            <div className="space-y-4 md:col-span-2">
+              <div className="space-y-2">
+                <Label>Profile Image</Label>
+                <div className="flex flex-col gap-4">
+                  {/* Image Preview */}
+                  {(imagePreview || formState.image.url) && (
+                    <div className="relative inline-block">
+                      <div className="h-48 w-48 rounded-lg overflow-hidden bg-slate-100 border border-border shadow-sm">
+                        <img
+                          src={imagePreview || formState.image.url}
+                          alt="Preview"
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={removeImage}
+                        className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 transition-colors"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Upload Button */}
+                  <div className="flex gap-2">
+                    <input
+                      className="bg-white hidden"
+                      id="imageInput"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageInputChange}
+                      disabled={isUploadingImage}
+                    />
+                    <label htmlFor="imageInput" className="flex-1">
+                      <Button
+                        asChild
+                        variant={
+                          imagePreview || formState.image.url
+                            ? "secondary"
+                            : "default"
+                        }
+                        disabled={isUploadingImage}
+                        className="w-full cursor-pointer"
+                      >
+                        <span>
+                          <Upload size={16} className="mr-2" />
+                          {isUploadingImage
+                            ? "Uploading..."
+                            : imagePreview || formState.image.url
+                              ? "Change image"
+                              : "Upload image"}
+                        </span>
+                      </Button>
+                    </label>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         );
@@ -581,7 +782,7 @@ export default function ChildrenDashboard() {
   };
 
   return (
-    <div className="p-8">
+    <div className="p-8 ">
       <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="text-sm uppercase tracking-[0.3em] text-muted-foreground">
@@ -606,6 +807,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2">
               <Label htmlFor="search">Search children</Label>
               <Input
+                className="bg-white"
                 id="search"
                 placeholder="Search by name, school or location"
                 value={searchTerm}
@@ -640,14 +842,14 @@ export default function ChildrenDashboard() {
         </div>
       </Card>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        {filteredChildren.map((child) => (
+      <div className="grid bg-background  rounded-lg gap-6 lg:grid-cols-2">
+        {filteredChildren.map((child, index) => (
           <Card
-            key={child._id}
-            className="overflow-hidden bg-card border-border"
+            key={child._id || index}
+            className="overflow-hidden  bg-card border-border"
           >
             <div className="flex flex-col gap-4 p-6 sm:flex-row">
-              <div className="min-h-[180px] w-full rounded-xl bg-slate-100/80 shadow-sm sm:w-44">
+              <div className="min-h-45 w-full rounded-xl bg-slate-100/80 shadow-sm sm:w-44">
                 <img
                   src={child.image.url}
                   alt={child.name}
@@ -659,7 +861,8 @@ export default function ChildrenDashboard() {
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <h2 className="text-xl font-semibold text-foreground">
-                        {child.name}
+                        {child.firstName} {child.secondName}{" "}
+                        {child.givenName ? `(${child.givenName})` : ""}
                       </h2>
                       <p className="text-sm text-foreground/70">
                         {child.school} • {child.location}
@@ -684,12 +887,6 @@ export default function ChildrenDashboard() {
                         {child.monthlyNeed}
                       </p>
                     </div>
-                    <div className="rounded-lg bg-muted p-3 text-sm text-foreground/80">
-                      Progress
-                      <p className="text-base font-semibold text-foreground">
-                        {child.progress}%
-                      </p>
-                    </div>
                   </div>
                 </div>
                 <div className="mt-4 space-y-3 text-sm text-foreground/70">
@@ -697,19 +894,23 @@ export default function ChildrenDashboard() {
                     <span className="font-semibold text-foreground">
                       Guardian:
                     </span>{" "}
-                    {child.guardianNames.join(", ")}
+                    {child?.guardianNames.includes(",")
+                      ? child?.guardianNames.split(", ").join(", ")
+                      : child?.guardianNames}
                   </p>
                   <p>
                     <span className="font-semibold text-foreground">
                       Needs:
                     </span>{" "}
-                    {child.needs.join(", ")}
+                    {child?.needs?.includes(",")
+                      ? child?.needs?.split(", ").join(", ")
+                      : child?.needs}
                   </p>
                   <p>
                     <span className="font-semibold text-foreground">
                       Interests:
                     </span>{" "}
-                    {child.interests.join(", ")}
+                    {child?.interests?.split(", ").join(", ")}
                   </p>
                 </div>
                 <div className="mt-6 flex flex-wrap gap-3">
@@ -724,8 +925,21 @@ export default function ChildrenDashboard() {
                     variant="destructive"
                     size="sm"
                     onClick={() => handleDeleteProfile(child._id)}
+                    disabled={deleting}
                   >
-                    <Trash2 size={14} className="mr-2" /> Delete
+                    {deleting ? (
+                      <span className="flex items-center">
+                        <>
+                          {" "}
+                          <Loader className="mr-2 h-4 w-4 animate-spin" />
+                          Deleting...
+                        </>
+                      </span>
+                    ) : (
+                      <>
+                        <Trash2 size={14} className="mr-2" /> Delete
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>
@@ -792,6 +1006,7 @@ export default function ChildrenDashboard() {
                   size="sm"
                   disabled={wizardStep === 1}
                   onClick={handleBack}
+                  className="bg-accent/10"
                 >
                   <ChevronLeft size={16} /> Back
                 </Button>
@@ -802,8 +1017,22 @@ export default function ChildrenDashboard() {
                 ) : null}
               </div>
               {wizardStep === 3 ? (
-                <Button onClick={handleSaveProfile}>
-                  {editingChild ? "Save changes" : "Create profile"}
+                <Button disabled={loading} onClick={handleSaveProfile}>
+                  {editingChild ? (
+                    loading ? (
+                      <>
+                        Saving... <Loader className="animate-spin" />
+                      </>
+                    ) : (
+                      "Save changes"
+                    )
+                  ) : loading ? (
+                    <>
+                      Creating... <Loader className="animate-spin" />
+                    </>
+                  ) : (
+                    "Create profile"
+                  )}
                 </Button>
               ) : null}
             </div>

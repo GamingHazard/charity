@@ -1,11 +1,12 @@
 ﻿"use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 import { Navbar } from "@/components/shared/navbar";
 import { Footer } from "@/components/shared/footer";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Sparkles, Filter, Heart } from "lucide-react";
 import {
   AnimatedElement,
@@ -13,33 +14,74 @@ import {
 } from "@/components/motion/animated-elements";
 import { mockSponsorshipProfiles } from "@/lib/mock-data";
 import SponsorshipCard from "@/components/public/sponsorship-card";
+import { useQuery } from "@tanstack/react-query";
 
 const ageGroups = ["All", "0-5", "6-12", "13-18"] as const;
 const familyStatuses = ["All", "Total Orphans", "Single Parent"] as const;
+const PROFILES_PER_PAGE = 6;
 
 export default function SponsorBrowsePage() {
+  const { data: Profiles, isLoading } = useQuery({
+    queryKey: ["children", "profiles"],
+  });
+
   const [selectedAgeGroup, setSelectedAgeGroup] =
     useState<(typeof ageGroups)[number]>("All");
   const [selectedFamilyStatus, setSelectedFamilyStatus] =
     useState<(typeof familyStatuses)[number]>("All");
 
+  const [profiles, setProfiles] = useState<any[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+
   const filteredProfiles = useMemo(() => {
-    return mockSponsorshipProfiles.filter((profile) => {
-      const ageMatch =
-        selectedAgeGroup === "All" || profile.ageGroup === selectedAgeGroup;
-      const statusMatch =
-        selectedFamilyStatus === "All" ||
-        profile.familyStatus === selectedFamilyStatus;
-      return ageMatch && statusMatch;
-    });
+    return (
+      profiles?.filter((profile) => {
+        const ageMatch =
+          selectedAgeGroup === "All" || profile?.ageGroup === selectedAgeGroup;
+        const statusMatch =
+          selectedFamilyStatus === "All" ||
+          profile?.familyStatus === selectedFamilyStatus;
+        return ageMatch && statusMatch;
+      }) ?? []
+    );
+  }, [profiles, selectedAgeGroup, selectedFamilyStatus]);
+
+  const totalOrphans = profiles?.filter(
+    (profile) => profile?.familyStatus === "Total Orphans",
+  ).length;
+  const totalSingleParents = profiles?.filter(
+    (profile) => profile?.familyStatus === "Single Parent",
+  ).length;
+
+  useEffect(() => {
+    if (Profiles) {
+      const sponsoredProfiles = (Profiles as any[]).filter(
+        (profile: any) =>
+          profile.sponsorshipStatus === "Available" && profile.sponsor === null,
+      );
+      setProfiles(sponsoredProfiles as any);
+    }
+  }, [Profiles]);
+
+  useEffect(() => {
+    setCurrentPage(1);
   }, [selectedAgeGroup, selectedFamilyStatus]);
 
-  const totalOrphans = mockSponsorshipProfiles.filter(
-    (profile) => profile.familyStatus === "Total Orphans",
-  ).length;
-  const totalSingleParents = mockSponsorshipProfiles.filter(
-    (profile) => profile.familyStatus === "Single Parent",
-  ).length;
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredProfiles.length / PROFILES_PER_PAGE),
+  );
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  const paginatedProfiles = filteredProfiles.slice(
+    (currentPage - 1) * PROFILES_PER_PAGE,
+    currentPage * PROFILES_PER_PAGE,
+  );
 
   return (
     <main className="min-h-screen bg-background">
@@ -66,17 +108,25 @@ export default function SponsorBrowsePage() {
                   <p className="text-sm uppercase tracking-[0.24em] text-white/70">
                     Children available
                   </p>
-                  <p className="mt-3 text-3xl font-bold text-white">
-                    {mockSponsorshipProfiles.length}
-                  </p>
+                  {isLoading ? (
+                    <Skeleton className="mt-3 h-12 w-32 rounded-full bg-white/20" />
+                  ) : (
+                    <p className="mt-3 text-3xl font-bold text-white">
+                      {profiles?.length}
+                    </p>
+                  )}
                 </Card>
                 <Card className="rounded-3xl border border-white/10 bg-white/10 p-6 shadow-lg backdrop-blur-sm">
                   <p className="text-sm uppercase tracking-[0.24em] text-white/70">
                     Orphan & family support
                   </p>
-                  <p className="mt-3 text-3xl font-bold text-white">
-                    {totalOrphans + totalSingleParents}
-                  </p>
+                  {isLoading ? (
+                    <Skeleton className="mt-3 h-12 w-32 rounded-full bg-white/20" />
+                  ) : (
+                    <p className="mt-3 text-3xl font-bold text-white">
+                      {totalOrphans + totalSingleParents}
+                    </p>
+                  )}
                 </Card>
               </div>
             </div>
@@ -195,23 +245,35 @@ export default function SponsorBrowsePage() {
                   <p className="text-sm text-muted-foreground">
                     Total children
                   </p>
-                  <p className="mt-2 text-3xl font-semibold text-foreground">
-                    {mockSponsorshipProfiles.length}
-                  </p>
+                  {isLoading ? (
+                    <Skeleton className="mt-2 h-10 w-24 rounded-full" />
+                  ) : (
+                    <p className="mt-2 text-3xl font-semibold text-foreground">
+                      {filteredProfiles.length}
+                    </p>
+                  )}
                 </div>
                 <div className="rounded-3xl border border-border bg-background p-5">
                   <p className="text-sm text-muted-foreground">Total orphans</p>
-                  <p className="mt-2 text-3xl font-semibold text-foreground">
-                    {totalOrphans}
-                  </p>
+                  {isLoading ? (
+                    <Skeleton className="mt-2 h-10 w-24 rounded-full" />
+                  ) : (
+                    <p className="mt-2 text-3xl font-semibold text-foreground">
+                      {totalOrphans}
+                    </p>
+                  )}
                 </div>
                 <div className="rounded-3xl border border-border bg-background p-5">
                   <p className="text-sm text-muted-foreground">
                     Single parent homes
                   </p>
-                  <p className="mt-2 text-3xl font-semibold text-foreground">
-                    {totalSingleParents}
-                  </p>
+                  {isLoading ? (
+                    <Skeleton className="mt-2 h-10 w-24 rounded-full" />
+                  ) : (
+                    <p className="mt-2 text-3xl font-semibold text-foreground">
+                      {totalSingleParents}
+                    </p>
+                  )}
                 </div>
               </div>
             </Card>
@@ -227,8 +289,9 @@ export default function SponsorBrowsePage() {
                   Children who need sponsorship
                 </h2>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Showing {filteredProfiles.length} of{" "}
-                  {mockSponsorshipProfiles.length} profiles.
+                  Showing {paginatedProfiles.length} of{" "}
+                  {filteredProfiles.length} profiles on page {currentPage} of{" "}
+                  {totalPages}.
                 </p>
               </div>
               {/* <div className="rounded-3xl border border-border bg-card px-5 py-3 text-sm text-foreground shadow-sm">
@@ -240,9 +303,24 @@ export default function SponsorBrowsePage() {
             </div>
 
             <AnimatedContainer className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-              {filteredProfiles.length > 0 ? (
-                filteredProfiles.map((profile) => (
-                  <AnimatedElement key={profile._id} variant="scaleIn">
+              {isLoading ? (
+                Array.from({ length: 6 }).map((_, index) => (
+                  <AnimatedElement key={`skeleton-${index}`} variant="scaleIn">
+                    <Card className="rounded-4xl border border-border bg-card p-6">
+                      <div className="space-y-4">
+                        <Skeleton className="h-44 w-full rounded-3xl" />
+                        <div className="space-y-3">
+                          <Skeleton className="h-6 w-3/4 rounded-full" />
+                          <Skeleton className="h-4 w-1/2 rounded-full" />
+                          <Skeleton className="h-10 w-full rounded-full" />
+                        </div>
+                      </div>
+                    </Card>
+                  </AnimatedElement>
+                ))
+              ) : filteredProfiles.length > 0 ? (
+                paginatedProfiles.map((profile) => (
+                  <AnimatedElement key={profile?._id} variant="scaleIn">
                     <SponsorshipCard profile={profile} />
                   </AnimatedElement>
                 ))
@@ -257,6 +335,43 @@ export default function SponsorBrowsePage() {
                 </Card>
               )}
             </AnimatedContainer>
+
+            {!isLoading && filteredProfiles.length > 0 ? (
+              <div className="mt-8 flex flex-col gap-3 rounded-3xl border border-border bg-card p-4 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+                <p>
+                  Page {currentPage} of {totalPages}
+                  {filteredProfiles.length > PROFILES_PER_PAGE && (
+                    <>
+                      {" "}
+                      — showing {paginatedProfiles.length} of{" "}
+                      {filteredProfiles.length} results
+                    </>
+                  )}
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() =>
+                      setCurrentPage((page) => Math.max(1, page - 1))
+                    }
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() =>
+                      setCurrentPage((page) => Math.min(totalPages, page + 1))
+                    }
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            ) : null}
           </div>
         </div>
       </section>

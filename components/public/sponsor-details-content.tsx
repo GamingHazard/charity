@@ -119,7 +119,7 @@ export default function SponsorDetailsContent({
                         value:
                           profile.guardianNames &&
                           profile.guardianNames.length > 0
-                            ? profile.guardianNames.join(", ")
+                            ? profile.guardianNames.split(",").join(", ")
                             : "No guardians listed",
                         icon: <Heart size={16} />,
                       },
@@ -154,15 +154,7 @@ export default function SponsorDetailsContent({
                         Hobbies & Interests
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        {profile.hobbies &&
-                          profile.hobbies.map((hobby) => (
-                            <span
-                              key={hobby}
-                              className="inline-flex items-center rounded-full bg-linear-to-r from-green-100 to-emerald-100 px-4 py-2 text-sm font-medium text-green-700 hover:from-green-200 hover:to-emerald-200 transition-all"
-                            >
-                              {hobby}
-                            </span>
-                          ))}
+                        {profile.hobbies.split(",").join(", ")}
                       </div>
                     </div>
 
@@ -171,16 +163,7 @@ export default function SponsorDetailsContent({
                         Why Support is Needed
                       </p>
                       <ul className="space-y-3">
-                        {profile.needs.map((need, idx) => (
-                          <li key={idx} className="flex gap-3">
-                            <span className="inline-flex items-center justify-center shrink-0 w-6 h-6 rounded-full bg-linear-to-br from-green-100 to-emerald-100">
-                              <span className="w-2 h-2 rounded-full bg-green-600" />
-                            </span>
-                            <span className="text-base text-gray-700">
-                              {need}
-                            </span>
-                          </li>
-                        ))}
+                        {profile.needs.split(",").join(", ")}
                       </ul>
                     </div>
                   </div>
@@ -230,18 +213,8 @@ export default function SponsorDetailsContent({
                   delay={0.2}
                 >
                   <div className="space-y-3">
-                    {profile.interests && profile.interests.length > 0 ? (
-                      profile.interests.map((interest, idx) => (
-                        <div
-                          key={idx}
-                          className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200/50 hover:border-blue-300/80 transition-all"
-                        >
-                          <div className="w-2 h-2 rounded-full bg-blue-600" />
-                          <span className="text-sm font-medium text-gray-700">
-                            {interest}
-                          </span>
-                        </div>
-                      ))
+                    {profile.interests.length > 0 ? (
+                      profile.interests.split(",").join(", ")
                     ) : (
                       <p className="text-sm text-gray-600">
                         No specific interests listed

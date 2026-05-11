@@ -54,12 +54,12 @@ export interface Campaign {
 }
 
 export interface PaymentRecord {
-  id: string;
+  
   date: string;
   amount: number;
   method: string;
   status: "Completed" | "Pending" | "Failed";
-  receiptId: string;
+  transactionId: string;
   note: string;
 }
 
@@ -73,10 +73,9 @@ export interface Donor {
 
 export interface SponsorshipRecord {
   _id: string;
-  childId: string;
-  childName: string;
-  donor: Donor;
-  plan: string;
+  child?: any;
+  donor: any;
+  plan?: string;
   monthlyAmount: number;
   status: "Active" | "Pending" | "Paused" | "Completed";
   startDate: string;
@@ -100,18 +99,18 @@ export interface SponsorshipProfile {
   nationality: string;
   familyStatus: "Total Orphans" | "Single Parent";
   numberOfParents: 0 | 1 | 2;
-  guardianNames: string[];
+  guardianNames: any;
   image: {
     url: string;
     public_id: string;
   };
   story: string;
   background: string;
-  hobbies: string[];
-  interests: string[];
+  hobbies: any;
+  interests: any;
   school: string;
   location: string;
-  needs: string[];
+  needs: any;
   monthlyNeed: string;
   progress: number;
   sponsorshipStatus: string;

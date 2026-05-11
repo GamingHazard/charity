@@ -100,7 +100,7 @@ export default function Step1SponsorBio({
 
       <motion.div
         variants={itemVariants}
-        className="bg-background rounded-2xl border border-border bg-background/50 p-4"
+        className="bg-background rounded-2xl border border-border   p-4"
       >
         <p className="text-xs text-muted-foreground">
           ℹ️ We'll use this information to confirm your sponsorship commitment.

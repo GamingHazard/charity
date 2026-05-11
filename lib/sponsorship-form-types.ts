@@ -22,6 +22,7 @@ export const donationSchema = z.object({
   period: z.enum(["Monthly", "3 Months", "6 Months", "Yearly"], {
     errorMap: () => ({ message: "Please select a sponsorship period" }),
   }),
+  remindByEmail: z.boolean().default(false),
 });
 
 export const paymentSchema = z.object({
@@ -37,16 +38,49 @@ export const paymentSchema = z.object({
   cvv: z.string().regex(/^\d{3,4}$/, "CVV must be 3-4 digits"),
 });
 
+export const zellePaymentSchema = z.object({
+  zelleName: z.string().min(2, "Full name must be at least 2 characters"),
+  zellePhone: z.string().regex(/^\(?\d{3}\)?[ -]?\d{3}[ -]?\d{4}$/, "Phone must be a valid 10-digit number"),
+});
+
+export const checkPaymentSchema = z.object({
+  checkEmail: z
+    .string()
+    .optional()
+    .refine((val) => !val || /\S+@\S+\.\S+/.test(val), "Invalid email address"),
+  checkAddress: z.string().min(5, "Address must be at least 5 characters"),
+  checkDescription: z.string().optional(),
+});
+
+export const achPaymentSchema = z.object({
+  achContactPhone: z.string().regex(/^\(?\d{3}\)?[ -]?\d{3}[ -]?\d{4}$/, "Phone must be a valid 10-digit number"),
+  achContactEmail: z
+    .string()
+    .optional()
+    .refine((val) => !val || /\S+@\S+\.\S+/.test(val), "Invalid email address"),
+});
+
+export const paymentMethodSchema = z.object({
+  paymentMethod: z.enum(['zelle', 'stripe', 'check',  'paypal', 'ach'], {
+    errorMap: () => ({ message: "Please select a payment method" }),
+  }),
+});
+
 // Combined form data type
 export type SponsorData = z.infer<typeof sponsorBioSchema>;
 export type LocationData = z.infer<typeof locationSchema>;
 export type DonationData = z.infer<typeof donationSchema>;
-export type PaymentData = z.infer<typeof paymentSchema>;
+export type PaymentData = z.infer<typeof paymentSchema> &
+  Partial<z.infer<typeof zellePaymentSchema>> &
+  Partial<z.infer<typeof checkPaymentSchema>> &
+  Partial<z.infer<typeof achPaymentSchema>>;
+export type PaymentMethodData = z.infer<typeof paymentMethodSchema>;
 
 export interface SponsorshipFormData {
   sponsor: Partial<SponsorData>;
   location: Partial<LocationData>;
   donation: Partial<DonationData>;
+  paymentMethod: Partial<PaymentMethodData>;
   payment: Partial<PaymentData>;
 }
 
@@ -70,8 +104,21 @@ export const SPONSORSHIP_PERIODS = [
 export const DEFAULT_FORM_DATA: SponsorshipFormData = {
   sponsor: { name: "", email: "", phone: "" },
   location: { address: "", city: "", state: "", zip: "" },
-  donation: { amount: 50, period: "Monthly" },
-  payment: { cardName: "", cardNumber: "", expiry: "", cvv: "" },
+  donation: { amount: 50, period: "Monthly", remindByEmail: false },
+  paymentMethod: { paymentMethod: "card" },
+  payment: {
+    cardName: "",
+    cardNumber: "",
+    expiry: "",
+    cvv: "",
+    zelleName: "",
+    zellePhone: "",
+    checkEmail: "",
+    checkAddress: "",
+    checkDescription: "",
+    achContactPhone: "",
+    achContactEmail: "",
+  },
 };
 
 // Helper functions
@@ -113,6 +160,17 @@ export function formatExpiry(value: string): string {
   const digits = value.replace(/\D/g, "").slice(0, 4);
   if (digits.length >= 3) {
     return `${digits.slice(0, 2)}/${digits.slice(2, 4)}`;
+  }
+  return digits;
+}
+
+export function formatPhoneNumber(value: string): string {
+  const digits = value.replace(/\D/g, "").slice(0, 10);
+  if (digits.length >= 6) {
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
+  }
+  if (digits.length >= 3) {
+    return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
   }
   return digits;
 }

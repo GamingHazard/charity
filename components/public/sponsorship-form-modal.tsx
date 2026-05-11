@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
-import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -11,11 +11,16 @@ import {
   locationSchema,
   donationSchema,
   paymentSchema,
+  paymentMethodSchema,
+  zellePaymentSchema,
+  checkPaymentSchema,
+  achPaymentSchema,
   SponsorshipFormData,
   SponsorData,
   LocationData,
   DonationData,
   PaymentData,
+  PaymentMethodData,
 } from "@/lib/sponsorship-form-types";
 import type { SponsorshipProfile } from "@/lib/mock-data";
 import { saveSponsorshipSubmission } from "@/lib/sponsorship-storage";
@@ -23,8 +28,10 @@ import SponsorshipFormHeader from "./sponsorship-form-header";
 import Step1SponsorBio from "./sponsorship-form-steps/step-1-sponsor-bio";
 import Step2Location from "./sponsorship-form-steps/step-2-location";
 import Step3Donation from "./sponsorship-form-steps/step-3-donation";
-import Step4Payment from "./sponsorship-form-steps/step-4-payment";
+import Step4PaymentMethod from "./sponsorship-form-steps/step-4-payment-method";
+import Step5PaymentDetails from "./sponsorship-form-steps/step-5-payment-details";
 import SponsorshipSuccessModal from "./sponsorship-success-modal";
+import { apiRequest } from "@/lib/query-client";
 
 interface SponsorshipFormModalProps {
   isOpen: boolean;
@@ -36,7 +43,8 @@ interface FormErrors {
   sponsor: Partial<Record<keyof SponsorData, string>>;
   location: Partial<Record<keyof LocationData, string>>;
   donation: Partial<Record<keyof DonationData, string>>;
-  payment: Partial<Record<keyof PaymentData, string>>;
+  paymentMethod: Partial<Record<keyof PaymentMethodData, string>>;
+  payment: Partial<Record<string, string>>;
 }
 
 export default function SponsorshipFormModal({
@@ -52,11 +60,23 @@ export default function SponsorshipFormModal({
     sponsor: {},
     location: {},
     donation: {},
+    paymentMethod: {},
     payment: {},
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [submissionData, setSubmissionData] = useState<any>(null);
+
+  const getDefaultMailingAddress = () => {
+    return [
+      formData.location.address,
+      formData.location.city,
+      formData.location.state,
+      formData.location.zip,
+    ]
+      .filter(Boolean)
+      .join(", ");
+  };
 
   const validateStep = useCallback(
     (step: number): boolean => {
@@ -64,6 +84,7 @@ export default function SponsorshipFormModal({
         sponsor: {},
         location: {},
         donation: {},
+        paymentMethod: {},
         payment: {},
       };
 
@@ -75,7 +96,18 @@ export default function SponsorshipFormModal({
         } else if (step === 3) {
           donationSchema.parse(formData.donation);
         } else if (step === 4) {
-          paymentSchema.parse(formData.payment);
+          paymentMethodSchema.parse(formData.paymentMethod);
+        } else if (step === 5) {
+          const method = formData.paymentMethod.paymentMethod;
+          if (method === "card") {
+            paymentSchema.parse(formData.payment);
+          } else if (method === "zelle") {
+            zellePaymentSchema.parse(formData.payment);
+          } else if (method === "check") {
+            checkPaymentSchema.parse(formData.payment);
+          } else if (method === "ach") {
+            achPaymentSchema.parse(formData.payment);
+          }
         }
         setErrors(newErrors);
         return true;
@@ -83,15 +115,13 @@ export default function SponsorshipFormModal({
         if (error.errors) {
           error.errors.forEach((err: any) => {
             const field = err.path[0] as string;
-            const stepKey =
-              step === 1
-                ? "sponsor"
-                : step === 2
-                  ? "location"
-                  : step === 3
-                    ? "donation"
-                    : "payment";
-            newErrors[stepKey as keyof FormErrors][field as any] = err.message;
+            let stepKey: keyof FormErrors;
+            if (step === 1) stepKey = "sponsor";
+            else if (step === 2) stepKey = "location";
+            else if (step === 3) stepKey = "donation";
+            else if (step === 4) stepKey = "paymentMethod";
+            else stepKey = "payment";
+            (newErrors[stepKey] as any)[field] = err.message;
           });
         }
         setErrors(newErrors);
@@ -104,7 +134,45 @@ export default function SponsorshipFormModal({
   const handleNextStep = () => {
     if (!validateStep(currentStep)) return;
 
-    if (currentStep < 4) {
+    if (currentStep === 4) {
+      setFormData((prev) => {
+        const nextPayment = { ...prev.payment };
+        const method = prev.paymentMethod.paymentMethod;
+
+        if (method === "zelle") {
+          nextPayment.zelleName =
+            nextPayment.zelleName || prev.sponsor.name || "";
+          nextPayment.zellePhone =
+            nextPayment.zellePhone || prev.sponsor.phone || "";
+        } else if (method === "check") {
+          nextPayment.checkEmail =
+            nextPayment.checkEmail || prev.sponsor.email || "";
+          nextPayment.checkAddress =
+            nextPayment.checkAddress ||
+            [
+              prev.location.address,
+              prev.location.city,
+              prev.location.state,
+              prev.location.zip,
+            ]
+              .filter(Boolean)
+              .join(", ") ||
+            "";
+        } else if (method === "ach") {
+          nextPayment.achContactPhone =
+            nextPayment.achContactPhone || prev.sponsor.phone || "";
+          nextPayment.achContactEmail =
+            nextPayment.achContactEmail || prev.sponsor.email || "";
+        }
+
+        return {
+          ...prev,
+          payment: nextPayment,
+        };
+      });
+    }
+
+    if (currentStep < 5) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -120,19 +188,16 @@ export default function SponsorshipFormModal({
 
     setIsSubmitting(true);
     try {
-      const submission = saveSponsorshipSubmission({
+      const payload = {
         sponsor: formData.sponsor as SponsorData,
         location: formData.location as LocationData,
         donation: formData.donation as DonationData,
-        payment: {
-          ...formData.payment,
-          cardNumber: `****${formData.payment.cardNumber?.slice(-4)}`,
-        } as any,
+        paymentMethod: formData.paymentMethod as PaymentMethodData,
         childId: childProfile._id,
-        childName: childProfile.name,
-      });
+      };
 
-      setSubmissionData(submission);
+      await apiRequest("POST", `/sponsors/profile/new`, payload);
+
       setShowSuccess(true);
 
       // Reset form after 5 seconds
@@ -185,7 +250,10 @@ export default function SponsorshipFormModal({
         }
       }}
     >
-      <DialogContent className="max-h-[90vh] w-full max-w-2xl bg-card overflow-y-auto p-0">
+      <DialogContent
+        showCloseButton={false}
+        className="max-h-[90vh] w-full max-w-2xl bg-card overflow-y-auto p-0"
+      >
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -197,8 +265,8 @@ export default function SponsorshipFormModal({
           <div className="relative">
             <SponsorshipFormHeader
               currentStep={currentStep}
-              totalSteps={4}
-              childName={childProfile.name}
+              totalSteps={5}
+              childName={childProfile.firstName}
               childImage={childProfile.image.url}
             />
             <button
@@ -274,7 +342,32 @@ export default function SponsorshipFormModal({
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <Step4Payment
+                  <Step4PaymentMethod
+                    data={formData.paymentMethod}
+                    onChange={(data) =>
+                      handleFormDataChange("paymentMethod", data)
+                    }
+                    errors={errors.paymentMethod}
+                  />
+                </motion.div>
+              )}
+
+              {currentStep === 5 && (
+                <motion.div
+                  key="step5"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Step5PaymentDetails
+                    paymentMethod={formData.paymentMethod.paymentMethod || ""}
+                    donationAmount={formData.donation.amount || 0}
+                    donationPeriod={formData.donation.period || "Monthly"}
+                    defaultName={formData.sponsor.name || ""}
+                    defaultEmail={formData.sponsor.email || ""}
+                    defaultPhone={formData.sponsor.phone || ""}
+                    defaultAddress={getDefaultMailingAddress()}
                     data={formData.payment}
                     onChange={(data) => handleFormDataChange("payment", data)}
                     errors={errors.payment}
@@ -304,18 +397,18 @@ export default function SponsorshipFormModal({
             <div className="flex-1" />
 
             <motion.div
-              whileHover={currentStep < 4 ? { scale: 1.02 } : {}}
-              whileTap={currentStep < 4 ? { scale: 0.98 } : {}}
+              whileHover={currentStep < 5 ? { scale: 1.02 } : {}}
+              whileTap={currentStep < 5 ? { scale: 0.98 } : {}}
             >
               <Button
                 type="button"
-                onClick={currentStep < 4 ? handleNextStep : handleSubmit}
+                onClick={currentStep < 5 ? handleNextStep : handleSubmit}
                 disabled={isSubmitting}
                 className="rounded-full bg-primary px-8 font-semibold text-white hover:bg-green-700"
               >
                 {isSubmitting
                   ? "Processing..."
-                  : currentStep === 4
+                  : currentStep === 5
                     ? "Complete Sponsorship"
                     : "Next"}
               </Button>

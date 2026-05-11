@@ -147,6 +147,31 @@ export default function Step3Donation({
         )}
       </motion.div>
 
+      <motion.div
+        variants={itemVariants}
+        className="rounded-2xl border border-border bg-background p-4"
+      >
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={data.remindByEmail || false}
+            onChange={(e) =>
+              onChange({ ...data, remindByEmail: e.target.checked })
+            }
+            className="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-primary"
+          />
+          <div>
+            <p className="font-semibold text-foreground">
+              Remind me by email when my selected period is nearing
+            </p>
+            <p className="text-xs text-muted-foreground">
+              We'll send a reminder ahead of the next payment window so you can
+              make sure your sponsorship stays on track.
+            </p>
+          </div>
+        </label>
+      </motion.div>
+
       {/* Summary */}
       <motion.div
         variants={itemVariants}

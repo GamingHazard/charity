@@ -103,45 +103,61 @@ export default function DashboardPage() {
               <h3 className="text-lg font-bold text-foreground mb-4">
                 Quick Actions
               </h3>
-              <div className="space-y-2">
-                <Link href="/dashboard/programs">
+              <div className="space-y-2 gap-5 flex flex-col">
+                <Link className="mx-5" href="/dashboard/children">
                   <Button
-                    className="w-full justify-start text-left"
+                    className=" w-full justify-start text-left"
                     variant="outline"
                   >
-                    ➕ Add New Program
+                    🧒 Children
                   </Button>
                 </Link>
-                <Link href="/dashboard/children">
+                <Link className="mx-5" href="/dashboard/sponsorships">
                   <Button
-                    className="w-full justify-start text-left"
-                    variant="outline"
-                  >
-                    🧒 Manage Children
-                  </Button>
-                </Link>
-                <Link href="/dashboard/sponsorships">
-                  <Button
-                    className="w-full justify-start text-left"
+                    className=" w-full justify-start text-left"
                     variant="outline"
                   >
                     💝 Sponsorships
                   </Button>
                 </Link>
-                <Link href="/dashboard/donations">
+                <Link className="mx-5" href="/dashboard/staff">
                   <Button
-                    className="w-full justify-start text-left"
+                    className=" w-full justify-start text-left"
                     variant="outline"
                   >
-                    💰 Log Donation
+                    👥 Staff & Volunteers
                   </Button>
                 </Link>
-                <Link href="/dashboard/content">
+                <Link className="mx-5" href="/dashboard/blogs">
                   <Button
-                    className="w-full justify-start text-left"
+                    className=" w-full justify-start text-left"
                     variant="outline"
                   >
-                    📝 Update Content
+                    📖 Blogs
+                  </Button>
+                </Link>
+                <Link className="mx-5" href="/dashboard/gallery">
+                  <Button
+                    className=" w-full justify-start text-left"
+                    variant="outline"
+                  >
+                    🖼️ Gallery
+                  </Button>
+                </Link>
+                <Link className="mx-5" href="/dashboard/events">
+                  <Button
+                    className=" w-full justify-start text-left"
+                    variant="outline"
+                  >
+                    📅 Events
+                  </Button>
+                </Link>
+                <Link className="mx-5" href="/dashboard/campaigns">
+                  <Button
+                    className=" w-full justify-start text-left"
+                    variant="outline"
+                  >
+                    🎯 Campaigns
                   </Button>
                 </Link>
               </div>

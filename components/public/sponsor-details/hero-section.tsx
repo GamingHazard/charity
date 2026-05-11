@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import type { SponsorshipProfile } from "@/lib/mock-data";
 import { motion } from "framer-motion";
+import { use, useEffect } from "react";
 
 interface HeroSectionProps {
   profile: SponsorshipProfile;
@@ -33,6 +34,10 @@ export default function HeroSection({
       transition: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] },
     },
   };
+
+  useEffect(() => {
+    document.title = `${profile.firstName} ${profile.secondName} - Sponsor Details`;
+  }, [profile]);
 
   return (
     <motion.section
@@ -69,7 +74,7 @@ export default function HeroSection({
             <div className="overflow-hidden rounded-2xl sm:rounded-3xl border-2 border-white/40 shadow-2xl">
               <motion.img
                 src={profile.image.url}
-                alt={profile.name}
+                alt={profile.firstName}
                 className="h-96 sm:h-125 w-full object-cover"
                 initial={{ scale: 1.1, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
