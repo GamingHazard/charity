@@ -25,6 +25,7 @@ export default function BlogsPage() {
     if (blogData) {
       setPosts(blogData);
     }
+    
   }, [blogData]);
 
   const filteredBlogs: any[] =

@@ -19,7 +19,7 @@ export function Navbar() {
     const pathToLabel: Record<string, string> = {
       "/": "Home",
       "/about": "About",
-      "/campaign": "Campaigns",
+      "/gallery": "Gallery",
       "/blog": "Blogs",
       "/contact": "Contact",
     };
@@ -44,7 +44,7 @@ export function Navbar() {
   const navLinks = [
     { href: "/", label: "Home" },
     { href: "/about", label: "About" },
-    { href: "/campaign", label: "Campaigns" },
+    { href: "/gallery", label: "Gallery" },
     { href: "/blog", label: "Blogs" },
     { href: "/contact", label: "Contact" },
   ];

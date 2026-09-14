@@ -152,14 +152,6 @@ export default function DashboardPage() {
                     📅 Events
                   </Button>
                 </Link>
-                <Link className="mx-5" href="/dashboard/campaigns">
-                  <Button
-                    className=" w-full justify-start text-left"
-                    variant="outline"
-                  >
-                    🎯 Campaigns
-                  </Button>
-                </Link>
               </div>
             </Card>
           </AnimatedElement>

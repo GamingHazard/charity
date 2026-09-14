@@ -13,7 +13,6 @@ const sidebarItems = [
   { href: "/dashboard/blogs", label: "Blogs", icon: "📖" },
   { href: "/dashboard/gallery", label: "Gallery", icon: "🖼️" },
   { href: "/dashboard/events", label: "Events", icon: "📅" },
-  { href: "/dashboard/campaigns", label: "Campaigns", icon: "🎯" },
   // { href: "/dashboard/analytics", label: "Analytics", icon: "📈" },
   // { href: "/dashboard/content", label: "Content", icon: "📝" },
   // { href: "/dashboard/settings", label: "Settings", icon: "⚙️" },

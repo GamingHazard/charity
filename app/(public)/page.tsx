@@ -2,8 +2,6 @@
 
 import { Hero } from "@/components/public/hero";
 import { ImpactMetrics } from "@/components/public/impact-metrics";
-import { CampaignPreview } from "@/components/public/campaign-preview";
-import { CampaignSkeleton } from "@/components/public/campaign-skeleton";
 import { ProgramsSection } from "@/components/public/programs-section";
 import { AboutPreview } from "@/components/public/about-preview";
 import { Testimonials } from "@/components/public/testimonials";
@@ -54,11 +52,7 @@ export default function Home() {
   const [posts, setPosts] = useState([]);
   const [events, setEvents] = useState([]);
   const [gallery, setGallery] = useState([]);
-  const [campaign, setCampaign] = useState(null);
 
-  const { data: campaignsData, isLoading: campaignsLoading } = useQuery<any[]>({
-    queryKey: ["campaigns", "all"],
-  });
   const { data: galleryData, isLoading: galleryLoading } = useQuery<any[]>({
     queryKey: ["gallery", "all"],
   });
@@ -70,13 +64,6 @@ export default function Home() {
   });
 
   useEffect(() => {
-    if (campaignsData) {
-      // Filter for ongoing campaigns and take the first one
-      const ongoingCampaigns = campaignsData.filter(
-        (campaign: any) => campaign.status === "ongoing",
-      );
-      setCampaign(ongoingCampaigns[0] || null);
-    }
     if (galleryData) {
       setGallery((galleryData as any) || []);
     }
@@ -87,7 +74,7 @@ export default function Home() {
     if (eventsData) {
       setEvents((eventsData as any) || []);
     }
-  }, [campaignsData, galleryData, postsData, eventsData]);
+  }, [galleryData, postsData, eventsData]);
   const impactMetrics = [
     {
       label: "Communities Impacted",
@@ -336,13 +323,6 @@ export default function Home() {
           </AnimatedContainer>
         </section>
       </AnimatedElement>
-
-      {/* Campaign Section */}
-      {campaignsLoading ? (
-        <CampaignSkeleton />
-      ) : (
-        campaign && <CampaignPreview campaign={campaign} />
-      )}
 
       <GetInvolvedSection />
 
@@ -821,10 +801,10 @@ export default function Home() {
                 <li>
                   <Link
                     style={{ fontFamily: "Quicksand" }}
-                    href="/campaigns"
+                    href="/gallery"
                     className="hover:text-primary text-lg  mt-5 transition-colors"
                   >
-                    Our Campaigns
+                    Our Gallery
                   </Link>
                 </li>
                 <li>

@@ -62,10 +62,10 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href="/campaigns"
+                  href="/gallery"
                   className="text-foreground/70 hover:text-foreground transition-colors"
                 >
-                  Our Campaigns
+                  Our Gallery
                 </Link>
               </li>
               <li>

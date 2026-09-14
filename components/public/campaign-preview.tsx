@@ -157,7 +157,7 @@ export function CampaignPreview({ campaign }: CampaignPreviewProps) {
                       Donate Now
                     </Button>
                   </Link>
-                  <Link href="/campaign" className="flex-1">
+                  <Link href="/gallery" className="flex-1">
                     <Button
                       style={{ fontFamily: "Quicksand" }}
                       variant="outline"
