@@ -99,21 +99,38 @@ export interface SponsorshipProfile {
   nationality: string;
   familyStatus: "Total Orphans" | "Single Parent";
   numberOfParents: 0 | 1 | 2;
-  guardianNames: any;
+  guardianName: string;
+  guardianContact: string;
+  guardianRelation: "caretaker" | "mom" | "dad" | "sibling" | "uncle" | "aunt" | "grandparent";
   image: {
     url: string;
     public_id: string;
   };
-  story: string;
   background: string;
-  hobbies: any;
-  interests: any;
   school: string;
   location: string;
   needs: any;
   monthlyNeed: string;
+  education?: {
+    currentLevel?: string;
+    schoolName?: string;
+    currentClass?: string;
+    academicYear?: string;
+    lastTermResult?: string;
+    graduationTarget?: string;
+    estimatedGraduationYear?: string;
+    educationNotes?: string;
+  };
+  reportCards?: Array<{
+    name?: string;
+    url?: string;
+    public_id?: string;
+    fileType?: string;
+    uploadedAt?: string;
+  }>;
   progress: number;
   sponsorshipStatus: string;
+  sponsor?: any;
 }
 
 export const mockSponsorshipProfiles: SponsorshipProfile[] = [
@@ -131,15 +148,14 @@ export const mockSponsorshipProfiles: SponsorshipProfile[] = [
     nationality: "Ugandan",
     familyStatus: "Single Parent",
     numberOfParents: 1,
-    guardianNames: ["Juliana Komagum (Mother)"],
+    guardianName: "Juliana Komagum",
+    guardianContact: "Not provided",
+    guardianRelation: "mom",
     image: {
       url: "https://thumbs.dreamstime.com/b/african-child-girl-years-old-local-beach-dar-es-salaam-nikon-d-57401857.jpg",
       public_id: "sponsorship/amina"
     },
-    story: "Amina loves reading and dreams of becoming a teacher. She lives with her mother and younger brother and needs support for school fees and supplies.",
     background: "Amina is a bright and curious learner who excels in her studies. Despite her family's financial challenges, she maintains a positive attitude and helps her mother with household chores. She wants to study hard to become a teacher and give back to her community.",
-    hobbies: ["Reading", "Storytelling", "Drawing"],
-    interests: ["Reading", "Drawing", "Math"],
     school: "St. Mary’s Primary School",
     location: "Kampala, Uganda",
     needs: ["Education", "Basic needs", "Health & Nutrition support"],
@@ -161,15 +177,14 @@ export const mockSponsorshipProfiles: SponsorshipProfile[] = [
     nationality: "Ugandan",
     familyStatus: "Total Orphans",
     numberOfParents: 0,
-    guardianNames: ["Uncle Thomas Omusu"],
+    guardianName: "Thomas Omusu",
+    guardianContact: "Not provided",
+    guardianRelation: "uncle",
     image: {
       url: "https://thumbs.dreamstime.com/b/african-child-2693809.jpg",
       public_id: "sponsorship/david"
     },
-    story: "David is bright and hardworking. He hopes to continue school after losing both parents and needs a sponsor to keep his education on track.",
     background: "David lost both parents five years ago and is being raised by his uncle. Despite this hardship, he shows remarkable resilience and academic strength. He spends his afternoons helping with farming and caring for younger siblings. David dreams of becoming a scientist and contributing to his community's development.",
-    hobbies: ["Football", "Science experiments", "Writing stories"],
-    interests: ["Science", "Football", "Writing"],
     school: "Hope Children’s School",
     location: "Mukono, Uganda",
     needs: ["Education", "Basic needs", "Health & Nutrition support"],  monthlyNeed: "$60/month",
@@ -190,15 +205,14 @@ export const mockSponsorshipProfiles: SponsorshipProfile[] = [
     nationality: "Ugandan",
     familyStatus: "Single Parent",
     numberOfParents: 1,
-    guardianNames: ["Moses Nakazi (Father)"],
+    guardianName: "Moses Nakazi",
+    guardianContact: "Not provided",
+    guardianRelation: "dad",
     image: {
       url: "https://thumbs.dreamstime.com/b/cute-african-girl-flower-hair-close-up-portrait-little-child-braids-orange-standing-outdoors-against-green-63503699.jpg",
       public_id: "sponsorship/lillian"
     },
-    story: "Lillian is a joyful preschooler who loves songs and stories. She lives with her father and needs help to access early learning and meals.",
     background: "Lillian is a cheerful and energetic child who brings joy to everyone around her. Her mother passed away three years ago, and her father works as a casual laborer to provide for the family. Despite their limited means, Lillian attends preschool with great enthusiasm. She has a natural talent for music and loves to sing traditional songs.",
-    hobbies: ["Singing", "Painting", "Playing with friends"],
-    interests: ["Singing", "Stories", "Painting"],
     school: "Bright Beginnings Preschool",
     location: "Jinja, Uganda",
     needs: ["Education", "Basic needs", "Health & Nutrition support"],
@@ -220,15 +234,14 @@ export const mockSponsorshipProfiles: SponsorshipProfile[] = [
     nationality: "Ugandan",
     familyStatus: "Total Orphans",
     numberOfParents: 0,
-    guardianNames: ["Grandmother Rose Kiplagat"],
+    guardianName: "Rose Kiplagat",
+    guardianContact: "Not provided",
+    guardianRelation: "grandparent",
     image: {
       url: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSajvAiV-qlyAIZBTwsFZVJt0wkY0w0k6WeWA&s",
       public_id: "sponsorship/samuel"
     },
-    story: "Samuel is determined to finish secondary school despite hardship. He enjoys science and plans to become an engineer.",
     background: "Samuel has shown exceptional promise despite losing both parents at age 7. He is now in secondary school and consistently earns high marks in mathematics and science. Living with his elderly grandmother, Samuel balances his studies with helping in the farm and taking care of younger cousins. His dream is to study engineering and build water systems for rural communities.",
-    hobbies: ["Reading science books", "Basketball", "Learning programming"],
-    interests: ["Science", "Basketball", "Coding"],
     school: "National High School",
     location: "Wakiso, Uganda",
     needs: ["Education", "Basic needs", "Health & Nutrition support"],  monthlyNeed: "$70/month",
@@ -249,15 +262,14 @@ export const mockSponsorshipProfiles: SponsorshipProfile[] = [
     nationality: "Ugandan",
     familyStatus: "Single Parent",
     numberOfParents: 1,
-    guardianNames: ["Miriam Okumu (Mother)"],
+    guardianName: "Miriam Okumu",
+    guardianContact: "Not provided",
+    guardianRelation: "mom",
     image: {
       url: "https://t3.ftcdn.net/jpg/03/11/48/70/360_F_311487027_oIFZmgqD5Xv1T7jrKRcXMUJEfrTOZcRD.jpg",
       public_id: "sponsorship/grace"
     },
-    story: "Grace is active and kind. She needs support for school fees and nutrition so she can continue her education happily.",
     background: "Grace is known for her infectious smile and kind heart. Her father was a fisherman who passed away when she was three years old. Now her mother works as a housemaid to support Grace and her two younger siblings. Grace is the class captain and volunteers as a peer tutor for younger students. She believes education is the key to a better future.",
-    hobbies: ["Soccer", "Traditional dancing", "Reading adventure stories"],
-    interests: ["Dancing", "Soccer", "Reading"],
     school: "Kampala Day School",
     location: "Kampala, Uganda",
     needs: ["Education", "Basic needs", "Health & Nutrition support"],  monthlyNeed: "$55/month",

@@ -133,14 +133,6 @@ export default function HeroSection({
               </p>
             </div>
 
-            {/* Story section */}
-            <motion.p
-              variants={itemVariants}
-              className="text-base leading-relaxed text-gray-700 max-w-lg"
-            >
-              {profile.story}
-            </motion.p>
-
             {/* CTA Button */}
             <motion.button
               variants={itemVariants}

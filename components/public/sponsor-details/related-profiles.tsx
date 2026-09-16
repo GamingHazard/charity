@@ -125,9 +125,6 @@ export default function RelatedProfiles({
                     initial={{ opacity: 0 }}
                     whileHover={{ opacity: 1 }}
                   >
-                    <p className="text-white text-sm sm:text-base leading-relaxed line-clamp-2">
-                      {profile.story}
-                    </p>
                   </motion.div>
 
                   {/* Support badge */}

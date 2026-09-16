@@ -82,7 +82,7 @@ export default function SponsorshipSuccessModal({
                   Sponsor Name
                 </p>
                 <p className="text-lg font-semibold text-foreground">
-                  {submissionData.sponsor.name}
+                  {submissionData.sponsor.fullName}
                 </p>
               </div>
               <div className="space-y-2">

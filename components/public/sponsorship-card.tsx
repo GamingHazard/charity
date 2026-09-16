@@ -34,10 +34,6 @@ export default function SponsorshipCard({ profile }: SponsorshipCardProps) {
               Age {profile.age} • {profile.school}
             </p>
           </div>
-          <p className="text-sm text-foreground/80 line-clamp-3">
-            {profile.story}
-          </p>
-
           <div className="flex items-center justify-between text-sm text-foreground/70">
             <span>{profile.location}</span>
             <span className="font-semibold text-primary">See details</span>

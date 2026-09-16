@@ -37,14 +37,14 @@ import {
   DollarSign,
   ArrowUpRight,
   Loader,
+  Plus,
 } from "lucide-react";
 import {
   mockSponsorshipRecords,
   PaymentRecord,
   SponsorshipRecord,
 } from "@/lib/mock-data";
-import { useQuery } from "@tanstack/react-query";
-import { set } from "zod";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/query-client";
 
 type SponsorshipStatus = SponsorshipRecord["status"];
@@ -57,11 +57,49 @@ type PaymentForm = {
   note: string;
 };
 
+type SponsorForm = {
+  name: string;
+  email: string;
+  phone: string;
+  country: string;
+  address: string;
+  city: string;
+  state: string;
+  region: string;
+  zipCode: string;
+  bio: string;
+  amount: string;
+  period: string;
+  remindByEmail: boolean;
+  paymentMethod: string;
+  childId: string;
+  startDate: string;
+};
+
 const initialPayment: PaymentForm = {
   amount: "",
   method: "Select method",
   txnId: "",
   note: "",
+};
+
+const initialSponsorForm: SponsorForm = {
+  name: "",
+  email: "",
+  phone: "",
+  country: "",
+  address: "",
+  city: "",
+  state: "",
+  region: "",
+  zipCode: "",
+  bio: "",
+  amount: "",
+  period: "Monthly",
+  remindByEmail: true,
+  paymentMethod: "zelle",
+  childId: "",
+  startDate: new Date().toISOString().slice(0, 10),
 };
 
 function getStatusClasses(status: SponsorshipStatus | string) {
@@ -80,8 +118,12 @@ function getStatusClasses(status: SponsorshipStatus | string) {
 }
 
 export default function SponsorshipsDashboard() {
+  const queryClient = useQueryClient();
   const { data: sponsorships, isLoading } = useQuery<SponsorshipRecord[]>({
     queryKey: ["sponsors", "sponsorship", "records"],
+  });
+  const { data: childrenData = [] } = useQuery<any[]>({
+    queryKey: ["children", "profiles"],
   });
 
   const [records, setRecords] = useState<SponsorshipRecord[]>(
@@ -93,9 +135,18 @@ export default function SponsorshipsDashboard() {
   );
   const [selectedRecord, setSelectedRecord] =
     useState<SponsorshipRecord | null>(null);
+  const [selectedSponsorProfile, setSelectedSponsorProfile] = useState<any>(null);
+  const [selectedSponsorChildren, setSelectedSponsorChildren] = useState<any[]>([]);
+  const [selectedSponsorSummary, setSelectedSponsorSummary] = useState<any>(null);
+  const [loadingSponsorChildren, setLoadingSponsorChildren] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [sponsorSubmitting, setSponsorSubmitting] = useState(false);
+  const [sponsorFormError, setSponsorFormError] = useState("");
   const [paymentForm, setPaymentForm] = useState(initialPayment);
+  const [sponsorForm, setSponsorForm] = useState<SponsorForm>(initialSponsorForm);
 
   const filteredRecords = useMemo(() => {
     return records.filter((record) => {
@@ -133,19 +184,209 @@ export default function SponsorshipsDashboard() {
     0,
   );
 
-  const openDetail = (record: SponsorshipRecord) => {
+  const openDetail = async (record: SponsorshipRecord) => {
     setSelectedRecord(record);
+    setSelectedSponsorProfile(record.donor || null);
     setPaymentForm(initialPayment);
+    setSelectedSponsorChildren([]);
+    setSelectedSponsorSummary(null);
+    setLoadingSponsorChildren(true);
     setIsDialogOpen(true);
+
+    try {
+      if (record.donor?._id) {
+        const response = await apiRequest("GET", `/sponsors/${record.donor._id}`);
+        const data = await response.json();
+
+        const sponsorProfile = data?.sponsor || record.donor || null;
+        const sponsorChildren = Array.isArray(data?.children)
+          ? data.children
+          : Array.isArray(data)
+            ? data
+            : [];
+
+        setSelectedSponsorProfile(sponsorProfile);
+        setSelectedSponsorChildren(sponsorChildren);
+        setSelectedSponsorSummary(data?.summary || null);
+      } else {
+        const fallbackChildren = records.filter(
+          (entry) => entry.donor?._id === record.donor?._id,
+        );
+        setSelectedSponsorChildren(fallbackChildren);
+      }
+    } catch (error) {
+      console.error("Error loading sponsor relationship summary:", error);
+      const fallbackChildren = records.filter(
+        (entry) => entry.donor?._id === record.donor?._id,
+      );
+      setSelectedSponsorChildren(fallbackChildren);
+    } finally {
+      setLoadingSponsorChildren(false);
+    }
   };
 
-  const handleUpdateStatus = (status: SponsorshipStatus) => {
+  const resetSponsorForm = () => {
+    setSponsorForm(initialSponsorForm);
+    setSponsorFormError("");
+  };
+
+  const openProfileEditor = () => {
+    const profile = selectedSponsorProfile?.profile || selectedSponsorProfile?.sponsor || {};
+    const location = selectedSponsorProfile?.location || {};
+
+    setSponsorForm((current) => ({
+      ...current,
+      name: profile.fullName || profile.name || current.name,
+      email: profile.email || current.email,
+      phone: profile.phone || current.phone,
+      country: profile.country || location.country || current.country,
+      city: profile.city || location.city || current.city,
+      state: profile.state || location.state || current.state,
+      region: profile.region || location.region || current.region,
+      zipCode: profile.zipCode || location.zipCode || current.zipCode,
+      bio: profile.bio || current.bio,
+    }));
+    setIsEditProfileOpen(true);
+  };
+
+  const handleUpdateProfile = async () => {
+    const sponsorId = selectedSponsorProfile?._id || selectedRecord?.donor?._id;
+    if (!sponsorId) return;
+
+    try {
+      const response = await apiRequest("PATCH", `/sponsors/profile/${sponsorId}`, {
+        profile: {
+          fullName: sponsorForm.name.trim(),
+          email: sponsorForm.email.trim(),
+          phone: sponsorForm.phone.trim(),
+          country: sponsorForm.country.trim(),
+          city: sponsorForm.city.trim(),
+          state: sponsorForm.state.trim(),
+          region: sponsorForm.region.trim(),
+          zipCode: sponsorForm.zipCode.trim(),
+          bio: sponsorForm.bio.trim(),
+        },
+      });
+
+      if (!response.ok) throw new Error("Failed to update sponsor profile");
+
+      const result = await response.json();
+      setSelectedSponsorProfile(result.sponsor);
+      setIsEditProfileOpen(false);
+      await queryClient.invalidateQueries({ queryKey: ["sponsors", "sponsorship", "records"] });
+    } catch (error) {
+      console.error("Error updating sponsor profile:", error);
+      setSponsorFormError("Failed to update sponsor profile. Please try again.");
+    }
+  };
+
+  const handleCreateSponsor = async () => {
+    if (
+      !sponsorForm.name.trim() ||
+      !sponsorForm.email.trim() ||
+      !sponsorForm.phone.trim() ||
+      !sponsorForm.amount.trim()
+    ) {
+      setSponsorFormError(
+        "Please provide the sponsor name, email, phone number, and donation amount.",
+      );
+      return;
+    }
+
+    const amount = Number(sponsorForm.amount);
+    if (isNaN(amount) || amount <= 0) {
+      setSponsorFormError("Please enter a valid donation amount.");
+      return;
+    }
+
+    setSponsorSubmitting(true);
+    setSponsorFormError("");
+
+    try {
+      const payload = {
+        sponsor: {
+          name: sponsorForm.name.trim(),
+          email: sponsorForm.email.trim(),
+          phone: sponsorForm.phone.trim(),
+        },
+        profile: {
+          fullName: sponsorForm.name.trim(),
+          email: sponsorForm.email.trim(),
+          phone: sponsorForm.phone.trim(),
+          country: sponsorForm.country.trim(),
+          city: sponsorForm.city.trim(),
+          state: sponsorForm.state.trim(),
+          region: sponsorForm.region.trim(),
+          zipCode: sponsorForm.zipCode.trim(),
+          bio: sponsorForm.bio.trim(),
+        },
+        childId: sponsorForm.childId || undefined,
+        child: sponsorForm.childId || undefined,
+        location: {
+          address: sponsorForm.address.trim(),
+          city: sponsorForm.city.trim(),
+          state: sponsorForm.state.trim(),
+          zipCode: sponsorForm.zipCode.trim(),
+        },
+        donation: {
+          amount,
+          period: sponsorForm.period,
+          remindByEmail: sponsorForm.remindByEmail,
+        },
+        paymentMethod: sponsorForm.paymentMethod,
+        startDate: sponsorForm.startDate,
+        status: "Active",
+        source: "dashboard",
+      };
+
+      const res = await apiRequest("POST", "/sponsors/profile/new", payload);
+      if (!res.ok) {
+        throw new Error("Failed to create sponsor profile");
+      }
+
+      await queryClient.invalidateQueries({
+        queryKey: ["sponsors", "sponsorship", "records"],
+      });
+      await queryClient.invalidateQueries({ queryKey: ["children", "profiles"] });
+
+      setIsCreateDialogOpen(false);
+      resetSponsorForm();
+    } catch (error) {
+      console.error("Error creating sponsor profile:", error);
+      setSponsorFormError("Failed to create sponsor profile. Please try again.");
+    } finally {
+      setSponsorSubmitting(false);
+    }
+  };
+
+  const handleUpdateStatus = async (status: SponsorshipStatus) => {
     if (!selectedRecord) return;
-    const updated: SponsorshipRecord = { ...selectedRecord, status };
-    setSelectedRecord(updated);
-    setRecords((current) =>
-      current.map((record) => (record._id === updated._id ? updated : record)),
-    );
+
+    try {
+      const res = await apiRequest(
+        "PATCH",
+        `/sponsors/sponsorship/${selectedRecord._id}/status`,
+        { status },
+      );
+
+      if (!res.ok) {
+        throw new Error("Failed to update sponsorship status");
+      }
+
+      const updated: SponsorshipRecord = { ...selectedRecord, status };
+      setSelectedRecord(updated);
+      setRecords((current) =>
+        current.map((record) =>
+          record._id === updated._id ? updated : record,
+        ),
+      );
+      await queryClient.invalidateQueries({
+        queryKey: ["sponsors", "sponsorship", "records"],
+      });
+      await queryClient.invalidateQueries({ queryKey: ["children", "profiles"] });
+    } catch (error) {
+      console.error("Error updating sponsorship status:", error);
+    }
   };
 
   const handleAddPayment = async () => {
@@ -213,6 +454,10 @@ export default function SponsorshipsDashboard() {
           record._id === updatedRecord._id ? updatedRecord : record,
         ),
       );
+      await queryClient.invalidateQueries({
+        queryKey: ["sponsors", "sponsorship", "records"],
+      });
+      await queryClient.invalidateQueries({ queryKey: ["children", "profiles"] });
       setPaymentForm(initialPayment);
     } catch (error) {
       console.error("Error adding payment:", error);
@@ -275,9 +520,20 @@ export default function SponsorshipsDashboard() {
             place.
           </p>
         </div>
-        <Button onClick={downloadCsv} className="w-full md:w-auto">
-          <Download className="mr-2" size={16} /> Export CSV
-        </Button>
+        <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row">
+          <Button
+            onClick={() => {
+              resetSponsorForm();
+              setIsCreateDialogOpen(true);
+            }}
+            className="w-full md:w-auto"
+          >
+            <Plus className="mr-2" size={16} /> Add sponsor profile
+          </Button>
+          <Button onClick={downloadCsv} className="w-full md:w-auto">
+            <Download className="mr-2" size={16} /> Export CSV
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3 mb-8">
@@ -513,6 +769,363 @@ export default function SponsorshipsDashboard() {
         )}
       </Card>
 
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Create sponsor profile</DialogTitle>
+            <DialogDescription>
+              Add a sponsor who can support a child and begin tracking the
+              sponsorship relationship.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-2">
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm font-medium text-foreground">
+                  Sponsor basics
+                </p>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="sponsorName">Full name</Label>
+                  <Input
+                    id="sponsorName"
+                    value={sponsorForm.name}
+                    onChange={(event) =>
+                      setSponsorForm({ ...sponsorForm, name: event.target.value })
+                    }
+                    placeholder="Sponsor full name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="sponsorEmail">Email</Label>
+                  <Input
+                    id="sponsorEmail"
+                    type="email"
+                    value={sponsorForm.email}
+                    onChange={(event) =>
+                      setSponsorForm({ ...sponsorForm, email: event.target.value })
+                    }
+                    placeholder="sponsor@example.com"
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="sponsorPhone">Phone</Label>
+                  <Input
+                    id="sponsorPhone"
+                    value={sponsorForm.phone}
+                    onChange={(event) =>
+                      setSponsorForm({ ...sponsorForm, phone: event.target.value })
+                    }
+                    placeholder="(555) 123-4567"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="sponsorCountry">Country of origin</Label>
+                  <Input
+                    id="sponsorCountry"
+                    value={sponsorForm.country}
+                    onChange={(event) =>
+                      setSponsorForm({ ...sponsorForm, country: event.target.value })
+                    }
+                    placeholder="Country"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="sponsorPaymentMethod">Payment method</Label>
+                  <Select
+                    value={sponsorForm.paymentMethod}
+                    onValueChange={(value) =>
+                      setSponsorForm({ ...sponsorForm, paymentMethod: value })
+                    }
+                  >
+                    <SelectTrigger id="sponsorPaymentMethod" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="zelle">Zelle</SelectItem>
+                      <SelectItem value="stripe">Stripe</SelectItem>
+                      <SelectItem value="check">Check</SelectItem>
+                      <SelectItem value="card">Card</SelectItem>
+                      <SelectItem value="paypal">PayPal</SelectItem>
+                      <SelectItem value="ach">ACH</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm font-medium text-foreground">
+                  Location
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="sponsorAddress">Address</Label>
+                  <Input
+                    id="sponsorAddress"
+                    value={sponsorForm.address}
+                    onChange={(event) =>
+                      setSponsorForm({ ...sponsorForm, address: event.target.value })
+                    }
+                    placeholder="Street address"
+                  />
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="sponsorCity">City</Label>
+                    <Input
+                      id="sponsorCity"
+                      value={sponsorForm.city}
+                      onChange={(event) =>
+                        setSponsorForm({ ...sponsorForm, city: event.target.value })
+                      }
+                      placeholder="City"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="sponsorState">State</Label>
+                    <Input
+                      id="sponsorState"
+                      value={sponsorForm.state}
+                      onChange={(event) =>
+                        setSponsorForm({ ...sponsorForm, state: event.target.value })
+                      }
+                      placeholder="State"
+                    />
+                  </div>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="sponsorRegion">Region</Label>
+                    <Input
+                      id="sponsorRegion"
+                      value={sponsorForm.region}
+                      onChange={(event) =>
+                        setSponsorForm({ ...sponsorForm, region: event.target.value })
+                      }
+                      placeholder="Region"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="sponsorZipCode">Zip code</Label>
+                    <Input
+                      id="sponsorZipCode"
+                      value={sponsorForm.zipCode}
+                      onChange={(event) =>
+                        setSponsorForm({ ...sponsorForm, zipCode: event.target.value })
+                      }
+                      placeholder="ZIP code"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="sponsorBio">Bio</Label>
+                  <textarea
+                    id="sponsorBio"
+                    value={sponsorForm.bio}
+                    onChange={(event) =>
+                      setSponsorForm({ ...sponsorForm, bio: event.target.value })
+                    }
+                    placeholder="Tell us about the sponsor"
+                    className="min-h-24 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm font-medium text-foreground">
+                  Donation details
+                </p>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="sponsorAmount">Amount</Label>
+                  <Input
+                    id="sponsorAmount"
+                    type="number"
+                    value={sponsorForm.amount}
+                    onChange={(event) =>
+                      setSponsorForm({ ...sponsorForm, amount: event.target.value })
+                    }
+                    placeholder="150"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="sponsorPeriod">Period</Label>
+                  <Select
+                    value={sponsorForm.period}
+                    onValueChange={(value) =>
+                      setSponsorForm({ ...sponsorForm, period: value })
+                    }
+                  >
+                    <SelectTrigger id="sponsorPeriod" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Monthly">Monthly</SelectItem>
+                      <SelectItem value="3 Months">3 Months</SelectItem>
+                      <SelectItem value="6 Months">6 Months</SelectItem>
+                      <SelectItem value="Yearly">Yearly</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="sponsorStartDate">Start date</Label>
+                <Input
+                  id="sponsorStartDate"
+                  type="date"
+                  value={sponsorForm.startDate}
+                  onChange={(event) =>
+                    setSponsorForm({ ...sponsorForm, startDate: event.target.value })
+                  }
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  id="remindByEmail"
+                  type="checkbox"
+                  checked={sponsorForm.remindByEmail}
+                  onChange={(event) =>
+                    setSponsorForm({
+                      ...sponsorForm,
+                      remindByEmail: event.target.checked,
+                    })
+                  }
+                  className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                />
+                <Label htmlFor="remindByEmail">Send reminders by email</Label>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm font-medium text-foreground">
+                  Optional child assignment
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="sponsorChild">Link to child</Label>
+                <Select
+                  value={sponsorForm.childId}
+                  onValueChange={(value) =>
+                    setSponsorForm({ ...sponsorForm, childId: value })
+                  }
+                >
+                  <SelectTrigger id="sponsorChild" className="w-full">
+                    <SelectValue placeholder="Select a child (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {childrenData.map((child) => (
+                      <SelectItem key={child._id} value={child._id}>
+                        {child.firstName} {child.secondName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {sponsorFormError ? (
+              <p className="text-sm text-red-500">{sponsorFormError}</p>
+            ) : null}
+          </div>
+
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  resetSponsorForm();
+                  setSponsorFormError("");
+                }}
+              >
+                Cancel
+              </Button>
+            </DialogClose>
+            <Button onClick={handleCreateSponsor} disabled={sponsorSubmitting}>
+              {sponsorSubmitting ? (
+                <>
+                  Creating... <Loader className="ml-2 animate-spin" size={16} />
+                </>
+              ) : (
+                "Create sponsor"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isEditProfileOpen} onOpenChange={setIsEditProfileOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Complete sponsor profile</DialogTitle>
+            <DialogDescription>
+              Add or correct the sponsor information without changing sponsorship payments.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-2 md:grid-cols-2">
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="editSponsorName">Full name</Label>
+              <Input id="editSponsorName" value={sponsorForm.name} onChange={(event) => setSponsorForm({ ...sponsorForm, name: event.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="editSponsorEmail">Email</Label>
+              <Input id="editSponsorEmail" type="email" value={sponsorForm.email} onChange={(event) => setSponsorForm({ ...sponsorForm, email: event.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="editSponsorPhone">Phone</Label>
+              <Input id="editSponsorPhone" value={sponsorForm.phone} onChange={(event) => setSponsorForm({ ...sponsorForm, phone: event.target.value })} />
+            </div>
+            {[
+              ["country", "Country of origin"],
+              ["city", "City"],
+              ["state", "State"],
+              ["region", "Region"],
+              ["zipCode", "Zip code"],
+            ].map(([field, label]) => (
+              <div className="space-y-2" key={field}>
+                <Label htmlFor={`editSponsor${field}`}>{label}</Label>
+                <Input
+                  id={`editSponsor${field}`}
+                  value={sponsorForm[field as keyof SponsorForm] as string}
+                  onChange={(event) => setSponsorForm({ ...sponsorForm, [field]: event.target.value })}
+                />
+              </div>
+            ))}
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="editSponsorBio">Bio</Label>
+              <textarea
+                id="editSponsorBio"
+                value={sponsorForm.bio}
+                onChange={(event) => setSponsorForm({ ...sponsorForm, bio: event.target.value })}
+                className="min-h-24 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+              />
+            </div>
+            {sponsorFormError ? <p className="text-sm text-red-500 md:col-span-2">{sponsorFormError}</p> : null}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditProfileOpen(false)}>Cancel</Button>
+            <Button onClick={handleUpdateProfile}>Save profile</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-h-175 overflow-y-auto">
           <DialogHeader>
@@ -546,20 +1159,29 @@ export default function SponsorshipsDashboard() {
                     </div>
                     <div>
                       <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">
-                        Donor
+                        Sponsor profile
                       </p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="mt-2"
+                        onClick={openProfileEditor}
+                      >
+                        Complete profile
+                      </Button>
                       <p className="text-lg font-semibold text-foreground">
-                        {selectedRecord.donor?.sponsor?.name}
+                        {selectedSponsorProfile?.sponsor?.name || selectedSponsorProfile?.name || selectedRecord.donor?.sponsor?.name}
                       </p>
                       <a
-                        href={`mailto:${selectedRecord.donor?.sponsor?.email}`}
+                        href={`mailto:${selectedSponsorProfile?.sponsor?.email || selectedSponsorProfile?.email || selectedRecord.donor?.sponsor?.email}`}
                         className="text-sm text-accent underline"
                       >
-                        {selectedRecord.donor?.sponsor?.email}
+                        {selectedSponsorProfile?.sponsor?.email || selectedSponsorProfile?.email || selectedRecord.donor?.sponsor?.email}
                       </a>{" "}
-                      - {selectedRecord.donor?.sponsor?.phone}
+                      - {selectedSponsorProfile?.sponsor?.phone || selectedSponsorProfile?.phone || selectedRecord.donor?.sponsor?.phone}
                       <p className="text-sm text-foreground/70">
-                        {selectedRecord.donor?.phone}
+                        {selectedSponsorProfile?.location?.city || selectedRecord.donor?.phone || "Location not provided"}
                       </p>
                     </div>
                     <div className="grid gap-3 sm:grid-cols-2">
@@ -581,6 +1203,96 @@ export default function SponsorshipsDashboard() {
                             .map((p) => p.amount)
                             .reduce((sum, amount) => sum + amount, 0)}
                         </p>
+                      </div>
+                    </div>
+
+                    <div className="rounded-lg border border-border bg-background p-4">
+                      <div className="mb-3 flex items-center justify-between gap-3">
+                        <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">
+                          Sponsor relationship
+                        </p>
+                        <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+                          {(selectedSponsorSummary?.totalChildren ?? selectedSponsorChildren.length) || 0} children
+                        </span>
+                      </div>
+
+                      <div className="grid gap-3 sm:grid-cols-3">
+                        <div className="rounded-md bg-slate-100 p-3">
+                          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                            Active
+                          </p>
+                          <p className="mt-2 text-lg font-semibold text-foreground">
+                            {selectedSponsorSummary?.activeChildren ??
+                              selectedSponsorChildren.filter((entry) => entry.status === "Active").length}
+                          </p>
+                        </div>
+                        <div className="rounded-md bg-slate-100 p-3">
+                          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                            Pledged
+                          </p>
+                          <p className="mt-2 text-lg font-semibold text-foreground">
+                            ${selectedSponsorSummary?.totalPledged ??
+                              selectedSponsorChildren.reduce(
+                                (sum, entry) => sum + (entry.amount || 0),
+                                0,
+                              )}
+                          </p>
+                        </div>
+                        <div className="rounded-md bg-slate-100 p-3">
+                          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                            Paid
+                          </p>
+                          <p className="mt-2 text-lg font-semibold text-foreground">
+                            ${selectedSponsorSummary?.totalPaid ??
+                              selectedSponsorChildren.reduce(
+                                (sum, entry) => sum + (entry.totalPaid || 0),
+                                0,
+                              )}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 space-y-3">
+                        {loadingSponsorChildren ? (
+                          <div className="space-y-2">
+                            <Skeleton className="h-10 w-full" />
+                            <Skeleton className="h-10 w-full" />
+                          </div>
+                        ) : selectedSponsorChildren.length > 0 ? (
+                          selectedSponsorChildren.map((entry, index) => {
+                            const child = entry.child || {};
+                            const childName =
+                              child.firstName || child.name || "Unnamed child";
+                            const lastPayment = entry.lastPayment
+                              ? new Date(entry.lastPayment).toLocaleDateString()
+                              : "No payment";
+
+                            return (
+                              <div
+                                key={entry._id || index}
+                                className="flex items-center justify-between gap-3 rounded-md border border-border bg-slate-50 p-3"
+                              >
+                                <div>
+                                  <p className="font-medium text-foreground">
+                                    {childName}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {entry.status} • ${entry.amount || 0} • {lastPayment}
+                                  </p>
+                                </div>
+                                <span
+                                  className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${getStatusClasses(entry.status)}`}
+                                >
+                                  {entry.status}
+                                </span>
+                              </div>
+                            );
+                          })
+                        ) : (
+                          <p className="rounded-md border border-dashed border-border p-3 text-sm text-foreground/70">
+                            No children are currently linked to this sponsor.
+                          </p>
+                        )}
                       </div>
                     </div>
 

@@ -57,13 +57,27 @@ export default function Step1SponsorBio({
         <Input
           type="text"
           placeholder="Enter your full name"
-          value={data.name || ""}
-          onChange={(e) => handleChange("name", e.target.value)}
-          className={`bg-background rounded-2xl ${errors.name ? "border-destructive" : ""}`}
+          value={data.fullName || ""}
+          onChange={(e) => handleChange("fullName", e.target.value)}
+          className={`bg-background rounded-2xl ${errors.fullName ? "border-destructive" : ""}`}
         />
-        {errors.name && (
-          <p className="text-xs text-destructive mt-1">{errors.name}</p>
+        {errors.fullName && (
+          <p className="text-xs text-destructive mt-1">{errors.fullName}</p>
         )}
+      </motion.div>
+
+      <motion.div variants={itemVariants}>
+        <label className="block text-sm font-semibold text-foreground mb-2">
+          About you (optional)
+        </label>
+        <textarea
+          value={data.bio || ""}
+          onChange={(e) => handleChange("bio", e.target.value)}
+          placeholder="Tell us a little about yourself"
+          maxLength={1000}
+          className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+        />
+        {errors.bio && <p className="text-xs text-destructive mt-1">{errors.bio}</p>}
       </motion.div>
 
       <motion.div variants={itemVariants}>

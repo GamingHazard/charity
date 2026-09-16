@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 const sidebarItems = [
   { href: "/dashboard", label: "Dashboard", icon: "📊" },
   { href: "/dashboard/children", label: "Children", icon: "🧒" },
-  { href: "/dashboard/sponsorships", label: "Sponsorships", icon: "💝" },
+  { href: "/dashboard/sponsorships", label: "Sponsors", icon: "💝" },
   // { href: "/dashboard/programs", label: "Programs", icon: "📚" },
   // { href: "/dashboard/donations", label: "Donations", icon: "💰" },
   { href: "/dashboard/staff", label: "Staff & Volunteers", icon: "👥" },

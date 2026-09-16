@@ -72,7 +72,7 @@ export default function SponsorshipFormModal({
       formData.location.address,
       formData.location.city,
       formData.location.state,
-      formData.location.zip,
+      formData.location.zipCode,
     ]
       .filter(Boolean)
       .join(", ");
@@ -141,7 +141,7 @@ export default function SponsorshipFormModal({
 
         if (method === "zelle") {
           nextPayment.zelleName =
-            nextPayment.zelleName || prev.sponsor.name || "";
+            nextPayment.zelleName || prev.sponsor.fullName || "";
           nextPayment.zellePhone =
             nextPayment.zellePhone || prev.sponsor.phone || "";
         } else if (method === "check") {
@@ -153,7 +153,7 @@ export default function SponsorshipFormModal({
               prev.location.address,
               prev.location.city,
               prev.location.state,
-              prev.location.zip,
+              prev.location.zipCode,
             ]
               .filter(Boolean)
               .join(", ") ||
@@ -189,14 +189,33 @@ export default function SponsorshipFormModal({
     setIsSubmitting(true);
     try {
       const payload = {
-        sponsor: formData.sponsor as SponsorData,
-        location: formData.location as LocationData,
+        profile: {
+          fullName: formData.sponsor.fullName,
+          email: formData.sponsor.email,
+          phone: formData.sponsor.phone,
+          bio: formData.sponsor.bio || "",
+          country: formData.location.country || "",
+          city: formData.location.city || "",
+          state: formData.location.state || "",
+          region: formData.location.region || "",
+          zipCode: formData.location.zipCode || "",
+        },
         donation: formData.donation as DonationData,
         paymentMethod: formData.paymentMethod as PaymentMethodData,
         childId: childProfile._id,
+        source: "website",
       };
 
-      await apiRequest("POST", `/sponsors/profile/new`, payload);
+      const response = await apiRequest("POST", `/sponsors/profile/new`, payload);
+      const result = await response.json();
+
+      setSubmissionData({
+        ...formData,
+        childId: childProfile._id,
+        childName: `${childProfile.firstName} ${childProfile.secondName}`.trim(),
+        submissionId: result.sponsor?._id || `sponsor_${Date.now()}`,
+        submittedAt: new Date().toISOString(),
+      });
 
       setShowSuccess(true);
 
@@ -364,7 +383,7 @@ export default function SponsorshipFormModal({
                     paymentMethod={formData.paymentMethod.paymentMethod || ""}
                     donationAmount={formData.donation.amount || 0}
                     donationPeriod={formData.donation.period || "Monthly"}
-                    defaultName={formData.sponsor.name || ""}
+                    defaultName={formData.sponsor.fullName || ""}
                     defaultEmail={formData.sponsor.email || ""}
                     defaultPhone={formData.sponsor.phone || ""}
                     defaultAddress={getDefaultMailingAddress()}

@@ -2,16 +2,19 @@ import { z } from "zod";
 
 // Zod schemas for form validation
 export const sponsorBioSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
+  fullName: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
   phone: z.string().regex(/^\d{10,}$/, "Phone must be at least 10 digits"),
+  bio: z.string().max(1000, "Bio must be 1000 characters or less").optional(),
 });
 
 export const locationSchema = z.object({
-  address: z.string().min(5, "Address must be at least 5 characters"),
-  city: z.string().min(2, "City must be at least 2 characters"),
-  state: z.string().min(2, "State/Province must be at least 2 characters"),
-  zip: z.string().min(3, "Zip/Postal code must be at least 3 characters"),
+  address: z.string().optional(),
+  country: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  region: z.string().optional(),
+  zipCode: z.string().optional(),
 });
 
 export const donationSchema = z.object({
@@ -102,8 +105,8 @@ export const SPONSORSHIP_PERIODS = [
 
 // Default form data
 export const DEFAULT_FORM_DATA: SponsorshipFormData = {
-  sponsor: { name: "", email: "", phone: "" },
-  location: { address: "", city: "", state: "", zip: "" },
+  sponsor: { fullName: "", email: "", phone: "", bio: "" },
+  location: { address: "", country: "", city: "", state: "", region: "", zipCode: "" },
   donation: { amount: 50, period: "Monthly", remindByEmail: false },
   paymentMethod: { paymentMethod: "card" },
   payment: {

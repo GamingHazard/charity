@@ -73,6 +73,19 @@ export default function Step2Location({
       <motion.div variants={itemVariants} className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className="block text-sm font-medium text-foreground mb-2">
+            Country of origin *
+          </label>
+          <Input
+            type="text"
+            placeholder="e.g., United States"
+            value={data.country || ""}
+            onChange={(e) => handleChange("country", e.target.value)}
+            className="w-full rounded-lg border border-border bg-background px-4 py-2 text-foreground placeholder-muted-foreground transition focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
+          />
+          {errors.country && <p className="mt-1 text-sm text-destructive">{errors.country}</p>}
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-foreground mb-2">
             City *
           </label>
           <Input
@@ -104,6 +117,20 @@ export default function Step2Location({
         </div>
       </motion.div>
 
+      <motion.div variants={itemVariants}>
+        <label className="block text-sm font-medium text-foreground mb-2">
+          Region *
+        </label>
+        <Input
+          type="text"
+          placeholder="e.g., Northeast"
+          value={data.region || ""}
+          onChange={(e) => handleChange("region", e.target.value)}
+          className="w-full rounded-lg border border-border bg-background px-4 py-2 text-foreground placeholder-muted-foreground transition focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
+        />
+        {errors.region && <p className="mt-1 text-sm text-destructive">{errors.region}</p>}
+      </motion.div>
+
       {/* Zip Code */}
       <motion.div variants={itemVariants}>
         <label className="block text-sm font-medium text-foreground mb-2">
@@ -112,12 +139,12 @@ export default function Step2Location({
         <Input
           type="text"
           placeholder="e.g., 10001"
-          value={data.zip || ""}
-          onChange={(e) => handleChange("zip", e.target.value)}
+          value={data.zipCode || ""}
+          onChange={(e) => handleChange("zipCode", e.target.value)}
           className="w-full rounded-lg border border-border bg-background px-4 py-2 text-foreground placeholder-muted-foreground transition focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
         />
-        {errors.zip && (
-          <p className="mt-1 text-sm text-destructive">{errors.zip}</p>
+        {errors.zipCode && (
+          <p className="mt-1 text-sm text-destructive">{errors.zipCode}</p>
         )}
       </motion.div>
     </motion.div>
