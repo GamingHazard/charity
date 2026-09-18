@@ -8,6 +8,15 @@ export interface ContentItem {
   createdAt?: string;
 }
 
+export function normalizeContentItem(item: ContentItem & { updatedAt?: string; _id?: string }): ContentItem {
+  return {
+    ...item,
+    id: item.id || item._id || `content-${Date.now()}`,
+    lastUpdated: item.updatedAt ? item.updatedAt.split('T')[0] : item.lastUpdated,
+    createdAt: item.createdAt ? item.createdAt.split('T')[0] : item.createdAt,
+  };
+}
+
 export const CONTENT_SECTIONS = [
   'Home',
   'About',

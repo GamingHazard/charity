@@ -5,8 +5,12 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { AnimatedElement } from "@/components/motion/animated-elements";
 import ScrollReveal from "../../lib/fontAnimation";
+import { useContent } from "@/hooks/use-content";
 
 export function Hero() {
+  const { data: content = [] } = useContent("Home");
+  const heroContent = content.find((item) => item.id === "hero");
+  const heroSubtitle = content.find((item) => item.id === "hero-subtitle");
   const images = useMemo(
     () => [
       "https://img.freepik.com/premium-photo/group-young-african-children-linung-up-their-city-home-balcony-smiling-bypassers_875825-151309.jpg?semt=ais_hybrid&w=740&q=80",
@@ -72,7 +76,7 @@ export function Hero() {
                   style={{ fontFamily: "Quicksand" }}
                   className="text-3xl sm:text-4xl md:text-6xl lg:text-6xl xl:text-7xl font-bold text-white text-balance leading-tight drop-shadow-lg "
                 >
-                  Planting Seeds of Love & Hope
+                  {heroContent?.content.split(" - ")[0] || "Planting Seeds of Love & Hope"}
                 </h1>
               </AnimatedElement>
 
@@ -80,8 +84,7 @@ export function Hero() {
                 style={{ fontFamily: "Quicksand" }}
                 className="text-lg sm:text-xl md:text-2xl text-white/90 max-w-3xl mx-auto lg:mx-0 text-balance drop-shadow-md"
               >
-                Empowering communities through education, nutrition, and
-                sustainable development. One seed at a time.
+                {heroSubtitle?.content || "Empowering communities through education, nutrition, and sustainable development. One seed at a time."}
               </p>
             </div>
 

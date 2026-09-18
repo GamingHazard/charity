@@ -446,29 +446,31 @@ export default function ChildDetailPage() {
                   <p className="text-xs uppercase tracking-wide text-foreground/60">Sponsor</p>
                   <div className="mt-3 flex items-center gap-3">
                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                      {sponsorProfile.name?.charAt(0)?.toUpperCase() || "S"}
+                      {sponsorProfile?.profile?.fullName?.charAt(0)?.toUpperCase() || "S"}
                     </div>
                     <div>
-                      <p className="font-semibold text-foreground">{sponsorProfile.name}</p>
-                      <p className="text-sm text-foreground/70">{sponsorProfile.email}</p>
+                      <p className="font-semibold text-foreground">{sponsorProfile?.profile?.fullName}</p>
+                      <p className="text-sm text-foreground/70">{sponsorProfile?.profile?.email}</p>
                     </div>
                   </div>
                 </div>
                 <div className="rounded-lg bg-muted p-4">
                   <p className="text-xs uppercase tracking-wide text-foreground/60">Contact</p>
                   <ul className="mt-3 space-y-2 text-sm text-foreground/80">
-                    <li><span className="font-medium text-foreground">Phone:</span> {sponsorProfile.phone || "Not provided"}</li>
-                    <li><span className="font-medium text-foreground">Address:</span> {(profile as any).sponsor?.location ? [
-                        (profile as any).sponsor.location.address,
-                        (profile as any).sponsor.location.city,
-                        (profile as any).sponsor.location.state,
-                        (profile as any).sponsor.location.zipCode,
-                      ].filter(Boolean).join(", ") || "Not provided" : "Not provided"}</li>
+                    <li><span className="font-medium text-foreground">Phone:</span> {sponsorProfile?.profile?.phone || "Not provided"}</li>
+                    <li><span className="font-medium text-foreground">Address:</span> { [
+                        (sponsorProfile as any)?.profile?.address,
+                        (sponsorProfile as any)?.profile?.city,
+                        (sponsorProfile as any)?.profile?.state,
+                      ].filter(Boolean).join(", ") ||  "Not provided"}</li>
+                    <li><span className="font-medium text-foreground">Zip:</span> {sponsorProfile?.profile?.zipCode || "Not provided"}</li>
+                    <li><span className="font-medium text-foreground">Country:</span> {sponsorProfile?.profile?.country || "Not provided"}</li>
+                      
                   </ul>
                 </div>
                 <div className="rounded-lg bg-muted p-4">
-                  <p className="text-xs uppercase tracking-wide text-foreground/60">Assigned on</p>
-                  <p className="mt-3 text-base font-semibold text-foreground">{formatDisplayDate((profile as any).sponsor?.startDate)}</p>
+                  <p className="text-xs uppercase tracking-wide text-foreground/60">Created on</p>
+                  <p className="mt-3 text-base font-semibold text-foreground">{formatDisplayDate(sponsorProfile.createdAt)}</p>
                 </div>
                 <div className="rounded-lg bg-muted p-4">
                   <p className="text-xs uppercase tracking-wide text-foreground/60">Plan</p>
@@ -497,7 +499,7 @@ export default function ChildDetailPage() {
                 {history.map((record: any, index: number) => {
                   const donor = record.donor || {};
                   const sponsorName = donor.profile?.fullName || donor.sponsor?.name || donor.name || "Unknown sponsor";
-                  const amount = Number(record.amount ?? record.donation?.amount ?? donor.donation?.amount ?? 0);
+                  const amount = Number(donor.donation?.amount ?? 0);
                   const status = record.status || "Pending";
                   const startDate = record.startDate ? new Date(record.startDate).toLocaleDateString("en-US", {
                     year: "numeric",
@@ -533,7 +535,7 @@ export default function ChildDetailPage() {
 
         {activeTab === "documents" && (
           <div className="rounded-xl border border-border bg-card p-4">
-            <h3 className="mb-3 text-lg font-semibold text-foreground">Documents</h3>
+            <h3 className="mb-3 text-lg font-semibold text-foreground">Child's Report cards </h3>
             {reportCards.length > 0 ? (
               <div className="grid gap-3 md:grid-cols-2">
                 {reportCards.map((card: any, index: number) => (

@@ -44,7 +44,7 @@ import { uploadImageToCloudinary } from "@/lib/cloudinary-upload";
 import { apiRequest } from "@/lib/query-client";
 import { useQuery } from "@tanstack/react-query";
 
-const initialFormState = {
+const initialFormState:any = {
   _id: "",
   name: "",
   firstName: "",
@@ -78,10 +78,13 @@ const initialFormState = {
   needsInput: "",
   monthlyNeed: "",
   education: {
+    isStudying: false,
     currentLevel: "",
     schoolName: "",
+    classGrade: "",
     currentClass: "",
     academicYear: "",
+    expectedGraduationYear: "",
     lastTermResult: "",
     graduationTarget: "",
     estimatedGraduationYear: "",
@@ -187,7 +190,7 @@ export default function ChildrenDashboard() {
   });
 
   const { data: sponsorRecords, isLoading: isLoadingSponsors } = useQuery({
-    queryKey: ["sponsors", "sponsorship", "records"],
+    queryKey: ["sponsors", "profiles", "all"],
   });
 
   const [children, setChildren] = useState<SponsorshipProfile[]>([]);
@@ -223,16 +226,6 @@ export default function ChildrenDashboard() {
     "overview" | "education" | "family" | "sponsor" | "history" | "documents"
   >("overview");
   const [assignmentForm, setAssignmentForm] = useState({
-    sponsorName: "",
-    sponsorEmail: "",
-    sponsorPhone: "",
-    address: "",
-    city: "",
-    state: "",
-    zipCode: "",
-    amount: "",
-    period: "Monthly",
-    paymentMethod: "zelle",
     startDate: new Date().toISOString().slice(0, 10),
     selectedSponsorId: "",
   });
@@ -258,26 +251,29 @@ export default function ChildrenDashboard() {
   }, [children, searchTerm, statusFilter]);
 
   const sponsorOptions = useMemo(() => {
-    if (!sponsorRecords) return [];
+    if (!Array.isArray(sponsorRecords)) return [];
 
     const seen = new Set<string>();
 
     return sponsorRecords
-      .filter((record: any) => record?.donor?.sponsor)
       .map((record: any) => {
-        const sponsor = record.donor.sponsor;
-        const key = `${sponsor.email || ""}-${sponsor.phone || ""}-${sponsor.name || ""}`;
+        // /sponsors/profiles/all returns sponsor documents; older responses
+        // may still be nested under donor.sponsor.
+        const sponsor = record?.profile || record?.sponsor || record?.donor?.sponsor || {};
+        const option = {
+          _id: String(record?._id || record?.donor?._id || ""),
+          name: sponsor.fullName || sponsor.name || "",
+          email: sponsor.email || "",
+          phone: sponsor.phone || "",
+        };
+        const key = `${option.email}-${option.phone}-${option.name}`;
 
-        if (seen.has(key)) {
+        if (!option._id || !option.name || !option.email || seen.has(key)) {
           return null;
         }
 
         seen.add(key);
-
-        return {
-          _id: record.donor?._id || record._id,
-          ...sponsor,
-        };
+        return option;
       })
       .filter(Boolean);
   }, [sponsorRecords]);
@@ -408,10 +404,16 @@ export default function ChildrenDashboard() {
         : child.needs,
       monthlyNeed: child.monthlyNeed,
       education: {
+        isStudying: child.education?.isStudying ?? Boolean(child.education?.currentLevel),
         currentLevel: child.education?.currentLevel || "",
         schoolName: child.education?.schoolName || child.school || "",
+        classGrade: child.education?.classGrade || child.education?.currentClass || "",
         currentClass: child.education?.currentClass || "",
         academicYear: child.education?.academicYear || "",
+        expectedGraduationYear:
+          child.education?.expectedGraduationYear ||
+          child.education?.estimatedGraduationYear ||
+          "",
         lastTermResult: child.education?.lastTermResult || "",
         graduationTarget: child.education?.graduationTarget || "",
         estimatedGraduationYear: child.education?.estimatedGraduationYear || "",
@@ -420,7 +422,7 @@ export default function ChildrenDashboard() {
       reportCards: child.reportCards || [],
       progress: child.progress,
       sponsorshipStatus: child.sponsorshipStatus,
-    });
+    } as FormState);
     setImagePreview(child.image.url);
     setIsDialogOpen(true);
   };
@@ -473,16 +475,6 @@ export default function ChildrenDashboard() {
   const openAssignSponsor = (child: SponsorshipProfile) => {
     setAssigningChild(child);
     setAssignmentForm({
-      sponsorName: "",
-      sponsorEmail: "",
-      sponsorPhone: "",
-      address: child.location || "",
-      city: "",
-      state: "",
-      zipCode: "",
-      amount: child.monthlyNeed || "",
-      period: "Monthly",
-      paymentMethod: "zelle",
       startDate: new Date().toISOString().slice(0, 10),
       selectedSponsorId: "",
     });
@@ -496,20 +488,8 @@ export default function ChildrenDashboard() {
       (option: any) => option._id === assignmentForm.selectedSponsorId,
     );
 
-    const sponsorPayload = selectedSponsor
-      ? {
-          name: selectedSponsor.name,
-          email: selectedSponsor.email,
-          phone: selectedSponsor.phone,
-        }
-      : {
-          name: assignmentForm.sponsorName.trim(),
-          email: assignmentForm.sponsorEmail.trim(),
-          phone: assignmentForm.sponsorPhone.trim(),
-        };
-
-    if (!sponsorPayload.name || !sponsorPayload.email || !sponsorPayload.phone) {
-      setFormError("Please provide a sponsor name, email and phone number.");
+    if (!selectedSponsor) {
+      setFormError("Please select a sponsor.");
       return;
     }
 
@@ -520,30 +500,26 @@ export default function ChildrenDashboard() {
       const payload = {
         childId: assigningChild._id,
         child: assigningChild._id,
-        sponsorId: selectedSponsor?._id || undefined,
-        sponsor: sponsorPayload,
+        sponsorId: selectedSponsor._id,
+        sponsor: {
+          name: selectedSponsor.name,
+          email: selectedSponsor.email,
+          phone: selectedSponsor.phone,
+        },
         location: {
-          address: assignmentForm.address.trim(),
-          city: assignmentForm.city.trim(),
-          state: assignmentForm.state.trim(),
-          zipCode: assignmentForm.zipCode.trim(),
+          address: assigningChild.location || "",
         },
         donation: {
-          amount: Number(assignmentForm.amount || 0),
-          period: assignmentForm.period,
+          amount: Number(String(assigningChild.monthlyNeed || "").replace(/[^0-9.]/g, "")) || 0,
+          period: "Monthly",
           remindByEmail: true,
         },
-        paymentMethod: assignmentForm.paymentMethod,
+        paymentMethod: "zelle",
         startDate: assignmentForm.startDate,
         status: "Active",
       };
 
-      const endpoint = assigningChild.sponsor ? "/sponsors/reassign" : "/sponsors/profile/new";
-      const res = await apiRequest(
-        assigningChild.sponsor ? "PATCH" : "POST",
-        endpoint,
-        payload,
-      );
+      const res = await apiRequest("PATCH", "/sponsors/reassign", payload);
       const data = await res.json();
 
       const updatedChild = {
@@ -608,9 +584,16 @@ export default function ChildrenDashboard() {
       }
     }
 
-    if (wizardStep === 2) {
-      if (!formState.school.trim() || !formState.location.trim()) {
-        setFormError("Please fill in school and location details.");
+    if (wizardStep === 3) {
+      if (!formState.location.trim()) {
+        setFormError("Please provide the child's location.");
+        return false;
+      }
+    }
+
+    if (wizardStep === 4 && formState.education.isStudying) {
+      if (!formState.education.schoolName.trim() || !formState.education.classGrade) {
+        setFormError("Please provide the school and class or grade.");
         return false;
       }
     }
@@ -623,7 +606,7 @@ export default function ChildrenDashboard() {
     if (!validateStep()) {
       return;
     }
-    setWizardStep((current) => Math.min(current + 1, 3));
+    setWizardStep((current) => Math.min(current + 1, 6));
   };
 
   const handleBack = () => {
@@ -644,12 +627,12 @@ export default function ChildrenDashboard() {
       const nextEducation = {
         ...formState.education,
         schoolName: formState.education.schoolName || formState.school.trim(),
-        estimatedGraduationYear:
-          formState.education.estimatedGraduationYear ||
-          estimateGraduationYear(
-            formState.education.currentLevel,
-            formState.education.currentClass,
-          ),
+        classGrade:
+          formState.education.classGrade || formState.education.currentClass,
+        currentClass:
+          formState.education.classGrade || formState.education.currentClass,
+        expectedGraduationYear:
+          formState.education.expectedGraduationYear || "",
       };
 
       const payload: any = {
@@ -680,7 +663,6 @@ export default function ChildrenDashboard() {
           .filter(Boolean),
         monthlyNeed: formState.monthlyNeed,
         education: nextEducation,
-        reportCards: formState.reportCards || [],
         sponsorshipStatus: formState.sponsorshipStatus,
       };
       if (editingChild) {
@@ -694,6 +676,29 @@ export default function ChildrenDashboard() {
         res = await apiRequest("POST", `/children/profile/new`, payload);
       }
       data = await res.json();
+
+      if (!editingChild && data.profile?._id && assignmentForm.selectedSponsorId) {
+        const selectedSponsor = sponsorOptions.find(
+          (option: any) => option._id === assignmentForm.selectedSponsorId,
+        );
+        if (selectedSponsor) {
+          try {
+            await apiRequest("PATCH", "/sponsors/reassign", {
+              childId: data.profile._id,
+              child: data.profile._id,
+              sponsorId: selectedSponsor._id,
+              sponsor: { name: selectedSponsor.name, email: selectedSponsor.email, phone: selectedSponsor.phone },
+              donation: { amount: 0, period: "Monthly", remindByEmail: true },
+              paymentMethod: "zelle",
+              startDate: assignmentForm.startDate,
+              status: "Active",
+            });
+          } catch (assignmentError) {
+            console.error("Child profile created but sponsor assignment failed:", assignmentError);
+            setFormError("Profile created, but sponsor assignment failed. You can assign the sponsor from the child list.");
+          }
+        }
+      }
 
       newProfile = {
         ...data.profile,
@@ -728,7 +733,7 @@ export default function ChildrenDashboard() {
     }
   };
 
-  const stepContent = () => {
+  const legacyStepContent = () => {
     switch (wizardStep) {
       case 1:
         return (
@@ -849,6 +854,9 @@ export default function ChildrenDashboard() {
                 }
               />
             </div>
+
+
+            
             <div className="space-y-2">
               <Label htmlFor="nationality">Nationality</Label>
               <Input
@@ -1296,6 +1304,67 @@ export default function ChildrenDashboard() {
     }
   };
 
+  const stepContent = () => {
+    switch (wizardStep) {
+      case 1:
+        return (
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2"><Label htmlFor="firstName">First name</Label><Input id="firstName" value={formState.firstName} onChange={(event) => setFormState({ ...formState, firstName: event.target.value })} /></div>
+            <div className="space-y-2"><Label htmlFor="secondName">Second name</Label><Input id="secondName" value={formState.secondName} onChange={(event) => setFormState({ ...formState, secondName: event.target.value })} /></div>
+            <div className="space-y-2"><Label htmlFor="givenName">Preferred name</Label><Input id="givenName" value={formState.givenName} onChange={(event) => setFormState({ ...formState, givenName: event.target.value })} /></div>
+            <div className="space-y-2"><Label htmlFor="gender">Gender</Label><Select value={formState.gender} onValueChange={(value) => setFormState({ ...formState, gender: value as "Female" | "Male" })}><SelectTrigger id="gender"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Female">Female</SelectItem><SelectItem value="Male">Male</SelectItem></SelectContent></Select></div>
+            <div className="space-y-2"><Label htmlFor="dateOfBirth">Date of birth</Label><Input id="dateOfBirth" type="date" value={formState.dateOfBirth} onChange={(event) => setFormState({ ...formState, dateOfBirth: event.target.value })} /></div>
+            <div className="space-y-2"><Label htmlFor="age">Age</Label><Input id="age" type="number" min={0} value={formState.age} onChange={(event) => setFormState({ ...formState, age: Number(event.target.value) || 0 })} /></div>
+            <div className="space-y-2"><Label htmlFor="ageGroup">Age group</Label><Select value={formState.ageGroup} onValueChange={(value) => setFormState({ ...formState, ageGroup: value as typeof formState.ageGroup })}><SelectTrigger id="ageGroup"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="0-5">0-5</SelectItem><SelectItem value="6-12">6-12</SelectItem><SelectItem value="13-18">13-18</SelectItem></SelectContent></Select></div>
+            <div className="space-y-2"><Label htmlFor="nationality">Nationality</Label><Input id="nationality" value={formState.nationality} onChange={(event) => setFormState({ ...formState, nationality: event.target.value })} /></div>
+          </div>
+        );
+      case 2:
+        return (
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2"><Label htmlFor="familyStatus">Family status</Label><Select value={formState.familyStatus} onValueChange={(value) => setFormState({ ...formState, familyStatus: value as typeof formState.familyStatus })}><SelectTrigger id="familyStatus"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Single Parent">Single Parent</SelectItem><SelectItem value="Total Orphans">Total Orphans</SelectItem></SelectContent></Select></div>
+            <div className="space-y-2"><Label htmlFor="numberOfParents">Number of parents</Label><Select value={String(formState.numberOfParents)} onValueChange={(value) => setFormState({ ...formState, numberOfParents: Number(value) as 0 | 1 | 2 })}><SelectTrigger id="numberOfParents"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="0">0</SelectItem><SelectItem value="1">1</SelectItem><SelectItem value="2">2</SelectItem></SelectContent></Select></div>
+            <div className="space-y-2 md:col-span-2"><Label htmlFor="guardianName">Guardian name</Label><Input id="guardianName" value={formState.guardianName} onChange={(event) => setFormState({ ...formState, guardianName: event.target.value })} /></div>
+            <div className="space-y-2"><Label htmlFor="guardianContact">Guardian contact</Label><Input id="guardianContact" value={formState.guardianContact} onChange={(event) => setFormState({ ...formState, guardianContact: event.target.value })} /></div>
+            <div className="space-y-2"><Label htmlFor="guardianRelation">Guardian relationship</Label><Select value={formState.guardianRelation} onValueChange={(value) => setFormState({ ...formState, guardianRelation: value as typeof formState.guardianRelation })}><SelectTrigger id="guardianRelation"><SelectValue /></SelectTrigger><SelectContent>{["caretaker", "mom", "dad", "sibling", "uncle", "aunt", "grandparent"].map((value) => <SelectItem key={value} value={value}>{value}</SelectItem>)}</SelectContent></Select></div>
+          </div>
+        );
+      case 3:
+        return (
+          <div className="grid gap-4">
+            <div className="space-y-2"><Label htmlFor="background">Bio</Label><Textarea id="background" value={formState.background} onChange={(event) => setFormState({ ...formState, background: event.target.value })} /></div>
+            <div className="space-y-2"><Label htmlFor="needsInput">Support needs</Label><Input id="needsInput" placeholder="Education, nutrition, health" value={formState.needsInput} onChange={(event) => setFormState({ ...formState, needsInput: event.target.value })} /></div>
+            <div className="grid gap-4 md:grid-cols-2"><div className="space-y-2"><Label htmlFor="location">Location</Label><Input id="location" value={formState.location} onChange={(event) => setFormState({ ...formState, location: event.target.value })} /></div><div className="space-y-2"><Label htmlFor="monthlyNeed">Monthly support</Label><Input id="monthlyNeed" value={formState.monthlyNeed} onChange={(event) => setFormState({ ...formState, monthlyNeed: event.target.value })} /></div></div>
+          </div>
+        );
+      case 4:
+        return (
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="flex items-center justify-between rounded-md border p-3 md:col-span-2"><Label htmlFor="isStudying">Is studying</Label><Switch id="isStudying" checked={formState.education.isStudying} onCheckedChange={(checked) => setFormState({ ...formState, education: { ...formState.education, isStudying: checked } })} /></div>
+            <div className="space-y-2"><Label htmlFor="schoolName">Name of school</Label><Input id="schoolName" value={formState.education.schoolName} onChange={(event) => setFormState({ ...formState, school: event.target.value, education: { ...formState.education, schoolName: event.target.value } })} /></div>
+            <div className="space-y-2"><Label htmlFor="classGrade">Class / grade</Label><Select value={formState.education.classGrade} onValueChange={(value) => setFormState({ ...formState, class: value, education: { ...formState.education, classGrade: value, currentClass: value } })}><SelectTrigger id="classGrade"><SelectValue placeholder="Select class or grade" /></SelectTrigger><SelectContent>{["Baby", "Top", "P-1", "P-2", "P-3", "P-4", "P-5", "P-6", "P-7", "S-1", "S-2", "S-3", "S-4", "S-5", "S-6", "Vocational school", "University"].map((value) => <SelectItem key={value} value={value}>{value}</SelectItem>)}</SelectContent></Select></div>
+            <div className="space-y-2"><Label htmlFor="expectedGraduationYear">Expected graduation year</Label><Input id="expectedGraduationYear" type="number" min={new Date().getFullYear()} value={formState.education.expectedGraduationYear} onChange={(event) => setFormState({ ...formState, education: { ...formState.education, expectedGraduationYear: event.target.value } })} /></div>
+          </div>
+        );
+      case 5:
+        return (
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2 md:col-span-2"><Label htmlFor="existingSponsor">Assign existing sponsor</Label><Select value={assignmentForm.selectedSponsorId} onValueChange={(value) => setAssignmentForm({ ...assignmentForm, selectedSponsorId: value })}><SelectTrigger id="existingSponsor"><SelectValue placeholder="Optional" /></SelectTrigger><SelectContent>{sponsorOptions.map((option: any) => <SelectItem key={option._id} value={option._id}>{option.name} ({option.email})</SelectItem>)}</SelectContent></Select></div>
+            <div className="space-y-2"><Label htmlFor="wizardStartDate">Start date</Label><Input id="wizardStartDate" type="date" value={assignmentForm.startDate} onChange={(event) => setAssignmentForm({ ...assignmentForm, startDate: event.target.value })} /></div>
+          </div>
+        );
+      default:
+        return (
+          <div className="space-y-4">
+            <Label>Profile image</Label>
+            {(imagePreview || formState.image.url) && <div className="relative h-48 w-48 overflow-hidden rounded-lg border"><img src={imagePreview || formState.image.url} alt="Preview" className="h-full w-full object-cover" /></div>}
+            <input className="hidden" id="wizardImageInput" type="file" accept="image/*" onChange={handleImageInputChange} disabled={isUploadingImage} />
+            <label htmlFor="wizardImageInput"><Button asChild type="button" disabled={isUploadingImage}><span><Upload size={16} className="mr-2" />{isUploadingImage ? "Uploading..." : "Upload image"}</span></Button></label>
+          </div>
+        );
+    }
+  };
+
   return (
     <div className="p-8 ">
       <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -1469,7 +1538,7 @@ export default function ChildrenDashboard() {
           }
         }}
       >
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl  overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {assigningChild
@@ -1490,19 +1559,10 @@ export default function ChildrenDashboard() {
                 <Label htmlFor="existingSponsor">Choose an existing sponsor</Label>
                 <Select
                   value={assignmentForm.selectedSponsorId}
-                  onValueChange={(value) => {
-                    const selected = sponsorOptions.find(
-                      (option: any) => option._id === value,
-                    );
-
-                    setAssignmentForm((current) => ({
-                      ...current,
-                      selectedSponsorId: value,
-                      sponsorName: selected?.name || current.sponsorName,
-                      sponsorEmail: selected?.email || current.sponsorEmail,
-                      sponsorPhone: selected?.phone || current.sponsorPhone,
-                    }));
-                  }}
+                  onValueChange={(value) => setAssignmentForm((current) => ({
+                    ...current,
+                    selectedSponsorId: value,
+                  }))}
                 >
                   <SelectTrigger id="existingSponsor" className="bg-white">
                     <SelectValue placeholder="Select a sponsor" />
@@ -1518,88 +1578,7 @@ export default function ChildrenDashboard() {
               </div>
             ) : null}
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="sponsorName">Sponsor name</Label>
-                <Input
-                  id="sponsorName"
-                  className="bg-white"
-                  value={assignmentForm.sponsorName}
-                  onChange={(event) =>
-                    setAssignmentForm({
-                      ...assignmentForm,
-                      sponsorName: event.target.value,
-                    })
-                  }
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="sponsorEmail">Sponsor email</Label>
-                <Input
-                  id="sponsorEmail"
-                  className="bg-white"
-                  value={assignmentForm.sponsorEmail}
-                  onChange={(event) =>
-                    setAssignmentForm({
-                      ...assignmentForm,
-                      sponsorEmail: event.target.value,
-                    })
-                  }
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="sponsorPhone">Sponsor phone</Label>
-                <Input
-                  id="sponsorPhone"
-                  className="bg-white"
-                  value={assignmentForm.sponsorPhone}
-                  onChange={(event) =>
-                    setAssignmentForm({
-                      ...assignmentForm,
-                      sponsorPhone: event.target.value,
-                    })
-                  }
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="amount">Donation amount</Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  className="bg-white"
-                  value={assignmentForm.amount}
-                  onChange={(event) =>
-                    setAssignmentForm({
-                      ...assignmentForm,
-                      amount: event.target.value,
-                    })
-                  }
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="period">Sponsorship period</Label>
-                <Select
-                  value={assignmentForm.period}
-                  onValueChange={(value) =>
-                    setAssignmentForm({ ...assignmentForm, period: value })
-                  }
-                >
-                  <SelectTrigger id="period" className="bg-white">
-                    <SelectValue>{assignmentForm.period}</SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Monthly">Monthly</SelectItem>
-                    <SelectItem value="3 Months">3 Months</SelectItem>
-                    <SelectItem value="6 Months">6 Months</SelectItem>
-                    <SelectItem value="Yearly">Yearly</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
+            <div className="space-y-2">
               <div className="space-y-2">
                 <Label htmlFor="startDate">Start date</Label>
                 <Input
@@ -1611,92 +1590,6 @@ export default function ChildrenDashboard() {
                     setAssignmentForm({
                       ...assignmentForm,
                       startDate: event.target.value,
-                    })
-                  }
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="paymentMethod">Payment method</Label>
-                <Select
-                  value={assignmentForm.paymentMethod}
-                  onValueChange={(value) =>
-                    setAssignmentForm({
-                      ...assignmentForm,
-                      paymentMethod: value,
-                    })
-                  }
-                >
-                  <SelectTrigger id="paymentMethod" className="bg-white">
-                    <SelectValue>{assignmentForm.paymentMethod}</SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="zelle">Zelle</SelectItem>
-                    <SelectItem value="stripe">Stripe</SelectItem>
-                    <SelectItem value="paypal">PayPal</SelectItem>
-                    <SelectItem value="check">Check</SelectItem>
-                    <SelectItem value="ach">ACH</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="address">Address</Label>
-                <Input
-                  id="address"
-                  className="bg-white"
-                  value={assignmentForm.address}
-                  onChange={(event) =>
-                    setAssignmentForm({
-                      ...assignmentForm,
-                      address: event.target.value,
-                    })
-                  }
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="city">City</Label>
-                <Input
-                  id="city"
-                  className="bg-white"
-                  value={assignmentForm.city}
-                  onChange={(event) =>
-                    setAssignmentForm({
-                      ...assignmentForm,
-                      city: event.target.value,
-                    })
-                  }
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="state">State</Label>
-                <Input
-                  id="state"
-                  className="bg-white"
-                  value={assignmentForm.state}
-                  onChange={(event) =>
-                    setAssignmentForm({
-                      ...assignmentForm,
-                      state: event.target.value,
-                    })
-                  }
-                />
-              </div>
-
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="zipCode">Zip code</Label>
-                <Input
-                  id="zipCode"
-                  className="bg-white"
-                  value={assignmentForm.zipCode}
-                  onChange={(event) =>
-                    setAssignmentForm({
-                      ...assignmentForm,
-                      zipCode: event.target.value,
                     })
                   }
                 />
@@ -1719,8 +1612,10 @@ export default function ChildrenDashboard() {
         </DialogContent>
       </Dialog>
 
+      
+
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-4xl overflow-auto h-140">
           <DialogHeader>
             <DialogTitle>
               {editingChild ? "Edit child profile" : "New child profile"}
@@ -1730,38 +1625,23 @@ export default function ChildrenDashboard() {
             <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-muted px-4 py-3 text-sm text-foreground/70">
               <div>
                 <p className="font-semibold text-foreground">
-                  Step {wizardStep} of 3
+                  Step {wizardStep} of 6
                 </p>
                 <p>
-                  {wizardStep === 1
-                    ? "Child details"
-                    : wizardStep === 2
-                      ? "Household and schooling"
-                      : "Support plan"}
+                  {[
+                    "Profile",
+                    "Family",
+                    "Bio",
+                    "Education",
+                    "Sponsor assignment",
+                    "Image upload",
+                  ][wizardStep - 1]}
                 </p>
               </div>
               <div className="flex items-center gap-2 text-foreground/70">
-                <span
-                  className={
-                    wizardStep >= 1
-                      ? "h-2 w-2 rounded-full bg-primary"
-                      : "h-2 w-2 rounded-full bg-slate-300"
-                  }
-                />
-                <span
-                  className={
-                    wizardStep >= 2
-                      ? "h-2 w-2 rounded-full bg-primary"
-                      : "h-2 w-2 rounded-full bg-slate-300"
-                  }
-                />
-                <span
-                  className={
-                    wizardStep >= 3
-                      ? "h-2 w-2 rounded-full bg-primary"
-                      : "h-2 w-2 rounded-full bg-slate-300"
-                  }
-                />
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <span key={index} className={wizardStep >= index + 1 ? "h-2 w-2 rounded-full bg-primary" : "h-2 w-2 rounded-full bg-slate-300"} />
+                ))}
               </div>
             </div>
             {formError ? (
@@ -1781,13 +1661,13 @@ export default function ChildrenDashboard() {
                 >
                   <ChevronLeft size={16} /> Back
                 </Button>
-                {wizardStep < 3 ? (
+                {wizardStep < 6 ? (
                   <Button size="sm" onClick={handleNext}>
                     Next <ChevronRight size={16} className="ml-2" />
                   </Button>
                 ) : null}
               </div>
-              {wizardStep === 3 ? (
+              {wizardStep === 6 ? (
                 <Button disabled={loading} onClick={handleSaveProfile}>
                   {editingChild ? (
                     loading ? (

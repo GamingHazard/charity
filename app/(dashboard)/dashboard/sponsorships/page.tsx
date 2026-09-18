@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,6 +50,36 @@ import { apiRequest } from "@/lib/query-client";
 
 type SponsorshipStatus = SponsorshipRecord["status"];
 type PaymentStatus = PaymentRecord["status"];
+
+type SponsorProfile = {
+  _id: string;
+  profile?: {
+    fullName?: string;
+    email?: string;
+    phone?: string;
+    country?: string;
+    city?: string;
+    state?: string;
+    region?: string;
+    zipCode?: string;
+    bio?: string;
+  };
+  location?: {
+    address?: string;
+    country?: string;
+    city?: string;
+    state?: string;
+    region?: string;
+    zipCode?: string;
+  };
+  donation?: {
+    amount?: number;
+    period?: string;
+    remindByEmail?: boolean;
+  };
+  paymentMethod?: string;
+  profileStatus?: "Complete" | "Incomplete" | string;
+};
 
 type PaymentForm = {
   amount: string;
@@ -112,25 +143,28 @@ function getStatusClasses(status: SponsorshipStatus | string) {
       return "bg-slate-100 text-slate-800";
     case "Completed":
       return "bg-sky-100 text-sky-800";
+    case "Complete":
+      return "bg-emerald-100 text-emerald-800";
+    case "Incomplete":
+      return "bg-amber-100 text-amber-800";
     default:
       return "bg-slate-100 text-slate-800";
   }
 }
 
-export default function SponsorshipsDashboard() {
+export default function SponsorshipsDashboard() { 
+  const router = useRouter();
   const queryClient = useQueryClient();
-  const { data: sponsorships, isLoading } = useQuery<SponsorshipRecord[]>({
-    queryKey: ["sponsors", "sponsorship", "records"],
+  const { data: sponsorships, isLoading } = useQuery<SponsorProfile[]>({
+    queryKey: ["sponsors", "profiles","all"],
   });
   const { data: childrenData = [] } = useQuery<any[]>({
     queryKey: ["children", "profiles"],
   });
 
-  const [records, setRecords] = useState<SponsorshipRecord[]>(
-    mockSponsorshipRecords,
-  );
+  const [records, setRecords] = useState<SponsorshipRecord[]>(mockSponsorshipRecords);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | SponsorshipStatus>(
+  const [statusFilter, setStatusFilter] = useState<"all" | "Complete" | "Incomplete">(
     "all",
   );
   const [selectedRecord, setSelectedRecord] =
@@ -148,81 +182,42 @@ export default function SponsorshipsDashboard() {
   const [paymentForm, setPaymentForm] = useState(initialPayment);
   const [sponsorForm, setSponsorForm] = useState<SponsorForm>(initialSponsorForm);
 
+  const sponsorProfiles = useMemo(
+    () => (Array.isArray(sponsorships) ? sponsorships : []),
+    [sponsorships],
+  );
+
   const filteredRecords = useMemo(() => {
-    return records.filter((record) => {
+    return sponsorProfiles.filter((profile) => {
       const matchesSearch = [
-        record.child?.firstName,
-        record.donor.name,
-        record.donor.email,
+        profile.profile?.fullName,
+        profile.profile?.email,
+        profile.profile?.phone,
+        profile.location?.city,
+        profile.location?.country,
       ]
         .join(" ")
         .toLowerCase()
         .includes(searchQuery.toLowerCase());
       const matchesStatus =
-        statusFilter === "all" || record.status === statusFilter;
+        statusFilter === "all" || profile.profileStatus === statusFilter;
       return matchesSearch && matchesStatus;
     });
-  }, [records, searchQuery, statusFilter]);
+  }, [sponsorProfiles, searchQuery, statusFilter]);
 
-  const totalActive = records.filter(
-    (record) => record.status === "Active",
+  const totalActive = sponsorProfiles.filter(
+    (profile) => profile.profileStatus === "Complete",
   ).length;
 
-  const totalMonthly = records.reduce(
-    (sum, record) => sum + (record.donor?.donation?.amount || 0),
+  const totalMonthly = sponsorProfiles.reduce(
+    (sum, profile) => sum + Number(profile.donation?.amount || 0),
     0,
   );
-  const totalPaid = records.reduce(
-    (sum, record) =>
-      sum +
-      (record?.payments?.length > 0
-        ? record.payments.reduce(
-            (paymentSum, payment) => paymentSum + (payment.amount || 0),
-            0,
-          )
-        : 0),
-    0,
-  );
+  const totalPaid = 0;
 
-  const openDetail = async (record: SponsorshipRecord) => {
-    setSelectedRecord(record);
-    setSelectedSponsorProfile(record.donor || null);
-    setPaymentForm(initialPayment);
-    setSelectedSponsorChildren([]);
-    setSelectedSponsorSummary(null);
-    setLoadingSponsorChildren(true);
-    setIsDialogOpen(true);
-
-    try {
-      if (record.donor?._id) {
-        const response = await apiRequest("GET", `/sponsors/${record.donor._id}`);
-        const data = await response.json();
-
-        const sponsorProfile = data?.sponsor || record.donor || null;
-        const sponsorChildren = Array.isArray(data?.children)
-          ? data.children
-          : Array.isArray(data)
-            ? data
-            : [];
-
-        setSelectedSponsorProfile(sponsorProfile);
-        setSelectedSponsorChildren(sponsorChildren);
-        setSelectedSponsorSummary(data?.summary || null);
-      } else {
-        const fallbackChildren = records.filter(
-          (entry) => entry.donor?._id === record.donor?._id,
-        );
-        setSelectedSponsorChildren(fallbackChildren);
-      }
-    } catch (error) {
-      console.error("Error loading sponsor relationship summary:", error);
-      const fallbackChildren = records.filter(
-        (entry) => entry.donor?._id === record.donor?._id,
-      );
-      setSelectedSponsorChildren(fallbackChildren);
-    } finally {
-      setLoadingSponsorChildren(false);
-    }
+  const openDetail = (profile: SponsorProfile) => {
+    if (!profile._id) return;
+    router.push(`/dashboard/sponsorships/${profile._id}`);
   };
 
   const resetSponsorForm = () => {
@@ -273,7 +268,7 @@ export default function SponsorshipsDashboard() {
       const result = await response.json();
       setSelectedSponsorProfile(result.sponsor);
       setIsEditProfileOpen(false);
-      await queryClient.invalidateQueries({ queryKey: ["sponsors", "sponsorship", "records"] });
+      await queryClient.invalidateQueries({ queryKey: ["sponsors", "profiles", "all"] });
     } catch (error) {
       console.error("Error updating sponsor profile:", error);
       setSponsorFormError("Failed to update sponsor profile. Please try again.");
@@ -345,7 +340,7 @@ export default function SponsorshipsDashboard() {
       }
 
       await queryClient.invalidateQueries({
-        queryKey: ["sponsors", "sponsorship", "records"],
+        queryKey: ["sponsors", "profiles", "all"],
       });
       await queryClient.invalidateQueries({ queryKey: ["children", "profiles"] });
 
@@ -381,7 +376,7 @@ export default function SponsorshipsDashboard() {
         ),
       );
       await queryClient.invalidateQueries({
-        queryKey: ["sponsors", "sponsorship", "records"],
+        queryKey: ["sponsors", "profiles", "all"],
       });
       await queryClient.invalidateQueries({ queryKey: ["children", "profiles"] });
     } catch (error) {
@@ -455,7 +450,7 @@ export default function SponsorshipsDashboard() {
         ),
       );
       await queryClient.invalidateQueries({
-        queryKey: ["sponsors", "sponsorship", "records"],
+        queryKey: ["sponsors", "profiles", "all"],
       });
       await queryClient.invalidateQueries({ queryKey: ["children", "profiles"] });
       setPaymentForm(initialPayment);
@@ -468,22 +463,24 @@ export default function SponsorshipsDashboard() {
 
   const downloadCsv = () => {
     const headers = [
-      "Child",
-      "Donor",
-      "Plan",
-      "MonthlyAmount",
-      "Status",
-      "TotalPaid",
-      "LastPayment",
+      "Sponsor",
+      "Email",
+      "Phone",
+      "Location",
+      "DonationAmount",
+      "Period",
+      "ProfileStatus",
     ];
-    const rows = records.map((record) => [
-      record.child?.firstName,
-      record.donor.name,
-      record.plan,
-      record.monthlyAmount.toString(),
-      record.status,
-      record.totalPaid.toString(),
-      record.lastPayment,
+    const rows = sponsorProfiles.map((profile) => [
+      profile.profile?.fullName || "",
+      profile.profile?.email || "",
+      profile.profile?.phone || "",
+      [profile.location?.city, profile.location?.state, profile.location?.country]
+        .filter(Boolean)
+        .join(", "),
+      String(profile.donation?.amount || 0),
+      profile.donation?.period || "",
+      profile.profileStatus || "Incomplete",
     ]);
     const csvContent = [headers, ...rows]
       .map((row) =>
@@ -494,16 +491,10 @@ export default function SponsorshipsDashboard() {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = "sponsorship-records.csv";
+    anchor.download = "sponsor-profiles.csv";
     anchor.click();
     URL.revokeObjectURL(url);
   };
-
-  useEffect(() => {
-    if (sponsorships) {
-      setRecords(sponsorships || []);
-    }
-  }, [sponsorships]);
 
   return (
     <div className="p-8">
@@ -574,7 +565,7 @@ export default function SponsorshipsDashboard() {
                 <Users className="size-6 text-primary" />
                 <div>
                   <p className="text-sm uppercase text-muted-foreground">
-                    Active sponsors
+                    Complete profiles
                   </p>
                   <p className="text-3xl font-semibold text-foreground">
                     {totalActive}
@@ -587,7 +578,7 @@ export default function SponsorshipsDashboard() {
                 <DollarSign className="size-6 text-emerald-600" />
                 <div>
                   <p className="text-sm uppercase text-muted-foreground">
-                    Monthly pledges
+                    Pledged amount
                   </p>
                   <p className="text-3xl font-semibold text-foreground">
                     ${totalMonthly}
@@ -600,10 +591,10 @@ export default function SponsorshipsDashboard() {
                 <ArrowUpRight className="size-6 text-sky-600" />
                 <div>
                   <p className="text-sm uppercase text-muted-foreground">
-                    Total paid
+                    Paid total
                   </p>
                   <p className="text-3xl font-semibold text-foreground">
-                    ${totalPaid}
+                    {totalPaid ? `$${totalPaid}` : "View details"}
                   </p>
                 </div>
               </div>
@@ -621,7 +612,7 @@ export default function SponsorshipsDashboard() {
                 <Input
                   id="search"
                   value={searchQuery}
-                  placeholder="Search by child or donor"
+                  placeholder="Search by name, email, or location"
                   onChange={(event) => setSearchQuery(event.target.value)}
                 />
               </div>
@@ -630,7 +621,7 @@ export default function SponsorshipsDashboard() {
                 <Select
                   value={statusFilter}
                   onValueChange={(value) =>
-                    setStatusFilter(value as "all" | SponsorshipStatus)
+                    setStatusFilter(value as "all" | "Complete" | "Incomplete")
                   }
                 >
                   <SelectTrigger id="statusFilter">
@@ -638,17 +629,15 @@ export default function SponsorshipsDashboard() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All</SelectItem>
-                    <SelectItem value="Active">Active</SelectItem>
-                    <SelectItem value="Pending">Pending</SelectItem>
-                    <SelectItem value="Paused">Paused</SelectItem>
-                    <SelectItem value="Completed">Completed</SelectItem>
+                    <SelectItem value="Complete">Complete</SelectItem>
+                    <SelectItem value="Incomplete">Incomplete</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label>Records</Label>
                 <p className="text-sm text-foreground/70">
-                  {filteredRecords.length} sponsorship records
+                  {filteredRecords.length} sponsor profiles
                 </p>
               </div>
             </div>
@@ -661,13 +650,12 @@ export default function SponsorshipsDashboard() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Child</TableHead>
-                <TableHead>Donor</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Sponsorship Type</TableHead>
-                <TableHead>Donation Amount</TableHead>
-                <TableHead>Total Donations</TableHead>
-                <TableHead>Last payment</TableHead>
+                <TableHead>Sponsor</TableHead>
+                <TableHead>Contact</TableHead>
+                <TableHead>Location</TableHead>
+                <TableHead>Donation amount</TableHead>
+                <TableHead>Period</TableHead>
+                <TableHead>Profile status</TableHead>
                 <TableHead className="text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
@@ -675,25 +663,19 @@ export default function SponsorshipsDashboard() {
               {Array.from({ length: 6 }).map((_, index) => (
                 <TableRow key={index}>
                   <TableCell>
-                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-4 w-32" />
                   </TableCell>
                   <TableCell>
                     <Skeleton className="h-4 w-32" />
                   </TableCell>
                   <TableCell>
-                    <Skeleton className="h-6 w-16 rounded-full" />
+                    <Skeleton className="h-4 w-20" />
                   </TableCell>
                   <TableCell>
                     <Skeleton className="h-4 w-20" />
                   </TableCell>
                   <TableCell>
-                    <Skeleton className="h-4 w-12" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-4 w-12" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-6 w-20 rounded-full" />
                   </TableCell>
                   <TableCell className="text-right">
                     <Skeleton className="h-8 w-16 ml-auto" />
@@ -706,58 +688,47 @@ export default function SponsorshipsDashboard() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="font-bold text-primary">Child</TableHead>
-                <TableHead className="font-bold text-primary">Donor</TableHead>
-                <TableHead className="font-bold text-primary">Status</TableHead>
-                <TableHead className="font-bold text-primary">
-                  Sponsorship Type
-                </TableHead>
-                <TableHead className="font-bold text-primary">
-                  Donation Amount
-                </TableHead>
-                <TableHead className="font-bold text-primary">
-                  Total Donations
-                </TableHead>
-                <TableHead className="font-bold text-primary">
-                  Last payment
-                </TableHead>
+                <TableHead className="font-bold text-primary">Sponsor</TableHead>
+                <TableHead className="font-bold text-primary">Contact</TableHead>
+                <TableHead className="font-bold text-primary">Location</TableHead>
+                <TableHead className="font-bold text-primary">Donation amount</TableHead>
+                <TableHead className="font-bold text-primary">Period</TableHead>
+                <TableHead className="font-bold text-primary">Profile status</TableHead>
                 <TableHead className="text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredRecords.map((record, index) => (
-                <TableRow key={record._id || index}>
+              {filteredRecords.map((profile, index) => (
+                <TableRow key={profile._id || index}>
                   <TableCell>
-                    {record.child?.firstName + " " + record.child?.secondName}
+                    <div>
+                      <p className="font-medium text-foreground">{profile.profile?.fullName || "Unnamed sponsor"}</p>
+                      <p className="text-xs text-muted-foreground">{profile.profile?.bio || "No bio provided"}</p>
+                    </div>
                   </TableCell>
-                  <TableCell>{record.donor?.sponsor?.name}</TableCell>
                   <TableCell>
-                    <span
-                      className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${getStatusClasses(record.status)}`}
-                    >
-                      {record.status}
+                    <div className="text-sm text-foreground/80">
+                      <p>{profile.profile?.email || "No email"}</p>
+                      <p>{profile.profile?.phone || "No phone"}</p>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {[profile.location?.city, profile.location?.state, profile.location?.country]
+                      .filter(Boolean)
+                      .join(", ") || "No location"}
+                  </TableCell>
+                  <TableCell>${Number(profile.donation?.amount || 0)}</TableCell>
+                  <TableCell>{profile.donation?.period || "Not provided"}</TableCell>
+                  <TableCell>
+                    <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${getStatusClasses(profile.profileStatus || "Incomplete")}`}>
+                      {profile.profileStatus || "Incomplete"}
                     </span>
-                  </TableCell>
-                  <TableCell>{record.donor?.donation?.period || 0}</TableCell>
-                  <TableCell>${record.donor?.donation?.amount || 0}</TableCell>
-                  <TableCell>
-                    $
-                    {record.payments
-                      .map((p) => p.amount)
-                      .reduce((sum, amount) => sum + amount, 0) || 0}
-                  </TableCell>
-                  <TableCell>
-                    {record.payments.length > 0
-                      ? new Date(
-                          record.payments[record.payments.length - 1].date,
-                        ).toLocaleDateString()
-                      : "no payment"}
                   </TableCell>
                   <TableCell className="text-right">
                     <Button
                       variant="secondary"
                       size="sm"
-                      onClick={() => openDetail(record)}
+                      onClick={() => openDetail(profile)}
                     >
                       View
                     </Button>

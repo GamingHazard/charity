@@ -63,13 +63,13 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              Email
+              Username
             </label>
             <Input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@seedsoflove.org"
+              placeholder="admin"
               required
               className="w-full bg-background border-border text-foreground"
               disabled={isLoading}
@@ -102,7 +102,7 @@ export default function LoginPage() {
 
         <div className="mt-6 text-center">
           <p className="text-sm text-foreground/60">
-            Demo credentials: any email with password of at least 6 characters
+            Sign in with an administrator account.
           </p>
         </div>
 

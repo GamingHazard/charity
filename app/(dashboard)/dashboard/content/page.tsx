@@ -1,17 +1,20 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ContentItemCard } from '@/components/dashboard/content-item-card';
 import { ContentStats } from '@/components/dashboard/content-stats';
-import { ContentItem, defaultContentItems, searchContent as filterContent, sortContent } from '@/lib/content-utils';
+import { ContentItem, defaultContentItems, normalizeContentItem, searchContent as filterContent, sortContent } from '@/lib/content-utils';
+import { apiRequest } from '@/lib/query-client';
 
 const initialContent: ContentItem[] = defaultContentItems;
 
 export default function ContentPage() {
   const [content, setContent] = useState<ContentItem[]>(initialContent);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -21,6 +24,22 @@ export default function ContentPage() {
 
   const sections = ['All', ...Array.from(new Set(content.map(item => item.section)))];
   const statuses = ['All', 'published', 'draft'];
+
+  useEffect(() => {
+    let active = true;
+    apiRequest('GET', '/content/all')
+      .then((response) => response.json())
+      .then((items) => {
+        if (active) setContent(items.map(normalizeContentItem));
+      })
+      .catch(() => {
+        if (active) setError('Unable to load content from the server. Showing local defaults.');
+      })
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
+    return () => { active = false; };
+  }, []);
 
   const filteredContent = useMemo(() => {
     const filtered = filterContent(content, searchTerm, selectedSection, selectedStatus);
@@ -32,14 +51,18 @@ export default function ContentPage() {
     setEditContent(item.content);
   };
 
-  const handleSave = (id: string) => {
-    setContent(content.map(item =>
-      item.id === id
-        ? { ...item, content: editContent, lastUpdated: new Date().toISOString().split('T')[0], status: 'published' }
-        : item
-    ));
-    setEditingId(null);
-    setEditContent('');
+  const handleSave = async (id: string) => {
+    const item = content.find((entry) => entry.id === id);
+    if (!item) return;
+    try {
+      const response = await apiRequest('PUT', `/content/${id}`, { ...item, content: editContent, status: 'published' });
+      const updated = normalizeContentItem(await response.json());
+      setContent((items) => items.map((entry) => entry.id === id ? updated : entry));
+      setEditingId(null);
+      setEditContent('');
+    } catch {
+      setError('Unable to save this content item.');
+    }
   };
 
   const handleCancel = () => {
@@ -47,21 +70,30 @@ export default function ContentPage() {
     setEditContent('');
   };
 
-  const handleDelete = (id: string) => {
-    setContent(content.filter(item => item.id !== id));
+  const handleDelete = async (id: string) => {
+    try {
+      await apiRequest('DELETE', `/content/${id}`);
+      setContent((items) => items.filter((item) => item.id !== id));
+    } catch {
+      setError('Unable to delete this content item.');
+    }
   };
 
-  const handleStatusChange = (id: string, newStatus: 'published' | 'draft') => {
-    setContent(content.map(item =>
-      item.id === id
-        ? { ...item, status: newStatus }
-        : item
-    ));
+  const handleStatusChange = async (id: string, newStatus: 'published' | 'draft') => {
+    const item = content.find((entry) => entry.id === id);
+    if (!item) return;
+    try {
+      const response = await apiRequest('PUT', `/content/${id}`, { ...item, status: newStatus });
+      const updated = normalizeContentItem(await response.json());
+      setContent((items) => items.map((entry) => entry.id === id ? updated : entry));
+    } catch {
+      setError('Unable to update publication status.');
+    }
   };
 
   const handleAddNew = () => {
     const newId = `content-${Date.now()}`;
-    const newItem: ContentPage = {
+    const newItem: ContentItem = {
       id: newId,
       title: 'New Content',
       section: selectedSection === 'All' ? 'Home' : selectedSection,
@@ -69,7 +101,10 @@ export default function ContentPage() {
       lastUpdated: new Date().toISOString().split('T')[0],
       status: 'draft',
     };
-    setContent([...content, newItem]);
+    apiRequest('POST', '/content', newItem)
+      .then((response) => response.json())
+      .then((item) => setContent((items) => [...items, normalizeContentItem(item)]))
+      .catch(() => setError('Unable to create a content item.'));
   };
 
   return (
@@ -79,6 +114,8 @@ export default function ContentPage() {
         <h2 className="text-3xl font-bold text-foreground mb-2">Content Management</h2>
         <p className="text-foreground/70">Edit website content across different sections and manage publishing status</p>
       </div>
+
+      {error && <p className="text-sm text-destructive">{error}</p>}
 
       {/* Statistics */}
       <ContentStats items={content} />
@@ -147,7 +184,9 @@ export default function ContentPage() {
       </div>
 
       {/* Content List */}
-      {filteredContent.length === 0 ? (
+      {isLoading ? (
+        <Card className="p-12 text-center bg-card border-border">Loading content...</Card>
+      ) : filteredContent.length === 0 ? (
         <Card className="p-12 text-center bg-card border-border">
           <p className="text-foreground/70">No content items found matching your filters.</p>
         </Card>

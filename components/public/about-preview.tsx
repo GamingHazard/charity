@@ -4,8 +4,11 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { AnimatedElement } from "@/components/motion/animated-elements";
 import { ArrowRight, Heart, Users, Award } from "lucide-react";
+import { useContent } from "@/hooks/use-content";
 
 export function AboutPreview() {
+  const { data: content = [] } = useContent("About");
+  const aboutContent = content.find((item) => item.id === "about");
   const stats = [
     { icon: Users, label: "Communities Served", value: "20+" },
     { icon: Heart, label: "Years of Service", value: "20+" },
@@ -29,11 +32,7 @@ export function AboutPreview() {
                 style={{ fontFamily: "Quicksand" }}
                 className="text-muted-foreground mb-6 leading-relaxed"
               >
-                For over two decades, Seeds of Love has been dedicated to
-                empowering communities through education, nutrition, and
-                sustainable development. We believe that every child deserves
-                access to quality education and proper nutrition, regardless of
-                their circumstances.
+                {aboutContent?.content || "For over two decades, Seeds of Love has been dedicated to empowering communities through education, nutrition, and sustainable development. We believe that every child deserves access to quality education and proper nutrition, regardless of their circumstances."}
               </p>
               <p
                 style={{ fontFamily: "Quicksand" }}

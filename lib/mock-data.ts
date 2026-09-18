@@ -112,10 +112,13 @@ export interface SponsorshipProfile {
   needs: any;
   monthlyNeed: string;
   education?: {
+    isStudying?: boolean;
     currentLevel?: string;
     schoolName?: string;
+    classGrade?: string;
     currentClass?: string;
     academicYear?: string;
+    expectedGraduationYear?: string;
     lastTermResult?: string;
     graduationTarget?: string;
     estimatedGraduationYear?: string;
@@ -123,6 +126,7 @@ export interface SponsorshipProfile {
   };
   reportCards?: Array<{
     name?: string;
+    description?: string;
     url?: string;
     public_id?: string;
     fileType?: string;

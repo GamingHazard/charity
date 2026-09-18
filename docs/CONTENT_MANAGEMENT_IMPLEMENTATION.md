@@ -157,12 +157,17 @@ Edit `components/dashboard/content-item-card.tsx` to modify individual item appe
 
 ## Integration Points
 
-The content management system is currently standalone and doesn't automatically update website content in real-time. To fully integrate:
+Content is persisted in the backend MongoDB database through `/api/content`.
+Published content is publicly readable, while dashboard mutations and the
+`/api/content/all` listing require the administrator JWT returned by
+`/api/auth/admin/login`.
 
-1. Create an API route to fetch content from the dashboard
-2. Modify public pages to query content instead of hardcoding
-3. Add caching strategy (ISR or revalidation)
-4. Implement content versioning if needed
+- The dashboard uses the content API for loading, creating, editing, deleting,
+   and publishing items.
+- The home hero and About preview read published content through
+   `hooks/use-content.ts` and retain fallback copy while the API is unavailable.
+- Set `NEXT_PUBLIC_API_BASE_URL` when the backend is not running at the default
+   `http://localhost:5000/api`.
 
 ## Future Enhancements
 

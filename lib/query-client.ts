@@ -1,7 +1,7 @@
  import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import axios from "axios";
 
-const BASE_URL =  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
+const BASE_URL =  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api";
 
 // simple in-memory rate limit tracker (requests per window)
 const REQUEST_THRESHOLD = parseInt(process.env.NEXT_PUBLIC_VITE_API_THRESHOLD || "60", 10); // max requests per window
@@ -57,6 +57,9 @@ export async function apiRequest(
     body = JSON.stringify(data);
   }
 
+  const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
+  if (token) headers.Authorization = `Bearer ${token}`;
+
   const res = await fetch(`${BASE_URL}${url}`, {
     method,
     headers,
@@ -92,6 +95,9 @@ export const getQueryFn: <T>(options: {
       const response = await axiosClient.get(url, {
         signal: controller.signal,
         withCredentials: false, // Explicitly disable credentials for GET requests
+        headers: typeof window !== "undefined" && localStorage.getItem("auth_token")
+          ? { Authorization: `Bearer ${localStorage.getItem("auth_token")}` }
+          : undefined,
       });
 
       return response.data;

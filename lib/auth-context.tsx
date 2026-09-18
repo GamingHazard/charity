@@ -6,6 +6,7 @@ interface User {
   id: string;
   email: string;
   name: string;
+  role: string;
 }
 
 interface AuthContextType {
@@ -36,23 +37,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string) => {
-    // Mock authentication - replace with real API call
-    if (email && password.length >= 6) {
-      const mockUser: User = {
-        id: '1',
-        email,
-        name: email.split('@')[0],
-      };
-      setUser(mockUser);
-      localStorage.setItem('user', JSON.stringify(mockUser));
-    } else {
-      throw new Error('Invalid credentials');
-    }
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api';
+    const response = await fetch(`${baseUrl}/auth/admin/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: email, password }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'Invalid credentials');
+
+    const authenticatedUser: User = {
+      id: String(data.id),
+      email,
+      name: data.username,
+      role: data.role,
+    };
+    setUser(authenticatedUser);
+    localStorage.setItem('user', JSON.stringify(authenticatedUser));
+    localStorage.setItem('auth_token', data.token);
   };
 
   const logout = () => {
     setUser(null);
     localStorage.removeItem('user');
+    localStorage.removeItem('auth_token');
   };
 
   return (
