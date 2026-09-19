@@ -3,60 +3,86 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { useData } from "@/lib/data-context";
+import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/query-client";
 import {
   AnimatedElement,
   AnimatedContainer,
 } from "@/components/motion/animated-elements";
 
-export default function DashboardPage() {
-  const { programs, donations, getTotalDonations, getTotalImpact } = useData();
+type DashboardSummary = {
+  children: { total: number; sponsored: number; available: number };
+  sponsors: { totalActive: number };
+  sponsorships: {
+    active: number;
+    pending: number;
+    cancelled: number;
+    totalPledged: number;
+  };
+  payments: {
+    completedCount: number;
+    totalReceived: number;
+    pendingCount: number;
+    failedCount: number;
+    currency: string;
+  };
+  reportCards: { total: number };
+  recentPayments: Array<{
+    id?: string;
+    amount: number;
+    currency: string;
+    method: string;
+    status: string;
+    date?: string;
+    childName: string;
+    sponsorName: string;
+  }>;
+};
 
-  const totalDonations = getTotalDonations();
-  const activePrograms = programs.filter((p) => p.status === "active").length;
-  const totalPeopleImpacted = getTotalImpact();
+export default function DashboardPage() {
+  const { data, isLoading, isError, refetch } = useQuery<DashboardSummary>({
+    queryKey: ["dashboard", "summary"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/dashboard/summary");
+      return response.json();
+    },
+  });
+
+  const summary = data || {
+    children: { total: 0, sponsored: 0, available: 0 },
+    sponsors: { totalActive: 0 },
+    sponsorships: { active: 0, pending: 0, cancelled: 0, totalPledged: 0 },
+    payments: {
+      completedCount: 0,
+      totalReceived: 0,
+      pendingCount: 0,
+      failedCount: 0,
+      currency: "UGX",
+    },
+    reportCards: { total: 0 },
+    recentPayments: [],
+  };
 
   const stats = [
     {
-      label: "Total Programs",
-      value: programs.length.toString(),
+      label: "Sponsored Children",
+      value: summary.children.sponsored.toLocaleString(),
       color: "bg-primary",
     },
     {
-      label: "Total Donations",
-      value: `$${(totalDonations / 1000).toFixed(0)}K`,
+      label: "Total Received",
+      value: `${summary.payments.totalReceived.toLocaleString()} ${summary.payments.currency}`,
       color: "bg-accent",
     },
     {
-      label: "Active Programs",
-      value: activePrograms.toString(),
+      label: "Active Sponsorships",
+      value: summary.sponsorships.active.toLocaleString(),
       color: "bg-primary",
     },
     {
-      label: "People Impacted",
-      value: `${(totalPeopleImpacted / 1000).toFixed(1)}K+`,
+      label: "Completed Payments",
+      value: summary.payments.completedCount.toLocaleString(),
       color: "bg-accent",
-    },
-  ];
-
-  const recentActivities = [
-    {
-      activity: "New donation received",
-      amount:
-        donations.length > 0
-          ? `$${donations[0].amount.toLocaleString()}`
-          : "$0",
-      time: "Recently",
-    },
-    {
-      activity: `${activePrograms} programs currently active`,
-      amount: "",
-      time: "Ongoing",
-    },
-    {
-      activity: `${programs.length} total programs in system`,
-      amount: "",
-      time: "Current",
     },
   ];
 
@@ -73,6 +99,19 @@ export default function DashboardPage() {
         </div>
       </AnimatedElement>
 
+      {isError ? (
+        <Card className="mb-8 border-destructive/30 bg-destructive/5 p-4">
+          <div className="flex items-center justify-between gap-4">
+            <p className="text-sm text-destructive">
+              Unable to load live dashboard data.
+            </p>
+            <Button variant="outline" onClick={() => refetch()}>
+              Retry
+            </Button>
+          </div>
+        </Card>
+      ) : null}
+
       {/* Stats Grid */}
       <AnimatedContainer staggerDelay={0.1}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -86,7 +125,7 @@ export default function DashboardPage() {
               <p className="text-foreground/60 text-sm mb-2">{stat.label}</p>
               <div className="flex items-end gap-3">
                 <p className="text-3xl font-bold text-foreground">
-                  {stat.value}
+                  {isLoading ? "--" : stat.value}
                 </p>
                 <div className={`${stat.color} w-2 h-8 rounded-full`}></div>
               </div>
@@ -160,25 +199,27 @@ export default function DashboardPage() {
           <AnimatedElement variant="fadeInRight">
             <Card className="p-6 bg-card border-border">
               <h3 className="text-lg font-bold text-foreground mb-4">
-                Recent Activity
+                Live Summary
               </h3>
               <div className="space-y-3">
-                {recentActivities.map((item, index) => (
+                {[
+                  `${summary.children.total} total children (${summary.children.available} available)`,
+                  `${summary.sponsors.totalActive} active sponsors`,
+                  `${summary.sponsorships.pending} pending sponsorships`,
+                  `${summary.reportCards.total} report cards uploaded`,
+                ].map((activity, index) => (
                   <div
                     key={index}
                     className="flex items-start justify-between pb-3 border-b border-border last:border-b-0"
                   >
                     <div>
                       <p className="text-foreground font-medium">
-                        {item.activity}
+                        {isLoading ? "Loading live summary..." : activity}
                       </p>
                       <p className="text-xs text-foreground/60 mt-1">
-                        {item.time}
+                        Current data
                       </p>
                     </div>
-                    {item.amount && (
-                      <p className="text-accent font-semibold">{item.amount}</p>
-                    )}
                   </div>
                 ))}
               </div>
@@ -186,6 +227,51 @@ export default function DashboardPage() {
           </AnimatedElement>
         </div>
       </AnimatedContainer>
+
+      <Card className="bg-card border-border p-6">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-bold text-foreground">
+              Recent Payments
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              Latest recorded sponsorship payments
+            </p>
+          </div>
+          <Link href="/dashboard/sponsorships">
+            <Button variant="outline">View sponsorships</Button>
+          </Link>
+        </div>
+        {summary.recentPayments.length > 0 ? (
+          <div className="space-y-3">
+            {summary.recentPayments.map((payment, index) => (
+              <div
+                key={payment.id || `${payment.childName}-${index}`}
+                className="flex flex-col gap-2 border-b border-border pb-3 last:border-0 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div>
+                  <p className="font-medium text-foreground">
+                    {payment.sponsorName} → {payment.childName}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {payment.method} ·{" "}
+                    {payment.date
+                      ? new Date(payment.date).toLocaleDateString()
+                      : "No date"}
+                  </p>
+                </div>
+                <p className="font-semibold text-accent">
+                  {payment.amount.toLocaleString()} {payment.currency}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            No payments have been recorded yet.
+          </p>
+        )}
+      </Card>
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -26,8 +27,18 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiRequest } from "@/lib/query-client";
+import { uploadImageToCloudinary } from "@/lib/cloudinary-upload";
+import { jsPDF } from "jspdf";
 import type { SponsorshipProfile } from "@/lib/mock-data";
-import { ArrowLeft, Unlink } from "lucide-react";
+import {
+  ArrowLeft,
+  Download,
+  Search,
+  Trash2,
+  Unlink,
+  Upload,
+  X,
+} from "lucide-react";
 
 function formatDisplayDate(value?: string | Date | null) {
   if (!value) return "Not provided";
@@ -70,6 +81,7 @@ function getStatusBadgeClass(status?: string) {
 export default function ChildDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const childId = typeof params?.id === "string" ? params.id : "";
 
   const [profile, setProfile] = useState<SponsorshipProfile | null>(null);
@@ -86,6 +98,15 @@ export default function ChildDetailPage() {
   const [isUnlinkDialogOpen, setIsUnlinkDialogOpen] = useState(false);
   const [isUnlinking, setIsUnlinking] = useState(false);
   const [unlinkError, setUnlinkError] = useState("");
+  const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
+  const [reportFile, setReportFile] = useState<File | null>(null);
+  const [reportPreview, setReportPreview] = useState("");
+  const [reportTitle, setReportTitle] = useState("");
+  const [reportSearch, setReportSearch] = useState("");
+  const [reportError, setReportError] = useState("");
+  const [isUploadingReport, setIsUploadingReport] = useState(false);
+  const [deletingReportId, setDeletingReportId] = useState("");
+  const [downloadingReportId, setDownloadingReportId] = useState("");
 
   useEffect(() => {
     if (!childId) return;
@@ -263,6 +284,9 @@ export default function ChildDetailPage() {
         ...data.profile,
         _id: profile._id,
       }));
+      await queryClient.invalidateQueries({
+        queryKey: ["dashboard", "summary"],
+      });
       setIsEditOpen(false);
     } catch (error) {
       console.error("Error saving child profile:", error);
@@ -271,6 +295,176 @@ export default function ChildDetailPage() {
       setIsSaving(false);
     }
   };
+
+  const resetReportDialog = () => {
+    setReportFile(null);
+    setReportPreview("");
+    setReportTitle("");
+    setReportError("");
+  };
+
+  const handleReportFileChange = (file?: File) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setReportError("Select an image file.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setReportError("Report card images must be 5 MB or smaller.");
+      return;
+    }
+
+    setReportError("");
+    setReportFile(file);
+    setReportPreview(URL.createObjectURL(file));
+  };
+
+  const handleUploadReportCard = async () => {
+    if (!childId || !reportFile) {
+      setReportError("Select an image first.");
+      return;
+    }
+    if (!reportTitle.trim()) {
+      setReportError("Enter a title for this report card.");
+      return;
+    }
+
+    setIsUploadingReport(true);
+    setReportError("");
+    try {
+      const upload = await uploadImageToCloudinary(reportFile);
+      const response = await apiRequest(
+        "POST",
+        `/children/profile/${childId}/report-cards`,
+        {
+          name: reportTitle.trim(),
+          url: upload.secure_url,
+          public_id: upload.public_id,
+          fileType: reportFile.type,
+        },
+      );
+      const result = await response.json();
+      if (!response.ok)
+        throw new Error(result.message || "Unable to save report card.");
+
+      setProfile((current) =>
+        current ? { ...current, ...result.profile } : current,
+      );
+      await queryClient.invalidateQueries({
+        queryKey: ["dashboard", "summary"],
+      });
+      setIsReportDialogOpen(false);
+      resetReportDialog();
+    } catch (error) {
+      console.error("Error uploading report card:", error);
+      setReportError(
+        error instanceof Error
+          ? error.message
+          : "Unable to upload report card.",
+      );
+    } finally {
+      setIsUploadingReport(false);
+    }
+  };
+
+  const handleDeleteReportCard = async (reportCard: any) => {
+    if (!childId || !reportCard?._id) return;
+    if (!window.confirm(`Delete ${reportCard.name || "this report card"}?`))
+      return;
+
+    setDeletingReportId(reportCard._id);
+    try {
+      const response = await apiRequest(
+        "DELETE",
+        `/children/profile/${childId}/report-cards/${reportCard._id}`,
+      );
+      const result = await response.json();
+      if (!response.ok)
+        throw new Error(result.message || "Unable to delete report card.");
+      setProfile((current) =>
+        current ? { ...current, ...result.profile } : current,
+      );
+      await queryClient.invalidateQueries({
+        queryKey: ["dashboard", "summary"],
+      });
+    } catch (error) {
+      setReportError(
+        error instanceof Error
+          ? error.message
+          : "Unable to delete report card.",
+      );
+    } finally {
+      setDeletingReportId("");
+    }
+  };
+
+  const handleDownloadReportPdf = async (reportCard: any) => {
+    if (!reportCard?.url) return;
+
+    setDownloadingReportId(
+      reportCard._id || reportCard.public_id || reportCard.url,
+    );
+    try {
+      const response = await fetch(reportCard.url);
+      if (!response.ok) throw new Error("Unable to download report image.");
+
+      const blob = await response.blob();
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(String(reader.result));
+        reader.onerror = () =>
+          reject(new Error("Unable to prepare report PDF."));
+        reader.readAsDataURL(blob);
+      });
+
+      const image = new Image();
+      image.src = dataUrl;
+      await new Promise<void>((resolve, reject) => {
+        image.onload = () => resolve();
+        image.onerror = () => reject(new Error("Unable to read report image."));
+      });
+
+      const pdf = new jsPDF({
+        orientation: image.width > image.height ? "landscape" : "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 10;
+      const scale = Math.min(
+        (pageWidth - margin * 2) / image.width,
+        (pageHeight - margin * 2) / image.height,
+      );
+      const imageWidth = image.width * scale;
+      const imageHeight = image.height * scale;
+      pdf.addImage(
+        dataUrl,
+        "JPEG",
+        (pageWidth - imageWidth) / 2,
+        (pageHeight - imageHeight) / 2,
+        imageWidth,
+        imageHeight,
+      );
+      pdf.save(
+        `${String(reportCard.name || "report-card").replace(/[^a-z0-9-_]+/gi, "-")}.pdf`,
+      );
+    } catch (error) {
+      setReportError(
+        error instanceof Error
+          ? error.message
+          : "Unable to download report PDF.",
+      );
+    } finally {
+      setDownloadingReportId("");
+    }
+  };
+
+  const filteredReportCards = (profile?.reportCards || []).filter((card: any) =>
+    String(card.name || "")
+      .toLowerCase()
+      .includes(reportSearch.toLowerCase()),
+  );
 
   const handleUnlinkSponsor = async () => {
     if (!childId) return;
@@ -295,6 +489,9 @@ export default function ChildDetailPage() {
             }
           : current,
       );
+      await queryClient.invalidateQueries({
+        queryKey: ["dashboard", "summary"],
+      });
       setHistory((current) =>
         current.map((record) =>
           ["Active", "Pending"].includes(record.status)
@@ -322,6 +519,142 @@ export default function ChildDetailPage() {
           .map((item) => item.trim())
           .filter(Boolean)
       : [];
+
+  const exportChildProfilePdf = () => {
+    const pdf = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4",
+    });
+    const margin = 14;
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    let y = 16;
+
+    const ensureSpace = (height = 10) => {
+      if (y + height > pageHeight - 16) {
+        pdf.addPage();
+        y = 16;
+      }
+    };
+    const section = (title: string) => {
+      ensureSpace(14);
+      pdf.setFillColor(22, 101, 52);
+      pdf.rect(margin, y - 5, 182, 8, "F");
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "bold");
+      pdf.text(title, margin + 3, y);
+      pdf.setTextColor(30, 30, 30);
+      y += 9;
+    };
+    const field = (label: string, value: unknown) => {
+      const lines = pdf.splitTextToSize(
+        `${label}: ${String(value ?? "Not provided")}`,
+        182,
+      );
+      ensureSpace(lines.length * 4 + 3);
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(9);
+      pdf.text(lines, margin, y);
+      y += lines.length * 4 + 2;
+    };
+
+    pdf.setTextColor(22, 101, 52);
+    pdf.setFontSize(18);
+    pdf.setFont("helvetica", "bold");
+    pdf.text("Child Profile Report", margin, y);
+    y += 8;
+    pdf.setTextColor(80, 80, 80);
+    pdf.setFontSize(9);
+    pdf.setFont("helvetica", "normal");
+    pdf.text(
+      `Child ID: ${profile._id} | Generated: ${new Date().toLocaleString()}`,
+      margin,
+      y,
+    );
+    y += 10;
+
+    section("Identity and Personal Details");
+    field("Profile ID", profile._id);
+    field(
+      "Name",
+      [profile.firstName, profile.secondName, profile.givenName]
+        .filter(Boolean)
+        .join(" "),
+    );
+    field("Gender", profile.gender);
+    field("Date of birth", formatDisplayDate(profile.dateOfBirth));
+    field(
+      "Age / age group",
+      `${profile.age || "Not provided"} / ${profile.ageGroup || "Not provided"}`,
+    );
+    field("Nationality", profile.nationality);
+    field("Class", profile.class);
+    field("School", profile.school);
+    field("Location", profile.location);
+
+    section("Family and Guardian Details");
+    field("Family status", profile.familyStatus);
+    field("Number of parents", profile.numberOfParents);
+    field("Guardian", profile.guardianName);
+    field("Guardian contact", profile.guardianContact);
+    field("Guardian relation", profile.guardianRelation);
+    field("Background", profile.background);
+    field("Needs", needsList.join(", "));
+
+    section("Education Details");
+    field("Current level", education.currentLevel);
+    field("Current class", education.currentClass);
+    field("Academic year", education.academicYear);
+    field("Last term result", education.lastTermResult);
+    field("Graduation target", education.graduationTarget);
+    field("Estimated graduation", education.estimatedGraduationYear);
+    field("Education notes", education.educationNotes);
+
+    section("Current Sponsorship");
+    field("Status", profile.sponsorshipStatus);
+    field("Sponsor ID", sponsorProfile?._id);
+    field("Monthly need", profile.monthlyNeed);
+
+    section("Sponsorship and Payment History");
+    if (history.length > 0) {
+      history.forEach((record: any) => {
+        field(
+          "Sponsorship",
+          `${record._id || ""} | Sponsor ID: ${record.donor?._id || record.donor || sponsorProfile?._id || ""}`,
+        );
+        field(
+          "Status / amount",
+          `${record.status || ""} / ${record.amount || ""} ${record.frequency || ""}`,
+        );
+        (record.payments || []).forEach((payment: any) => {
+          field(
+            "Payment",
+            `${payment._id || ""} | ${payment.date ? formatDisplayDate(payment.date) : ""} | ${payment.amount || 0} ${payment.currency || "UGX"} | ${payment.method || ""} | ${payment.transactionId || ""} | Group: ${payment.paymentGroupId || ""}`,
+          );
+        });
+      });
+    } else {
+      field("History", "No sponsorship history available");
+    }
+
+    section("Report Cards and Documents");
+    if (reportCards.length > 0) {
+      reportCards.forEach((card: any) => {
+        field(
+          "Report card",
+          `${card._id || ""} | ${card.name || "Report card"} | ${card.fileType || ""} | ${card.uploadedAt ? formatDisplayDate(card.uploadedAt) : ""} | ${card.url || ""}`,
+        );
+      });
+    } else {
+      field("Documents", "No report cards uploaded");
+    }
+
+    pdf.setFontSize(8);
+    pdf.setTextColor(100, 100, 100);
+    pdf.text("Confidential administrative report", margin, pageHeight - 8);
+    pdf.save(`child-profile-${profile._id}.pdf`);
+  };
 
   if (loading) {
     return (
@@ -360,11 +693,17 @@ export default function ChildDetailPage() {
   return (
     <div className="p-8">
       <Button
-        variant="outline"
         onClick={() => router.push("/dashboard/children")}
-        className="mb-6"
+        className="mb-6 bg-accent text-white hover:bg-accent/90"
       >
         <ArrowLeft className="mr-2" size={16} /> Back to children
+      </Button>
+      <Button
+        className="absolute top-18 right-8"
+        onClick={exportChildProfilePdf}
+      >
+        <Download className="mr-2 size-4" />
+        Export profile
       </Button>
 
       <div className="mt-2 grid gap-6 lg:grid-cols-[320px_1fr]">
@@ -949,40 +1288,203 @@ export default function ChildDetailPage() {
 
         {activeTab === "documents" && (
           <div className="rounded-xl border border-border bg-card p-4">
-            <h3 className="mb-3 text-lg font-semibold text-foreground">
-              Child's Report cards{" "}
-            </h3>
-            {reportCards.length > 0 ? (
-              <div className="grid gap-3 md:grid-cols-2">
-                {reportCards.map((card: any, index: number) => (
-                  <a
-                    key={
-                      card.public_id ||
-                      card.url ||
-                      `${card.name || "document"}-${index}`
-                    }
-                    href={card.url || "#"}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="rounded-lg border border-border bg-muted p-3 text-sm text-foreground/80 hover:bg-muted/80"
-                  >
-                    <p className="font-medium text-foreground">
-                      {card.name || "Report card"}
-                    </p>
-                    <p className="mt-1 text-xs text-foreground/60">
-                      {card.fileType || "Document"}
-                    </p>
-                  </a>
-                ))}
+            <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-foreground">
+                  Child&apos;s report cards
+                </h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Upload and manage academic reports.
+                </p>
               </div>
+              <Button
+                onClick={() => {
+                  resetReportDialog();
+                  setIsReportDialogOpen(true);
+                }}
+              >
+                <Upload className="mr-2 size-4" /> Upload report card
+              </Button>
+            </div>
+
+            {reportCards.length > 0 ? (
+              <>
+                <div className="relative mb-5 max-w-md">
+                  <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    value={reportSearch}
+                    onChange={(event) => setReportSearch(event.target.value)}
+                    placeholder="Search reports by name..."
+                    className="pl-9"
+                  />
+                </div>
+                {filteredReportCards.length > 0 ? (
+                  <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                    {filteredReportCards.map((card: any, index: number) => (
+                      <article
+                        key={
+                          card._id || card.public_id || `${card.name}-${index}`
+                        }
+                        className="group relative aspect-[4/3] overflow-hidden rounded-xl border border-border bg-muted shadow-sm"
+                      >
+                        <img
+                          src={card.url}
+                          alt={card.name || "Report card"}
+                          className="h-full w-full object-cover"
+                        />
+                        <div className="absolute inset-x-0 bottom-0 bg-black/80 p-3 text-white">
+                          <p className="truncate font-semibold">
+                            {card.name || "Report card"}
+                          </p>
+                          <div className="mt-2 flex items-center gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              disabled={
+                                downloadingReportId ===
+                                (card._id || card.public_id || card.url)
+                              }
+                              onClick={() => void handleDownloadReportPdf(card)}
+                              className="border-white/30 bg-transparent text-white hover:bg-white/10 hover:text-white"
+                            >
+                              <Download className="mr-1 size-3" />
+                              {downloadingReportId ===
+                              (card._id || card.public_id || card.url)
+                                ? "Preparing..."
+                                : "PDF"}
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              disabled={
+                                !card._id || deletingReportId === card._id
+                              }
+                              onClick={() => handleDeleteReportCard(card)}
+                            >
+                              <Trash2 className="mr-1 size-3" />
+                              {deletingReportId === card._id
+                                ? "Deleting..."
+                                : "Delete"}
+                            </Button>
+                          </div>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-dashed border-border bg-background p-6 text-sm text-muted-foreground">
+                    No report cards match your search.
+                  </div>
+                )}
+              </>
             ) : (
               <div className="rounded-lg border border-dashed border-border bg-background p-4 text-sm text-foreground/70">
                 No report cards have been uploaded for this child yet.
               </div>
             )}
+            {reportError ? (
+              <p className="mt-4 text-sm text-destructive">{reportError}</p>
+            ) : null}
           </div>
         )}
       </div>
+
+      <Dialog
+        open={isReportDialogOpen}
+        onOpenChange={(open) => {
+          if (!isUploadingReport) {
+            setIsReportDialogOpen(open);
+            if (!open) resetReportDialog();
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Upload report card</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {reportError ? (
+              <p className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+                {reportError}
+              </p>
+            ) : null}
+            <div className="flex min-h-52 items-center justify-center overflow-hidden rounded-lg border border-dashed border-border bg-muted">
+              {reportPreview ? (
+                <img
+                  src={reportPreview}
+                  alt="Selected report preview"
+                  className="max-h-64 w-full object-contain"
+                />
+              ) : (
+                <label className="cursor-pointer p-8 text-center text-sm text-muted-foreground">
+                  <Upload className="mx-auto mb-2 size-8" />
+                  Select a report image
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="hidden"
+                    onChange={(event) =>
+                      handleReportFileChange(event.target.files?.[0])
+                    }
+                  />
+                </label>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <label className="inline-flex cursor-pointer items-center rounded-md border border-border px-3 py-2 text-sm hover:bg-muted">
+                <Upload className="mr-2 size-4" />
+                {reportPreview ? "Change image" : "Choose image"}
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  className="hidden"
+                  onChange={(event) =>
+                    handleReportFileChange(event.target.files?.[0])
+                  }
+                />
+              </label>
+              {reportPreview ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setReportFile(null);
+                    setReportPreview("");
+                  }}
+                >
+                  <X className="mr-2 size-4" /> Clear
+                </Button>
+              ) : null}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="reportTitle">Report title</Label>
+              <Input
+                id="reportTitle"
+                value={reportTitle}
+                onChange={(event) => setReportTitle(event.target.value)}
+                placeholder="3rd Term Report"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsReportDialogOpen(false)}
+              disabled={isUploadingReport}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleUploadReportCard}
+              disabled={isUploadingReport || !reportFile}
+            >
+              {isUploadingReport ? "Uploading..." : "Upload report"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto max-w-3xl">

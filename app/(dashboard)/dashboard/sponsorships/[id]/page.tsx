@@ -3,10 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
+import { jsPDF } from "jspdf";
 import {
   Archive,
   ArrowLeft,
   CreditCard,
+  Download,
   Unlink,
   Users,
   Wallet,
@@ -35,6 +37,12 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -43,6 +51,8 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiRequest } from "@/lib/query-client";
+import { uploadImageToCloudinary } from "@/lib/cloudinary-upload";
+import { Camera, Loader2 } from "lucide-react";
 
 type SponsorDetail = {
   sponsor: {
@@ -75,6 +85,7 @@ type SponsorDetail = {
     };
     startDate?: string;
     profileStatus?: string;
+    image?: { url?: string; public_id?: string };
   };
   profileStatus?: string;
   profileCompletion?: number;
@@ -108,6 +119,28 @@ function getStatusBadgeClass(status?: string) {
   }
 }
 
+function createPaymentReference() {
+  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  return Array.from({ length: 7 }, () =>
+    characters.charAt(Math.floor(Math.random() * characters.length)),
+  ).join("");
+}
+
+function formatDisplayDate(value?: string | Date | null) {
+  if (!value) return "Not provided";
+
+  const parsedDate = new Date(value);
+  if (Number.isNaN(parsedDate.getTime())) {
+    return String(value);
+  }
+
+  return parsedDate.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
 export default function SponsorDetailPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -117,7 +150,7 @@ export default function SponsorDetailPage() {
   const [profile, setProfile] = useState<SponsorDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<
-    "overview" | "children" | "payments"
+    "overview" | "children" | "donations"
   >("overview");
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -140,6 +173,7 @@ export default function SponsorDetailPage() {
     method: "Cash",
     transactionId: "",
     notes: "",
+    splitDonation: false,
     allocationMode: "equal" as "equal" | "custom",
     selectedSponsorshipIds: [] as string[],
     customAmounts: {} as Record<string, string>,
@@ -164,6 +198,8 @@ export default function SponsorDetailPage() {
     startDate: new Date().toISOString().slice(0, 10),
   });
   const [childrenOptions, setChildrenOptions] = useState<any[]>([]);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [imageError, setImageError] = useState("");
 
   useEffect(() => {
     if (!sponsorId) return;
@@ -214,13 +250,230 @@ export default function SponsorDetailPage() {
   );
 
   const paymentHistory = useMemo(() => {
-    return Array.isArray(profile?.paymentHistory) ? profile.paymentHistory : [];
+    if (
+      Array.isArray(profile?.paymentHistory) &&
+      profile.paymentHistory.length > 0
+    ) {
+      return profile.paymentHistory;
+    }
+
+    return sponsoredChildren.flatMap((entry: any) =>
+      (entry.payments || []).map((payment: any) => ({
+        ...payment,
+        sponsorshipId: entry._id,
+        child: entry.child,
+      })),
+    );
   }, [profile]);
+
+  const exportRows = useMemo(
+    () =>
+      paymentHistory.map((payment: any) => ({
+        date: payment.date ? new Date(payment.date).toLocaleDateString() : "",
+        childId: String(payment.child?._id || payment.childId || ""),
+        sponsorshipId: String(payment.sponsorshipId || ""),
+        amount: String(Number(payment.amount || 0)),
+        currency: payment.currency || "UGX",
+        method: payment.method || payment.paymentMethod || "",
+        status: payment.status || "Completed",
+        reference: payment.transactionId || "",
+        paymentGroupId: payment.paymentGroupId || "",
+        notes: payment.notes || "",
+      })),
+    [paymentHistory],
+  );
+
+  const downloadFile = (content: BlobPart, filename: string, type: string) => {
+    const url = URL.createObjectURL(new Blob([content], { type }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const escapeCsv = (value: string) => `"${value.replace(/"/g, '""')}"`;
+
+  const exportPaymentsCsv = () => {
+    if (exportRows.length === 0) return;
+    const headers = [
+      "Date",
+      "Child ID",
+      "Sponsorship ID",
+      "Amount",
+      "Currency",
+      "Method",
+      "Status",
+      "Reference",
+      "Payment Group ID",
+      "Notes",
+    ];
+    const rows = exportRows.map((row) => [
+      row.date,
+      row.childId,
+      row.sponsorshipId,
+      row.amount,
+      row.currency,
+      row.method,
+      row.status,
+      row.reference,
+      row.paymentGroupId,
+      row.notes,
+    ]);
+    const csv = [headers, ...rows]
+      .map((row) => row.map(escapeCsv).join(","))
+      .join("\r\n");
+    downloadFile(
+      `\ufeff${csv}`,
+      `sponsor-donations-${sponsorId}.csv`,
+      "text/csv;charset=utf-8",
+    );
+  };
+
+  const exportPaymentsPdf = () => {
+    if (exportRows.length === 0) return;
+    const pdf = new jsPDF({
+      orientation: "landscape",
+      unit: "mm",
+      format: "a4",
+    });
+    const margin = 10;
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const columnWidths = [22, 36, 36, 22, 18, 28, 22, 30, 38, 58];
+    const headers = [
+      "Date",
+      "Child ID",
+      "Sponsorship ID",
+      "Amount",
+      "Currency",
+      "Method",
+      "Status",
+      "Reference",
+      "Payment Group",
+      "Notes",
+    ];
+    let y = 24;
+
+    pdf.setFontSize(14);
+    pdf.text(`Donation history: ${sponsorName}`, margin, 12);
+    pdf.setFontSize(8);
+    pdf.text(
+      `Sponsor ID: ${sponsorId} | Exported: ${new Date().toLocaleDateString()}`,
+      margin,
+      18,
+    );
+
+    const drawRow = (values: string[], bold = false) => {
+      let x = margin;
+      pdf.setFont("helvetica", bold ? "bold" : "normal");
+      values.forEach((value, index) => {
+        const lines = pdf.splitTextToSize(value || "", columnWidths[index] - 2);
+        pdf.text(lines, x + 1, y + 4);
+        x += columnWidths[index];
+      });
+      const rowHeight =
+        Math.max(
+          ...values.map(
+            (value, index) =>
+              pdf.splitTextToSize(value || "", columnWidths[index] - 2).length,
+          ),
+          1,
+        ) *
+          4 +
+        4;
+      pdf.setDrawColor(220);
+      pdf.line(margin, y + rowHeight, pageWidth - margin, y + rowHeight);
+      y += rowHeight;
+    };
+
+    drawRow(headers, true);
+    exportRows.forEach((row) => {
+      const values = [
+        row.date,
+        row.childId,
+        row.sponsorshipId,
+        row.amount,
+        row.currency,
+        row.method,
+        row.status,
+        row.reference,
+        row.paymentGroupId,
+        row.notes,
+      ];
+      const height =
+        Math.max(
+          ...values.map(
+            (value, index) =>
+              pdf.splitTextToSize(value || "", columnWidths[index] - 2).length,
+          ),
+          1,
+        ) *
+          4 +
+        4;
+      if (y + height > 195) {
+        pdf.addPage();
+        y = 16;
+        drawRow(headers, true);
+      }
+      drawRow(values);
+    });
+    pdf.save(`sponsor-donations-${sponsorId}.pdf`);
+  };
+
+  const exportSponsorProfilePdf = () => {
+    const profileData = profile || ({} as SponsorDetail);
+    const pdf = new jsPDF({ unit: "mm", format: "a4" });
+    const margin = 18;
+    let y = 22;
+
+    pdf.setFontSize(18);
+    pdf.setFont("helvetica", "bold");
+    pdf.text("Sponsor profile", margin, y);
+    y += 10;
+    pdf.setFontSize(10);
+    pdf.setFont("helvetica", "normal");
+    pdf.text(`Exported: ${new Date().toLocaleDateString()}`, margin, y);
+    y += 12;
+
+    const field = (label: string, value: unknown) => {
+      pdf.setFont("helvetica", "bold");
+      pdf.text(`${label}:`, margin, y);
+      pdf.setFont("helvetica", "normal");
+      pdf.text(String(value || "Not provided"), margin + 42, y);
+      y += 7;
+    };
+
+    const section = (title: string) => {
+      y += 4;
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(12);
+      pdf.text(title, margin, y);
+      pdf.setFontSize(10);
+      y += 8;
+    };
+
+    section("Contact");
+    field("Name", sponsorName);
+    field("Email", email);
+    field("Phone", phone);
+    field("Location", cityState);
+    field("Bio", sponsorProfile.bio);
+    field("Profile status", profileData.profileStatus || sponsor.profileStatus);
+    field("Created", formatDisplayDate((sponsor as any).createdAt));
+
+    section("Sponsorship summary");
+    field("Linked sponsorships", profileData.summary?.totalChildren);
+    field("Total pledged", `${totalPledged} - ${plegedFrequency}`);
+    field("Total paid", totalPaid);
+    field("Payment method", sponsor.paymentMethod);
+
+    pdf.save(`sponsor-profile-${sponsorId}.pdf`);
+  };
 
   const tabs = [
     { key: "overview", label: "Overview" },
     { key: "children", label: "Children" },
-    { key: "payments", label: "Payment history" },
+    { key: "donations", label: "Donation history" },
   ] as const;
 
   const openEditDialog = () => {
@@ -342,6 +595,9 @@ export default function SponsorDetailPage() {
       await queryClient.invalidateQueries({
         queryKey: ["children", "profiles"],
       });
+      await queryClient.invalidateQueries({
+        queryKey: ["dashboard", "summary"],
+      });
       setIsArchiveDialogOpen(false);
       router.push("/dashboard/sponsorships");
     } catch (error) {
@@ -382,12 +638,72 @@ export default function SponsorDetailPage() {
       await queryClient.invalidateQueries({
         queryKey: ["sponsors", "profiles", "all"],
       });
+      await queryClient.invalidateQueries({
+        queryKey: ["dashboard", "summary"],
+      });
       setUnlinkTarget(null);
     } catch (error) {
       console.error("Error unlinking child sponsor:", error);
       setUnlinkError("Unable to unlink this child. Please try again.");
     } finally {
       setIsUnlinking(false);
+    }
+  };
+
+  const handleSponsorImageChange = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setImageError("Select a valid image file.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setImageError("Sponsor images must be 5 MB or smaller.");
+      return;
+    }
+
+    setIsUploadingImage(true);
+    setImageError("");
+    try {
+      const upload = await uploadImageToCloudinary(file);
+      const response = await apiRequest(
+        "PATCH",
+        `/sponsors/profile/${sponsorId}`,
+        {
+          image: {
+            url: upload.secure_url,
+            public_id: upload.public_id,
+          },
+        },
+      );
+      const result = await response.json();
+      if (!response.ok)
+        throw new Error(result.message || "Unable to save sponsor image.");
+
+      setProfile((current) =>
+        current
+          ? { ...current, sponsor: { ...current.sponsor, ...result.sponsor } }
+          : current,
+      );
+      await queryClient.invalidateQueries({
+        queryKey: ["sponsors", "profiles", "all"],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["dashboard", "summary"],
+      });
+    } catch (error) {
+      console.error("Error uploading sponsor image:", error);
+      setImageError(
+        error instanceof Error
+          ? error.message
+          : "Unable to upload sponsor image.",
+      );
+    } finally {
+      setIsUploadingImage(false);
     }
   };
 
@@ -401,10 +717,14 @@ export default function SponsorDetailPage() {
       ...current,
       amount: "",
       date: new Date().toISOString().slice(0, 10),
-      transactionId: "",
+      transactionId: createPaymentReference(),
       notes: "",
+      splitDonation: activeSponsoredChildren.length > 1,
       allocationMode: "equal",
-      selectedSponsorshipIds: [],
+      selectedSponsorshipIds:
+        activeSponsoredChildren.length > 1
+          ? activeSponsoredChildren.map((entry: any) => String(entry._id))
+          : [],
       customAmounts: {},
     }));
     setIsPaymentDialogOpen(true);
@@ -414,7 +734,9 @@ export default function SponsorDetailPage() {
     setPaymentForm((current) => ({
       ...current,
       selectedSponsorshipIds: checked
-        ? [...current.selectedSponsorshipIds, sponsorshipId]
+        ? current.splitDonation
+          ? [...current.selectedSponsorshipIds, sponsorshipId]
+          : [sponsorshipId]
         : current.selectedSponsorshipIds.filter((id) => id !== sponsorshipId),
     }));
   };
@@ -530,6 +852,14 @@ export default function SponsorDetailPage() {
       await queryClient.invalidateQueries({
         queryKey: ["sponsors", "profiles", "all"],
       });
+      await queryClient.invalidateQueries({
+        queryKey: ["dashboard", "summary"],
+      });
+      const refreshedProfile = await apiRequest(
+        "GET",
+        `/sponsors/${sponsorId}`,
+      );
+      setProfile(await refreshedProfile.json());
       setIsPaymentDialogOpen(false);
     } catch (error) {
       console.error("Error recording donation:", error);
@@ -586,26 +916,57 @@ export default function SponsorDetailPage() {
     [location.city, location.state, location.country]
       .filter(Boolean)
       .join(", ") || "Not provided";
-  const totalPledged = Number(profile?.summary?.totalPledged || 0);
+  const totalPledged = Number(sponsor?.donation?.amount || 0);
   const totalPaid = Number(profile?.summary?.totalPaid || 0);
+  const plegedFrequency = sponsor?.donation?.period || "Monthly";
 
   return (
-    <div className="p-8">
+    <div className="p-8 relative">
       <Button
-        variant="outline"
         onClick={() => router.push("/dashboard/sponsorships")}
-        className="mb-6"
+        className="mb-6 bg-accent text-white hover:bg-accent/90"
       >
         <ArrowLeft className="mr-2" size={16} /> Back to sponsorships
+      </Button>
+      <Button
+        className="absolute top-10 right-3"
+        onClick={exportSponsorProfilePdf}
+      >
+        <Download className="mr-2 size-4" />
+        Export profile
       </Button>
 
       <div className="mt-2 grid gap-6 lg:grid-cols-[320px_1fr]">
         <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-          <img
-            src="/user.avif"
-            alt={sponsorName}
-            className="h-full min-h-80 w-full object-cover"
-          />
+          <div className="relative h-full min-h-80">
+            <img
+              src={sponsor.image?.url || "/user.avif"}
+              alt={sponsorName}
+              className="h-full min-h-80 w-full object-cover"
+            />
+            <label
+              title="Upload sponsor image"
+              className="absolute bottom-4 right-4 inline-flex cursor-pointer items-center justify-center rounded-full bg-black/70 p-3 text-white transition hover:bg-black"
+            >
+              {isUploadingImage ? (
+                <Loader2 className="size-5 animate-spin" />
+              ) : (
+                <Camera className="size-5" />
+              )}
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                className="hidden"
+                disabled={isUploadingImage}
+                onChange={handleSponsorImageChange}
+              />
+            </label>
+            {imageError ? (
+              <p className="absolute bottom-1 left-3 right-3 rounded bg-black/75 px-2 py-1 text-xs text-red-200">
+                {imageError}
+              </p>
+            ) : null}
+          </div>
         </div>
 
         <div className="space-y-6">
@@ -621,14 +982,6 @@ export default function SponsorDetailPage() {
             </div>
 
             <div className="flex items-center gap-2 self-start">
-              <Button
-                variant="default"
-                onClick={openPaymentDialog}
-                disabled={activeSponsoredChildren.length === 0}
-              >
-                <Wallet className="mr-2 size-4" />
-                Record donation
-              </Button>
               <Button variant="secondary" onClick={openEditDialog}>
                 Edit profile
               </Button>
@@ -751,7 +1104,7 @@ export default function SponsorDetailPage() {
                     Total pledged
                   </p>
                   <p className="mt-2 text-xl font-semibold text-foreground">
-                    ${totalPledged}
+                    ${totalPledged}-{plegedFrequency}
                   </p>
                 </div>
                 <div className="rounded-lg bg-muted p-3">
@@ -883,13 +1236,44 @@ export default function SponsorDetailPage() {
           </Card>
         )}
 
-        {activeTab === "payments" && (
+        {activeTab === "donations" && (
           <Card className="p-4">
-            <div className="mb-3 flex items-center gap-2">
-              <CreditCard className="size-4 text-primary" />
-              <h3 className="text-lg font-semibold text-foreground">
-                Sponsorship payment history
-              </h3>
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-2">
+                <CreditCard className="size-4 text-primary" />
+                <h3 className="text-lg font-semibold text-foreground">
+                  Sponsor's Donation History
+                </h3>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      disabled={exportRows.length === 0}
+                    >
+                      <Download className="mr-2 size-4" />
+                      Export
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={exportPaymentsCsv}>
+                      Export as CSV
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={exportPaymentsPdf}>
+                      Export as PDF
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <Button
+                  variant="default"
+                  onClick={openPaymentDialog}
+                  disabled={activeSponsoredChildren.length === 0}
+                >
+                  <Wallet className="mr-2 size-4" />
+                  Record donation
+                </Button>
+              </div>
             </div>
 
             {paymentHistory.length > 0 ? (
@@ -1250,21 +1634,17 @@ export default function SponsorDetailPage() {
                 </p>
               </div>
               <Switch
-                checked={paymentForm.selectedSponsorshipIds.length > 0}
+                checked={paymentForm.splitDonation}
                 onCheckedChange={(checked) => {
-                  if (!checked) {
-                    setPaymentForm((current) => ({
-                      ...current,
-                      selectedSponsorshipIds: [],
-                    }));
-                  } else if (activeSponsoredChildren.length === 1) {
-                    setPaymentForm((current) => ({
-                      ...current,
-                      selectedSponsorshipIds: [
-                        String(activeSponsoredChildren[0]._id),
-                      ],
-                    }));
-                  }
+                  setPaymentForm((current) => ({
+                    ...current,
+                    splitDonation: checked,
+                    selectedSponsorshipIds: checked
+                      ? activeSponsoredChildren.map((entry: any) =>
+                          String(entry._id),
+                        )
+                      : current.selectedSponsorshipIds.slice(0, 1),
+                  }));
                 }}
                 aria-label="Split donation across children"
               />
@@ -1272,7 +1652,9 @@ export default function SponsorDetailPage() {
 
             <div className="space-y-3">
               <p className="text-sm font-semibold text-foreground">
-                Children receiving this donation
+                {paymentForm.splitDonation
+                  ? "Children receiving this donation"
+                  : "Child receiving this donation"}
               </p>
               {activeSponsoredChildren.map((entry: any) => {
                 const entryId = String(entry._id);
@@ -1290,6 +1672,11 @@ export default function SponsorDetailPage() {
                     <div className="flex items-center gap-3">
                       <Checkbox
                         checked={selected}
+                        disabled={
+                          !paymentForm.splitDonation &&
+                          paymentForm.selectedSponsorshipIds.length > 0 &&
+                          !selected
+                        }
                         onCheckedChange={(checked) =>
                           togglePaymentChild(entryId, checked === true)
                         }
@@ -1322,6 +1709,16 @@ export default function SponsorDetailPage() {
                           }
                           placeholder="Amount"
                         />
+                      ) : selected ? (
+                        <span className="text-sm font-semibold text-foreground">
+                          {getPaymentAllocations()
+                            .find(
+                              (allocation) =>
+                                allocation.sponsorshipId === entryId,
+                            )
+                            ?.amount.toLocaleString() || "0"}{" "}
+                          {paymentForm.currency}
+                        </span>
                       ) : null}
                     </div>
                   </div>
@@ -1374,6 +1771,9 @@ export default function SponsorDetailPage() {
                 Custom amounts
               </Button>
               <p className="text-sm text-muted-foreground">
+                Selected: {paymentForm.selectedSponsorshipIds.length} of{" "}
+                {activeSponsoredChildren.length} children
+                <span className="mx-2">·</span>
                 Allocated:{" "}
                 {getPaymentAllocations()
                   .reduce((sum, allocation) => sum + allocation.amount, 0)
