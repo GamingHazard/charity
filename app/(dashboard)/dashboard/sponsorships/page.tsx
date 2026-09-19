@@ -763,12 +763,18 @@ export default function SponsorshipsDashboard() {
                 <TableHead className="font-bold text-primary">
                   Profile status
                 </TableHead>
-                <TableHead className="text-right">Action</TableHead>
+                {/* <TableHead className="text-right">Action</TableHead> */}
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredRecords.map((profile, index) => (
-                <TableRow key={profile._id || index}>
+                <TableRow
+                  className="cursor-pointer"
+                  onClick={() => {
+                    openDetail(profile);
+                  }}
+                  key={profile._id || index}
+                >
                   <TableCell>
                     <div>
                       <p className="font-medium text-foreground">
@@ -807,7 +813,7 @@ export default function SponsorshipsDashboard() {
                       {profile.profileStatus || "Incomplete"}
                     </span>
                   </TableCell>
-                  <TableCell className="text-right">
+                  {/* <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Button
                         variant="secondary"
@@ -826,7 +832,7 @@ export default function SponsorshipsDashboard() {
                         Archive
                       </Button>
                     </div>
-                  </TableCell>
+                  </TableCell> */}
                 </TableRow>
               ))}
             </TableBody>

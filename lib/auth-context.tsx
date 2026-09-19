@@ -1,12 +1,18 @@
-'use client';
+"use client";
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from "react";
+import {
+  hasPermission,
+  normalizeRole,
+  Permission,
+  UserRole,
+} from "@/lib/permissions";
 
 interface User {
   id: string;
   email: string;
   name: string;
-  role: string;
+  role: UserRole;
 }
 
 interface AuthContextType {
@@ -15,6 +21,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
+  can: (permission: Permission) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -25,42 +32,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Check for existing session on mount
   useEffect(() => {
-    const savedUser = localStorage.getItem('user');
+    const savedUser = localStorage.getItem("user");
     if (savedUser) {
       try {
-        setUser(JSON.parse(savedUser));
+        const saved = JSON.parse(savedUser);
+        const role = normalizeRole(saved.role);
+        if (role) {
+          setUser({ ...saved, role });
+        } else {
+          localStorage.removeItem("user");
+          localStorage.removeItem("auth_token");
+        }
       } catch {
-        localStorage.removeItem('user');
+        localStorage.removeItem("user");
       }
     }
     setIsLoading(false);
   }, []);
 
   const login = async (email: string, password: string) => {
-    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api';
+    const baseUrl =
+      process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api";
     const response = await fetch(`${baseUrl}/auth/admin/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username: email, password }),
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Invalid credentials');
+    if (!response.ok) throw new Error(data.message || "Invalid credentials");
+
+    const role = normalizeRole(data.role);
+    if (!role) throw new Error("This account has an unsupported role");
 
     const authenticatedUser: User = {
       id: String(data.id),
       email,
       name: data.username,
-      role: data.role,
+      role,
     };
     setUser(authenticatedUser);
-    localStorage.setItem('user', JSON.stringify(authenticatedUser));
-    localStorage.setItem('auth_token', data.token);
+    localStorage.setItem("user", JSON.stringify(authenticatedUser));
+    localStorage.setItem("auth_token", data.token);
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('user');
-    localStorage.removeItem('auth_token');
+    localStorage.removeItem("user");
+    localStorage.removeItem("auth_token");
   };
 
   return (
@@ -71,6 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         login,
         logout,
         isAuthenticated: !!user,
+        can: (permission) => hasPermission(user?.role, permission),
       }}
     >
       {children}
@@ -81,7 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }

@@ -9,6 +9,7 @@ import {
   AnimatedElement,
   AnimatedContainer,
 } from "@/components/motion/animated-elements";
+import { AnimatedCounter } from "@/components/motion/animated-counter";
 
 type DashboardSummary = {
   children: { total: number; sponsored: number; available: number };
@@ -66,22 +67,23 @@ export default function DashboardPage() {
   const stats = [
     {
       label: "Sponsored Children",
-      value: summary.children.sponsored.toLocaleString(),
+      value: summary.children.sponsored,
       color: "bg-primary",
     },
     {
       label: "Total Received",
-      value: `${summary.payments.totalReceived.toLocaleString()} ${summary.payments.currency}`,
+      value: summary.payments.totalReceived,
+      suffix: ` ${summary.payments.currency}`,
       color: "bg-accent",
     },
     {
       label: "Active Sponsorships",
-      value: summary.sponsorships.active.toLocaleString(),
+      value: summary.sponsorships.active,
       color: "bg-primary",
     },
     {
       label: "Completed Payments",
-      value: summary.payments.completedCount.toLocaleString(),
+      value: summary.payments.completedCount,
       color: "bg-accent",
     },
   ];
@@ -125,7 +127,11 @@ export default function DashboardPage() {
               <p className="text-foreground/60 text-sm mb-2">{stat.label}</p>
               <div className="flex items-end gap-3">
                 <p className="text-3xl font-bold text-foreground">
-                  {isLoading ? "--" : stat.value}
+                  {isLoading ? (
+                    "--"
+                  ) : (
+                    <AnimatedCounter value={stat.value} suffix={stat.suffix} />
+                  )}
                 </p>
                 <div className={`${stat.color} w-2 h-8 rounded-full`}></div>
               </div>

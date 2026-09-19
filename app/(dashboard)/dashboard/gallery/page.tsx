@@ -66,6 +66,7 @@ export default function GalleryPage() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [formError, setFormError] = useState("");
 
   const categoryOptions = ["Events", "Education", "Volunteers", "General"];
 
@@ -105,13 +106,55 @@ export default function GalleryPage() {
       URL.revokeObjectURL(imagePreview);
     }
     setImagePreview(null);
+    setSelectedImage(null);
   };
 
   const handleDialogOpenChange = (open: boolean) => {
     setShowAddDialog(open);
     if (!open) {
       resetNewImageForm();
+      setFormError("");
     }
+  };
+
+  const selectImage = (file: File | undefined) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setFormError("Select a valid image file.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setFormError("Images must be 5 MB or smaller.");
+      return;
+    }
+    setFormError("");
+    if (imagePreview) URL.revokeObjectURL(imagePreview);
+    setSelectedImage(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const validateNewImage = () => {
+    if (newImageForm.title.trim().length < 2) {
+      setFormError("Title must be at least 2 characters.");
+      return false;
+    }
+    if (!newImageForm.category.trim()) {
+      setFormError("Category is required.");
+      return false;
+    }
+    if (!selectedImage && !newImageForm.imageUrl.trim()) {
+      setFormError("Select an image or provide an image URL.");
+      return false;
+    }
+    if (
+      newImageForm.imageUrl.trim() &&
+      !/^https?:\/\/[^\s]+$/i.test(newImageForm.imageUrl.trim())
+    ) {
+      setFormError("Image URL must be a valid http or https URL.");
+      return false;
+    }
+    setFormError("");
+    return true;
   };
 
   const removeImage = () => {
@@ -120,6 +163,7 @@ export default function GalleryPage() {
     }
     setNewImageForm((prev) => ({ ...prev, imageFile: null }));
     setImagePreview(null);
+    setSelectedImage(null);
   };
 
   const categories = [
@@ -144,22 +188,30 @@ export default function GalleryPage() {
     setShowEditDialog(true);
   };
 
-  const handleSave = async(id: string) => {
+  const handleSave = async (id: string) => {
+    if (!editData.title?.trim() || editData.title.trim().length < 2) {
+      setFormError("Title must be at least 2 characters.");
+      return;
+    }
+    if (!editData.category?.trim()) {
+      setFormError("Category is required.");
+      return;
+    }
     try {
       const res = await apiRequest("PUT", `/gallery/${id}/update`, editData);
       if (res.ok) {
         setImages(
-      images.map((image) =>
-        image._id === id ? { ...image, ...editData } : image,
-      ),
-    );
+          images.map((image) =>
+            image._id === id ? { ...image, ...editData } : image,
+          ),
+        );
       }
     } catch (error) {
       console.log(error);
-      
     }
     setEditingId(null);
     setEditData({});
+    setFormError("");
   };
 
   const handleCancel = () => {
@@ -188,6 +240,8 @@ export default function GalleryPage() {
   };
 
   const handleAddNew = async () => {
+    if (!validateNewImage()) return;
+
     try {
       setSaving(true);
       let imageData = null;
@@ -197,10 +251,10 @@ export default function GalleryPage() {
       // if (!newImageForm.title) return;
 
       const newImage = {
-        title: newImageForm.title,
-        category: newImageForm.category || "General",
+        title: newImageForm.title.trim(),
+        category: newImageForm.category.trim(),
         featured: false,
-        imageUrl: newImageForm.imageUrl || "",
+        imageUrl: newImageForm.imageUrl.trim(),
         image: {
           url: imageData?.secure_url || "",
           public_id: imageData?.public_id || "",
@@ -214,12 +268,12 @@ export default function GalleryPage() {
         },
       };
 
-     const res = await apiRequest("POST", "/gallery/new", newImage);
+      const res = await apiRequest("POST", "/gallery/new", newImage);
 
-     if (res.ok) {
-      const data = await res.json();
-      setImages([...images, data?.newGalleryItem]);
-     }
+      if (res.ok) {
+        const data = await res.json();
+        setImages([...images, data?.newGalleryItem]);
+      }
       resetNewImageForm();
       setShowAddDialog(false);
     } catch (error) {
@@ -404,14 +458,7 @@ export default function GalleryPage() {
               onDrop={(e) => {
                 e.preventDefault();
                 setIsDragging(false);
-                const file = e.dataTransfer.files?.[0];
-                if (!file) return;
-                if (!file.type.startsWith("image/")) return;
-                if (imagePreview) {
-                  URL.revokeObjectURL(imagePreview);
-                }
-                setNewImageForm((prev) => ({ ...prev, imageFile: file }));
-                setImagePreview(URL.createObjectURL(file));
+                selectImage(e.dataTransfer.files?.[0]);
               }}
             >
               {imagePreview ? (
@@ -437,17 +484,16 @@ export default function GalleryPage() {
                 accept="image/*"
                 className="hidden"
                 onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-                  if (imagePreview) {
-                    URL.revokeObjectURL(imagePreview);
-                  }
-                  setNewImageForm((prev) => ({ ...prev, imageFile: file }));
-                  setImagePreview(URL.createObjectURL(file));
-                  setSelectedImage(file);
+                  selectImage(e.target.files?.[0]);
                 }}
               />
             </div>
+
+            {formError ? (
+              <p className="text-sm text-destructive" role="alert">
+                {formError}
+              </p>
+            ) : null}
 
             {newImageForm.image?.url && imagePreview && (
               <div className="flex items-center justify-between gap-4 rounded-md border border-border bg-background p-3">
@@ -558,103 +604,112 @@ export default function GalleryPage() {
 
       {/* Images Grid */}
       {images && images.length > 0 && (
-         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredImages.map((image) => (
-          <div
-            key={image?._id}
-            className="relative group overflow-hidden rounded-lg shadow-md hover:shadow-lg transition-shadow h-96 bg-background"
-          >
-            {/* Background Image */}
-            <img
-              src={image.image?.url}
-              alt={image.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredImages.map((image) => (
+            <div
+              key={image?._id}
+              className="relative group overflow-hidden rounded-lg shadow-md hover:shadow-lg transition-shadow h-96 bg-background"
+            >
+              {/* Background Image */}
+              <img
+                src={image.image?.url}
+                alt={image.title}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              />
 
-            {/* Overlay */}
-            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-4">
-              {/* Top section with title and menu */}
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h3 className="font-semibold text-white text-sm mb-2 line-clamp-2">
-                    {image.title}
-                  </h3>
-                  <span className="inline-block px-2 py-1 bg-white/20 text-white rounded text-xs font-medium">
-                    {image.category}
-                  </span>
-                </div>
-                <div className="relative ml-2">
-                  <button
-                    onClick={() =>
-                      setOpenMenuId(openMenuId === image._id ? null : image._id)
-                    }
-                    className="p-2 hover:bg-white/20 rounded transition-colors text-white"
-                  >
-                    <MoreVertical size={18} />
-                  </button>
-
-                  {openMenuId === image._id && (
-                    <div className="absolute right-0 mt-2 w-40 bg-card border border-border rounded-lg shadow-lg z-50 py-1">
-                      {/* Edit */}
-                      <button
-                        onClick={() => {
-                          handleEdit(image);
-                          setOpenMenuId(null);
-                        }}
-                        className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-background/50 flex items-center gap-2 transition-colors"
-                      >
-                        <Edit2 size={14} />
-                        Edit
-                      </button>
-
-                      {/* Delete */}
-                      <button
-                        onClick={() => {
-                          handleDelete(image._id);
-                          setOpenMenuId(null);
-                        }}
-                        className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50/10 flex items-center gap-2 transition-colors"
-                      >
-                        {deletingId === image._id ? (
-                          <>
-                            Deleting...{" "}
-                            <Loader className="animate-spin" size={12} />
-                          </>
-                        ) : (
-                          <>
-                            <Trash2 size={14} />
-                            Delete
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Bottom section with stats */}
-              <div className="space-y-1 text-xs text-white/80">
-                <div className="flex items-center justify-between">
-                  <span>Size: {image.image?.size || "unknown"}</span>
-                  {image.featured && (
-                    <span className="bg-accent text-accent-foreground px-2 py-0.5 rounded text-xs font-medium">
-                      ⭐ Featured
+              {/* Overlay */}
+              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-4">
+                {/* Top section with title and menu */}
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-white text-sm mb-2 line-clamp-2">
+                      {image.title}
+                    </h3>
+                    <span className="inline-block px-2 py-1 bg-white/20 text-white rounded text-xs font-medium">
+                      {image.category}
                     </span>
-                  )}
+                  </div>
+                  <div className="relative ml-2">
+                    <button
+                      onClick={() =>
+                        setOpenMenuId(
+                          openMenuId === image._id ? null : image._id,
+                        )
+                      }
+                      className="p-2 hover:bg-white/20 rounded transition-colors text-white"
+                    >
+                      <MoreVertical size={18} />
+                    </button>
+
+                    {openMenuId === image._id && (
+                      <div className="absolute right-0 mt-2 w-40 bg-card border border-border rounded-lg shadow-lg z-50 py-1">
+                        {/* Edit */}
+                        <button
+                          onClick={() => {
+                            handleEdit(image);
+                            setOpenMenuId(null);
+                          }}
+                          className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-background/50 flex items-center gap-2 transition-colors"
+                        >
+                          <Edit2 size={14} />
+                          Edit
+                        </button>
+
+                        {/* Delete */}
+                        <button
+                          onClick={() => {
+                            handleDelete(image._id);
+                            setOpenMenuId(null);
+                          }}
+                          className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50/10 flex items-center gap-2 transition-colors"
+                        >
+                          {deletingId === image._id ? (
+                            <>
+                              Deleting...{" "}
+                              <Loader className="animate-spin" size={12} />
+                            </>
+                          ) : (
+                            <>
+                              <Trash2 size={14} />
+                              Delete
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className="text-white/70">
-                  Uploaded: {new Date(image.createdAt).toLocaleDateString()}
+
+                {/* Bottom section with stats */}
+                <div className="space-y-1 text-xs text-white/80">
+                  <div className="flex items-center justify-between">
+                    <span>Size: {image.image?.size || "unknown"}</span>
+                    {image.featured && (
+                      <span className="bg-accent text-accent-foreground px-2 py-0.5 rounded text-xs font-medium">
+                        ⭐ Featured
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-white/70">
+                    Uploaded: {new Date(image.createdAt).toLocaleDateString()}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
-     )}
+          ))}
+        </div>
+      )}
 
       {images.length > 0 && filteredImages.length === 0 && (
         <Card className="p-8 text-center">
-          <span className="flex items-center justify-center w-full"> <img src="/no-images.png" className="w-100 h-120 align-middle text-center justify-self-center" alt="" /></span>
+          <span className="flex items-center justify-center w-full">
+            {" "}
+            <img
+              src="/no-images.png"
+              className="w-100 h-120 align-middle text-center justify-self-center"
+              alt=""
+            />
+          </span>
           <p className="text-foreground/70">
             No images found matching your filters
           </p>
@@ -662,9 +717,17 @@ export default function GalleryPage() {
       )}
       {images.length === 0 && (
         <Card className="p-8 text-center">
-          <span className="flex items-center justify-center w-full"> <img src="/no-images3.png" className="w-120 h-120 align-middle text-center justify-self-center" alt="" /></span>
+          <span className="flex items-center justify-center w-full">
+            {" "}
+            <img
+              src="/no-images3.png"
+              className="w-120 h-120 align-middle text-center justify-self-center"
+              alt=""
+            />
+          </span>
           <p className="text-foreground/70">
-            No images found  yet. Click "Upload Image" to add your first gallery image!
+            No images found yet. Click "Upload Image" to add your first gallery
+            image!
           </p>
         </Card>
       )}

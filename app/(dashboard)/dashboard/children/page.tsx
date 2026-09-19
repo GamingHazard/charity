@@ -312,7 +312,7 @@ export default function ChildrenDashboard() {
       reader.readAsDataURL(file);
 
       // Set the image URL from Cloudinary response
-      setFormState((prevState) => ({
+      setFormState((prevState: any) => ({
         ...prevState,
         image: {
           url: result.secure_url,
@@ -349,7 +349,7 @@ export default function ChildrenDashboard() {
         uploadedAt: new Date().toISOString(),
       };
 
-      setFormState((prevState) => ({
+      setFormState((prevState: any) => ({
         ...prevState,
         reportCards: [...(prevState.reportCards || []), nextCard],
       }));
@@ -361,7 +361,7 @@ export default function ChildrenDashboard() {
   };
 
   const removeImage = () => {
-    setFormState((prevState) => ({
+    setFormState((prevState: any) => ({
       ...prevState,
       image: {
         url: "",
@@ -372,10 +372,10 @@ export default function ChildrenDashboard() {
   };
 
   const removeReportCard = (publicId: string) => {
-    setFormState((prevState) => ({
+    setFormState((prevState: any) => ({
       ...prevState,
       reportCards: (prevState.reportCards || []).filter(
-        (card) => card.public_id !== publicId,
+        (card: any) => card.public_id !== publicId,
       ),
     }));
   };
@@ -688,7 +688,7 @@ export default function ChildrenDashboard() {
         location: formState.location.trim(),
         needs: formState.needsInput
           .split(",")
-          .map((item) => item.trim())
+          .map((item: any) => item.trim())
           .filter(Boolean),
         monthlyNeed: formState.monthlyNeed,
         education: nextEducation,
@@ -750,7 +750,7 @@ export default function ChildrenDashboard() {
           `${formState.firstName.trim()} ${formState.secondName.trim()}`,
         needs: formState.needsInput
           .split(",")
-          .map((item) => item.trim())
+          .map((item: any) => item.trim())
           .filter(Boolean),
         sponsor: data.profile.sponsor || null,
       };
@@ -783,7 +783,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2">
               <Label htmlFor="firstName">First name</Label>
               <Input
-                className="bg-white"
+                className="bg-background"
                 id="firstName"
                 value={formState.firstName}
                 onChange={(event) =>
@@ -794,7 +794,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2">
               <Label htmlFor="secondName">Second name</Label>
               <Input
-                className="bg-white"
+                className="bg-background"
                 id="secondName"
                 value={formState.secondName}
                 onChange={(event) =>
@@ -805,7 +805,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2">
               <Label htmlFor="givenName">Preferred name</Label>
               <Input
-                className="bg-white"
+                className="bg-background"
                 id="givenName"
                 value={formState.givenName}
                 onChange={(event) =>
@@ -824,7 +824,7 @@ export default function ChildrenDashboard() {
                   })
                 }
               >
-                <SelectTrigger className="bg-white" id="gender">
+                <SelectTrigger className="bg-background" id="gender">
                   <SelectValue>{formState.gender}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -836,7 +836,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2">
               <Label htmlFor="dateOfBirth">Date of birth</Label>
               <Input
-                className="bg-white"
+                className="bg-background"
                 id="dateOfBirth"
                 type="date"
                 value={formState.dateOfBirth}
@@ -851,7 +851,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2">
               <Label htmlFor="age">Age</Label>
               <Input
-                className="bg-white"
+                className="bg-background"
                 id="age"
                 type="number"
                 min={0}
@@ -875,7 +875,7 @@ export default function ChildrenDashboard() {
                   })
                 }
               >
-                <SelectTrigger className="bg-white" id="ageGroup">
+                <SelectTrigger className="bg-background" id="ageGroup">
                   <SelectValue>{formState.ageGroup}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -888,7 +888,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2">
               <Label htmlFor="class">Class</Label>
               <Input
-                className="bg-white"
+                className="bg-background"
                 id="class"
                 value={formState.class}
                 onChange={(event) =>
@@ -900,7 +900,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2">
               <Label htmlFor="nationality">Nationality</Label>
               <Input
-                className="bg-white"
+                className="bg-background"
                 id="nationality"
                 value={formState.nationality}
                 onChange={(event) =>
@@ -922,7 +922,7 @@ export default function ChildrenDashboard() {
                   })
                 }
               >
-                <SelectTrigger className="bg-white" id="familyStatus">
+                <SelectTrigger className="bg-background" id="familyStatus">
                   <SelectValue>{formState.familyStatus}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -942,7 +942,7 @@ export default function ChildrenDashboard() {
                   })
                 }
               >
-                <SelectTrigger className="bg-white" id="numberOfParents">
+                <SelectTrigger className="bg-background" id="numberOfParents">
                   <SelectValue>{String(formState.numberOfParents)}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -960,7 +960,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="guardianName">Guardian name</Label>
               <Input
-                className="bg-white"
+                className="bg-background"
                 id="guardianName"
                 placeholder="Example: Jane Doe"
                 value={formState.guardianName}
@@ -975,7 +975,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2">
               <Label htmlFor="guardianContact">Guardian contact</Label>
               <Input
-                className="bg-white"
+                className="bg-background"
                 id="guardianContact"
                 placeholder="Phone number"
                 value={formState.guardianContact}
@@ -999,7 +999,7 @@ export default function ChildrenDashboard() {
                   })
                 }
               >
-                <SelectTrigger className="bg-white" id="guardianRelation">
+                <SelectTrigger className="bg-background" id="guardianRelation">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -1016,7 +1016,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2">
               <Label htmlFor="school">School</Label>
               <Input
-                className="bg-white"
+                className="bg-background"
                 id="school"
                 value={formState.school}
                 onChange={(event) =>
@@ -1027,7 +1027,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2">
               <Label htmlFor="location">Location</Label>
               <Input
-                className="bg-white"
+                className="bg-background"
                 id="location"
                 value={formState.location}
                 onChange={(event) =>
@@ -1038,7 +1038,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="needsInput">Needs</Label>
               <Input
-                className="bg-white"
+                className="bg-background"
                 id="needsInput"
                 placeholder="Example: Education, Nutrition, Health"
                 value={formState.needsInput}
@@ -1055,6 +1055,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="background">Background</Label>
               <Textarea
+                className="bg-background"
                 id="background"
                 value={formState.background}
                 onChange={(event) =>
@@ -1066,7 +1067,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2">
               <Label htmlFor="currentLevel">Education level</Label>
               <Input
-                className="bg-white"
+                className="bg-background"
                 id="currentLevel"
                 placeholder="Primary, Secondary, University"
                 value={formState.education.currentLevel}
@@ -1085,7 +1086,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2">
               <Label htmlFor="currentClass">Current class</Label>
               <Input
-                className="bg-white"
+                className="bg-background"
                 id="currentClass"
                 placeholder="Primary 4, Senior 3"
                 value={formState.education.currentClass}
@@ -1104,7 +1105,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2">
               <Label htmlFor="academicYear">Academic year</Label>
               <Input
-                className="bg-white"
+                className="bg-background"
                 id="academicYear"
                 value={formState.education.academicYear}
                 onChange={(event) =>
@@ -1124,7 +1125,7 @@ export default function ChildrenDashboard() {
                 Estimated graduation year
               </Label>
               <Input
-                className="bg-white"
+                className="bg-background"
                 id="estimatedGraduationYear"
                 value={formState.education.estimatedGraduationYear}
                 onChange={(event) =>
@@ -1142,7 +1143,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2">
               <Label htmlFor="lastTermResult">Last term result</Label>
               <Input
-                className="bg-white"
+                className="bg-background"
                 id="lastTermResult"
                 value={formState.education.lastTermResult}
                 onChange={(event) =>
@@ -1160,7 +1161,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2">
               <Label htmlFor="graduationTarget">Graduation target</Label>
               <Input
-                className="bg-white"
+                className="bg-background"
                 id="graduationTarget"
                 value={formState.education.graduationTarget}
                 onChange={(event) =>
@@ -1195,7 +1196,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2">
               <Label htmlFor="monthlyNeed">Monthly support</Label>
               <Input
-                className="bg-white"
+                className="bg-background"
                 id="monthlyNeed"
                 value={formState.monthlyNeed}
                 onChange={(event) =>
@@ -1215,7 +1216,7 @@ export default function ChildrenDashboard() {
                   setFormState({ ...formState, sponsorshipStatus: value })
                 }
               >
-                <SelectTrigger className="bg-white" id="sponsorshipStatus">
+                <SelectTrigger className="bg-background" id="sponsorshipStatus">
                   <SelectValue>{formState.sponsorshipStatus}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -1231,7 +1232,7 @@ export default function ChildrenDashboard() {
                 <div className="flex flex-col gap-3">
                   {(formState.reportCards || []).length > 0 ? (
                     <div className="grid gap-2 md:grid-cols-2">
-                      {(formState.reportCards || []).map((card) => (
+                      {(formState.reportCards || []).map((card: any) => (
                         <div
                           key={card.public_id || card.url || card.name}
                           className="flex items-center justify-between gap-3 rounded-lg border border-border bg-slate-50 p-2"
@@ -1269,7 +1270,7 @@ export default function ChildrenDashboard() {
 
                   <div className="flex gap-2">
                     <input
-                      className="bg-white hidden"
+                      className="bg-background hidden"
                       id="reportCardInput"
                       type="file"
                       accept="image/*,.pdf"
@@ -1323,7 +1324,7 @@ export default function ChildrenDashboard() {
 
                   <div className="flex gap-2">
                     <input
-                      className="bg-white hidden"
+                      className="bg-background hidden"
                       id="imageInput"
                       type="file"
                       accept="image/*"
@@ -1368,6 +1369,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2">
               <Label htmlFor="firstName">First name</Label>
               <Input
+                className="bg-background"
                 id="firstName"
                 value={formState.firstName}
                 onChange={(event) =>
@@ -1378,6 +1380,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2">
               <Label htmlFor="secondName">Second name</Label>
               <Input
+                className="bg-background"
                 id="secondName"
                 value={formState.secondName}
                 onChange={(event) =>
@@ -1388,6 +1391,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2">
               <Label htmlFor="givenName">Preferred name</Label>
               <Input
+                className="bg-background"
                 id="givenName"
                 value={formState.givenName}
                 onChange={(event) =>
@@ -1406,7 +1410,7 @@ export default function ChildrenDashboard() {
                   })
                 }
               >
-                <SelectTrigger id="gender">
+                <SelectTrigger className="bg-background" id="gender">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -1418,6 +1422,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2">
               <Label htmlFor="dateOfBirth">Date of birth</Label>
               <Input
+                className="bg-background"
                 id="dateOfBirth"
                 type="date"
                 value={formState.dateOfBirth}
@@ -1432,9 +1437,9 @@ export default function ChildrenDashboard() {
             <div className="space-y-2">
               <Label htmlFor="age">Age</Label>
               <Input
+                className="bg-background"
                 id="age"
-                type="number"
-                min={0}
+                type="string"
                 value={formState.age}
                 onChange={(event) =>
                   setFormState({
@@ -1455,7 +1460,7 @@ export default function ChildrenDashboard() {
                   })
                 }
               >
-                <SelectTrigger id="ageGroup">
+                <SelectTrigger className="bg-background" id="ageGroup">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -1494,7 +1499,7 @@ export default function ChildrenDashboard() {
                   })
                 }
               >
-                <SelectTrigger id="familyStatus">
+                <SelectTrigger className="bg-background" id="familyStatus">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -1514,7 +1519,7 @@ export default function ChildrenDashboard() {
                   })
                 }
               >
-                <SelectTrigger id="numberOfParents">
+                <SelectTrigger className="bg-background" id="numberOfParents">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -1527,6 +1532,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="guardianName">Guardian name</Label>
               <Input
+                className="bg-background"
                 id="guardianName"
                 value={formState.guardianName}
                 onChange={(event) =>
@@ -1540,6 +1546,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2">
               <Label htmlFor="guardianContact">Guardian contact</Label>
               <Input
+                className="bg-background"
                 id="guardianContact"
                 value={formState.guardianContact}
                 onChange={(event) =>
@@ -1562,7 +1569,7 @@ export default function ChildrenDashboard() {
                   })
                 }
               >
-                <SelectTrigger id="guardianRelation">
+                <SelectTrigger className="bg-background" id="guardianRelation">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -1590,6 +1597,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2">
               <Label htmlFor="background">Bio</Label>
               <Textarea
+                className="bg-background"
                 id="background"
                 value={formState.background}
                 onChange={(event) =>
@@ -1600,6 +1608,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2">
               <Label htmlFor="needsInput">Support needs</Label>
               <Input
+                className="bg-background"
                 id="needsInput"
                 placeholder="Education, nutrition, health"
                 value={formState.needsInput}
@@ -1612,6 +1621,7 @@ export default function ChildrenDashboard() {
               <div className="space-y-2">
                 <Label htmlFor="location">Location</Label>
                 <Input
+                  className="bg-background"
                   id="location"
                   value={formState.location}
                   onChange={(event) =>
@@ -1622,6 +1632,7 @@ export default function ChildrenDashboard() {
               <div className="space-y-2">
                 <Label htmlFor="monthlyNeed">Monthly support</Label>
                 <Input
+                  className="bg-background"
                   id="monthlyNeed"
                   value={formState.monthlyNeed}
                   onChange={(event) =>
@@ -1638,9 +1649,10 @@ export default function ChildrenDashboard() {
       case 4:
         return (
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="flex items-center justify-between rounded-md border p-3 md:col-span-2">
+            <div className="flex bg-background items-center justify-between rounded-md border p-3 md:col-span-2">
               <Label htmlFor="isStudying">Is studying</Label>
               <Switch
+                className=" data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400"
                 id="isStudying"
                 checked={formState.education.isStudying}
                 onCheckedChange={(checked) =>
@@ -1654,6 +1666,8 @@ export default function ChildrenDashboard() {
             <div className="space-y-2">
               <Label htmlFor="schoolName">Name of school</Label>
               <Input
+                disabled={formState.education.isStudying === false}
+                className="bg-background"
                 id="schoolName"
                 value={formState.education.schoolName}
                 onChange={(event) =>
@@ -1671,6 +1685,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2">
               <Label htmlFor="classGrade">Class / grade</Label>
               <Select
+                disabled={formState.education.isStudying === false}
                 value={formState.education.classGrade}
                 onValueChange={(value) =>
                   setFormState({
@@ -1684,7 +1699,7 @@ export default function ChildrenDashboard() {
                   })
                 }
               >
-                <SelectTrigger id="classGrade">
+                <SelectTrigger className="bg-background" id="classGrade">
                   <SelectValue placeholder="Select class or grade" />
                 </SelectTrigger>
                 <SelectContent>
@@ -1719,6 +1734,8 @@ export default function ChildrenDashboard() {
                 Expected graduation year
               </Label>
               <Input
+                disabled={formState.education.isStudying === false}
+                className="bg-background"
                 id="expectedGraduationYear"
                 type="number"
                 min={new Date().getFullYear()}
@@ -1750,7 +1767,7 @@ export default function ChildrenDashboard() {
                   })
                 }
               >
-                <SelectTrigger id="existingSponsor">
+                <SelectTrigger className="bg-background" id="existingSponsor">
                   <SelectValue placeholder="Optional" />
                 </SelectTrigger>
                 <SelectContent>
@@ -1765,6 +1782,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2">
               <Label htmlFor="wizardStartDate">Start date</Label>
               <Input
+                className="bg-background"
                 id="wizardStartDate"
                 type="date"
                 value={assignmentForm.startDate}
@@ -1838,7 +1856,7 @@ export default function ChildrenDashboard() {
             <div className="space-y-2">
               <Label htmlFor="search">Search children</Label>
               <Input
-                className="bg-white"
+                className="bg-background"
                 id="search"
                 placeholder="Search by name, school or location"
                 value={searchTerm}
@@ -1902,7 +1920,7 @@ export default function ChildrenDashboard() {
                     <Button
                       variant="secondary"
                       size="icon"
-                      className="h-9 w-9 rounded-full bg-white/90 text-foreground hover:bg-white"
+                      className="h-9 w-9 rounded-full bg-background/90 text-foreground hover:bg-background"
                     >
                       <MoreHorizontal size={16} />
                     </Button>
@@ -1975,7 +1993,7 @@ export default function ChildrenDashboard() {
                     </p>
                   </div>
 
-                  <div className="rounded-full bg-white/15 px-2 py-1 text-xs text-white/90 backdrop-blur-sm">
+                  <div className="rounded-full bg-background/15 px-2 py-1 text-xs text-white/90 backdrop-blur-sm">
                     {getSponsorLabel(child)}
                   </div>
                 </div>
@@ -1995,7 +2013,7 @@ export default function ChildrenDashboard() {
           }
         }}
       >
-        <DialogContent className="max-w-2xl  overflow-y-auto">
+        <DialogContent className="max-w-2xl bg-card  overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {assigningChild
@@ -2025,7 +2043,7 @@ export default function ChildrenDashboard() {
                     }))
                   }
                 >
-                  <SelectTrigger id="existingSponsor" className="bg-white">
+                  <SelectTrigger id="existingSponsor" className="bg-background">
                     <SelectValue placeholder="Select a sponsor" />
                   </SelectTrigger>
                   <SelectContent>
@@ -2045,7 +2063,7 @@ export default function ChildrenDashboard() {
                 <Input
                   id="startDate"
                   type="date"
-                  className="bg-white"
+                  className="bg-background"
                   value={assignmentForm.startDate}
                   onChange={(event) =>
                     setAssignmentForm({
@@ -2074,7 +2092,7 @@ export default function ChildrenDashboard() {
       </Dialog>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-4xl overflow-auto h-140">
+        <DialogContent className="max-w-4xl bg-card overflow-auto h-140">
           <DialogHeader>
             <DialogTitle>
               {editingChild ? "Edit child profile" : "New child profile"}
@@ -2165,7 +2183,7 @@ export default function ChildrenDashboard() {
           if (!open) setViewingChild(null);
         }}
       >
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-5xl max-h-[90vh] bg-card overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Child profile details</DialogTitle>
           </DialogHeader>

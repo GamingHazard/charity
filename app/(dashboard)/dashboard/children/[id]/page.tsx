@@ -1312,10 +1312,10 @@ export default function ChildDetailPage() {
                 <div className="relative mb-5 max-w-md">
                   <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
+                    className="bg-background pl-9 text-muted-foreground"
                     value={reportSearch}
                     onChange={(event) => setReportSearch(event.target.value)}
                     placeholder="Search reports by name..."
-                    className="pl-9"
                   />
                 </div>
                 {filteredReportCards.length > 0 ? (
@@ -1400,7 +1400,7 @@ export default function ChildDetailPage() {
           }
         }}
       >
-        <DialogContent>
+        <DialogContent className="bg-card">
           <DialogHeader>
             <DialogTitle>Upload report card</DialogTitle>
           </DialogHeader>
@@ -1461,6 +1461,7 @@ export default function ChildDetailPage() {
             <div className="space-y-2">
               <Label htmlFor="reportTitle">Report title</Label>
               <Input
+                className="bg-background text-muted-foreground"
                 id="reportTitle"
                 value={reportTitle}
                 onChange={(event) => setReportTitle(event.target.value)}
@@ -1477,6 +1478,7 @@ export default function ChildDetailPage() {
               Cancel
             </Button>
             <Button
+              className="bg-accent text-white"
               onClick={handleUploadReportCard}
               disabled={isUploadingReport || !reportFile}
             >
@@ -1487,7 +1489,7 @@ export default function ChildDetailPage() {
       </Dialog>
 
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto max-w-3xl">
+        <DialogContent className="max-h-[90vh] bg-card overflow-y-auto max-w-3xl">
           <DialogHeader>
             <DialogTitle>Edit child profile</DialogTitle>
           </DialogHeader>
@@ -1504,6 +1506,7 @@ export default function ChildDetailPage() {
                 <div className="space-y-2">
                   <Label htmlFor="firstName">First name</Label>
                   <Input
+                    className="bg-background text-muted-foreground"
                     id="firstName"
                     value={formState.firstName}
                     onChange={(event) =>
@@ -1517,6 +1520,7 @@ export default function ChildDetailPage() {
                 <div className="space-y-2">
                   <Label htmlFor="secondName">Second name</Label>
                   <Input
+                    className="bg-background text-muted-foreground"
                     id="secondName"
                     value={formState.secondName}
                     onChange={(event) =>
@@ -1530,6 +1534,7 @@ export default function ChildDetailPage() {
                 <div className="space-y-2">
                   <Label htmlFor="givenName">Preferred name</Label>
                   <Input
+                    className="bg-background text-muted-foreground"
                     id="givenName"
                     value={formState.givenName}
                     onChange={(event) =>
@@ -1543,6 +1548,7 @@ export default function ChildDetailPage() {
                 <div className="space-y-2">
                   <Label htmlFor="gender">Gender</Label>
                   <Input
+                    className="bg-background text-muted-foreground"
                     id="gender"
                     value={formState.gender}
                     onChange={(event) =>
@@ -1553,6 +1559,7 @@ export default function ChildDetailPage() {
                 <div className="space-y-2">
                   <Label htmlFor="dateOfBirth">Date of birth</Label>
                   <Input
+                    className="bg-background text-muted-foreground"
                     id="dateOfBirth"
                     type="date"
                     value={formState.dateOfBirth}
@@ -1567,6 +1574,7 @@ export default function ChildDetailPage() {
                 <div className="space-y-2">
                   <Label htmlFor="age">Age</Label>
                   <Input
+                    className="bg-background text-muted-foreground"
                     id="age"
                     type="number"
                     value={formState.age}
@@ -1581,6 +1589,7 @@ export default function ChildDetailPage() {
                 <div className="space-y-2">
                   <Label htmlFor="class">Class</Label>
                   <Input
+                    className="bg-background text-muted-foreground"
                     id="class"
                     value={formState.class}
                     onChange={(event) =>
@@ -1591,6 +1600,7 @@ export default function ChildDetailPage() {
                 <div className="space-y-2">
                   <Label htmlFor="school">School</Label>
                   <Input
+                    className="bg-background text-muted-foreground"
                     id="school"
                     value={formState.school}
                     onChange={(event) =>
@@ -1601,6 +1611,7 @@ export default function ChildDetailPage() {
                 <div className="space-y-2 md:col-span-2">
                   <Label htmlFor="location">Location</Label>
                   <Input
+                    className="bg-background text-muted-foreground"
                     id="location"
                     value={formState.location}
                     onChange={(event) =>
@@ -1614,6 +1625,7 @@ export default function ChildDetailPage() {
                 <div className="space-y-2 md:col-span-2">
                   <Label htmlFor="background">Background</Label>
                   <Textarea
+                    className="bg-background text-muted-foreground"
                     id="background"
                     value={formState.background}
                     onChange={(event) =>
@@ -1627,6 +1639,7 @@ export default function ChildDetailPage() {
                 <div className="space-y-2 md:col-span-2">
                   <Label htmlFor="needsInput">Needs</Label>
                   <Input
+                    className="bg-background text-muted-foreground"
                     id="needsInput"
                     value={formState.needsInput}
                     onChange={(event) =>
@@ -1640,6 +1653,7 @@ export default function ChildDetailPage() {
                 <div className="space-y-2">
                   <Label htmlFor="monthlyNeed">Monthly need</Label>
                   <Input
+                    className="bg-background text-muted-foreground"
                     id="monthlyNeed"
                     value={formState.monthlyNeed}
                     onChange={(event) =>
@@ -1653,6 +1667,7 @@ export default function ChildDetailPage() {
                 <div className="space-y-2">
                   <Label htmlFor="guardianName">Guardian name</Label>
                   <Input
+                    className="bg-background text-muted-foreground"
                     id="guardianName"
                     value={formState.guardianName}
                     onChange={(event) =>
@@ -1666,6 +1681,7 @@ export default function ChildDetailPage() {
                 <div className="space-y-2">
                   <Label htmlFor="guardianContact">Guardian contact</Label>
                   <Input
+                    className="bg-background text-muted-foreground"
                     id="guardianContact"
                     value={formState.guardianContact}
                     onChange={(event) =>
@@ -1679,6 +1695,7 @@ export default function ChildDetailPage() {
                 <div className="space-y-2">
                   <Label htmlFor="guardianRelation">Guardian relation</Label>
                   <Input
+                    className="bg-background text-muted-foreground"
                     id="guardianRelation"
                     value={formState.guardianRelation}
                     onChange={(event) =>
@@ -1692,6 +1709,7 @@ export default function ChildDetailPage() {
                 <div className="space-y-2">
                   <Label htmlFor="sponsorshipStatus">Sponsorship status</Label>
                   <Input
+                    className="bg-background text-muted-foreground"
                     id="sponsorshipStatus"
                     value={formState.sponsorshipStatus}
                     onChange={(event) =>
@@ -1714,7 +1732,11 @@ export default function ChildDetailPage() {
             >
               Cancel
             </Button>
-            <Button onClick={handleEditSave} disabled={isSaving}>
+            <Button
+              className="bg-accent text-white"
+              onClick={handleEditSave}
+              disabled={isSaving}
+            >
               {isSaving ? "Saving..." : "Save changes"}
             </Button>
           </DialogFooter>

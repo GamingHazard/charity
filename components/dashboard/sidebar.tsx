@@ -2,17 +2,54 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/lib/auth-context";
+import type { Permission } from "@/lib/permissions";
 
 const sidebarItems = [
-  { href: "/dashboard", label: "Dashboard", icon: "📊" },
-  { href: "/dashboard/children", label: "Children", icon: "🧒" },
-  { href: "/dashboard/sponsorships", label: "Sponsors", icon: "💝" },
+  {
+    href: "/dashboard",
+    label: "Dashboard",
+    icon: "📊",
+    permission: "dashboard.view",
+  },
+  {
+    href: "/dashboard/children",
+    label: "Children",
+    icon: "🧒",
+    permission: "children.view",
+  },
+  {
+    href: "/dashboard/sponsorships",
+    label: "Sponsors",
+    icon: "💝",
+    permission: "sponsorships.view",
+  },
   // { href: "/dashboard/programs", label: "Programs", icon: "📚" },
   // { href: "/dashboard/donations", label: "Donations", icon: "💰" },
-  { href: "/dashboard/staff", label: "Staff & Volunteers", icon: "👥" },
-  { href: "/dashboard/blogs", label: "Blogs", icon: "📖" },
-  { href: "/dashboard/gallery", label: "Gallery", icon: "🖼️" },
-  { href: "/dashboard/events", label: "Events", icon: "📅" },
+  {
+    href: "/dashboard/staff",
+    label: "Staff & Volunteers",
+    icon: "👥",
+    permission: "staff.view",
+  },
+  {
+    href: "/dashboard/blogs",
+    label: "Blogs",
+    icon: "📖",
+    permission: "blogs.view",
+  },
+  {
+    href: "/dashboard/gallery",
+    label: "Gallery",
+    icon: "🖼️",
+    permission: "gallery.view",
+  },
+  {
+    href: "/dashboard/events",
+    label: "Events",
+    icon: "📅",
+    permission: "events.view",
+  },
   // { href: "/dashboard/analytics", label: "Analytics", icon: "📈" },
   // { href: "/dashboard/content", label: "Content", icon: "📝" },
   // { href: "/dashboard/settings", label: "Settings", icon: "⚙️" },
@@ -20,6 +57,10 @@ const sidebarItems = [
 
 export function DashboardSidebar() {
   const pathname = usePathname();
+  const { can } = useAuth();
+  const visibleItems = sidebarItems.filter((item) =>
+    can(item.permission as Permission),
+  );
 
   return (
     <aside className="w-64 bg-card border-r border-border flex flex-col">
@@ -38,7 +79,7 @@ export function DashboardSidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-2">
-        {sidebarItems.map((item) => {
+        {visibleItems.map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link
