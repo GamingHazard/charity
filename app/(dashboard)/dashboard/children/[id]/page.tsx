@@ -14,10 +14,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiRequest } from "@/lib/query-client";
 import type { SponsorshipProfile } from "@/lib/mock-data";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Unlink } from "lucide-react";
 
 function formatDisplayDate(value?: string | Date | null) {
   if (!value) return "Not provided";
@@ -73,6 +83,9 @@ export default function ChildDetailPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState("");
   const [formState, setFormState] = useState<any>(null);
+  const [isUnlinkDialogOpen, setIsUnlinkDialogOpen] = useState(false);
+  const [isUnlinking, setIsUnlinking] = useState(false);
+  const [unlinkError, setUnlinkError] = useState("");
 
   useEffect(() => {
     if (!childId) return;
@@ -83,7 +96,10 @@ export default function ChildDetailPage() {
       setLoading(true);
 
       try {
-        const response = await apiRequest("GET", `/children/profile/${childId}`);
+        const response = await apiRequest(
+          "GET",
+          `/children/profile/${childId}`,
+        );
         const data = await response.json();
 
         if (isMounted) {
@@ -188,7 +204,8 @@ export default function ChildDetailPage() {
         academicYear: profile.education?.academicYear || "",
         lastTermResult: profile.education?.lastTermResult || "",
         graduationTarget: profile.education?.graduationTarget || "",
-        estimatedGraduationYear: profile.education?.estimatedGraduationYear || "",
+        estimatedGraduationYear:
+          profile.education?.estimatedGraduationYear || "",
         educationNotes: profile.education?.educationNotes || "",
       },
     });
@@ -235,9 +252,17 @@ export default function ChildDetailPage() {
         sponsorshipStatus: formState.sponsorshipStatus,
       };
 
-      const res = await apiRequest("PUT", `/children/profile/${profile._id}/update`, payload);
+      const res = await apiRequest(
+        "PUT",
+        `/children/profile/${profile._id}/update`,
+        payload,
+      );
       const data = await res.json();
-      setProfile((current) => ({ ...(current || profile), ...data.profile, _id: profile._id }));
+      setProfile((current) => ({
+        ...(current || profile),
+        ...data.profile,
+        _id: profile._id,
+      }));
       setIsEditOpen(false);
     } catch (error) {
       console.error("Error saving child profile:", error);
@@ -247,13 +272,55 @@ export default function ChildDetailPage() {
     }
   };
 
+  const handleUnlinkSponsor = async () => {
+    if (!childId) return;
+
+    setIsUnlinking(true);
+    setUnlinkError("");
+
+    try {
+      const response = await apiRequest(
+        "PATCH",
+        `/sponsors/child/${childId}/unlink`,
+      );
+      const data = await response.json();
+
+      setProfile((current) =>
+        current
+          ? {
+              ...current,
+              ...data.child,
+              sponsor: null,
+              sponsorshipStatus: "Available",
+            }
+          : current,
+      );
+      setHistory((current) =>
+        current.map((record) =>
+          ["Active", "Pending"].includes(record.status)
+            ? { ...record, status: "Cancelled" }
+            : record,
+        ),
+      );
+      setIsUnlinkDialogOpen(false);
+    } catch (error) {
+      console.error("Error unlinking sponsor:", error);
+      setUnlinkError("Unable to unlink this sponsor. Please try again.");
+    } finally {
+      setIsUnlinking(false);
+    }
+  };
+
   const sponsorProfile = (profile as any)?.sponsor || null;
   const education = profile?.education || {};
   const reportCards = profile?.reportCards || [];
   const needsList = Array.isArray(profile?.needs)
     ? profile.needs
     : typeof profile?.needs === "string"
-      ? profile.needs.split(",").map((item) => item.trim()).filter(Boolean)
+      ? profile.needs
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean)
       : [];
 
   if (loading) {
@@ -273,12 +340,18 @@ export default function ChildDetailPage() {
   if (!profile) {
     return (
       <div className="p-8">
-        <Button variant="outline" onClick={() => router.back()} className="mb-6">
+        <Button
+          variant="outline"
+          onClick={() => router.back()}
+          className="mb-6"
+        >
           <ArrowLeft className="mr-2" size={16} /> Back
         </Button>
         <Card className="p-6">
           <h2 className="text-xl font-semibold">Child not found</h2>
-          <p className="mt-2 text-sm text-muted-foreground">The child profile could not be loaded.</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            The child profile could not be loaded.
+          </p>
         </Card>
       </div>
     );
@@ -286,7 +359,11 @@ export default function ChildDetailPage() {
 
   return (
     <div className="p-8">
-      <Button variant="outline" onClick={() => router.push("/dashboard/children")} className="mb-6">
+      <Button
+        variant="outline"
+        onClick={() => router.push("/dashboard/children")}
+        className="mb-6"
+      >
         <ArrowLeft className="mr-2" size={16} /> Back to children
       </Button>
 
@@ -314,8 +391,12 @@ export default function ChildDetailPage() {
             </div>
 
             <div className="flex items-center gap-2 self-start">
-              <Button variant="secondary" onClick={openEditDialog}>Edit profile</Button>
-              <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getStatusBadgeClass(profile.sponsorshipStatus)}`}>
+              <Button variant="secondary" onClick={openEditDialog}>
+                Edit profile
+              </Button>
+              <span
+                className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getStatusBadgeClass(profile.sponsorshipStatus)}`}
+              >
                 {profile.sponsorshipStatus}
               </span>
             </div>
@@ -323,20 +404,36 @@ export default function ChildDetailPage() {
 
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-lg bg-muted p-3">
-              <p className="text-xs uppercase tracking-wide text-foreground/60">Age</p>
-              <p className="mt-1 text-base font-semibold text-foreground">{profile.age}</p>
+              <p className="text-xs uppercase tracking-wide text-foreground/60">
+                Age
+              </p>
+              <p className="mt-1 text-base font-semibold text-foreground">
+                {profile.age}
+              </p>
             </div>
             <div className="rounded-lg bg-muted p-3">
-              <p className="text-xs uppercase tracking-wide text-foreground/60">Class</p>
-              <p className="mt-1 text-base font-semibold text-foreground">{profile.class}</p>
+              <p className="text-xs uppercase tracking-wide text-foreground/60">
+                Class
+              </p>
+              <p className="mt-1 text-base font-semibold text-foreground">
+                {profile.class}
+              </p>
             </div>
             <div className="rounded-lg bg-muted p-3">
-              <p className="text-xs uppercase tracking-wide text-foreground/60">Gender</p>
-              <p className="mt-1 text-base font-semibold text-foreground">{profile.gender}</p>
+              <p className="text-xs uppercase tracking-wide text-foreground/60">
+                Gender
+              </p>
+              <p className="mt-1 text-base font-semibold text-foreground">
+                {profile.gender}
+              </p>
             </div>
             <div className="rounded-lg bg-muted p-3">
-              <p className="text-xs uppercase tracking-wide text-foreground/60">Sponsor</p>
-              <p className="mt-1 text-base font-semibold text-foreground">{sponsorProfile?.name || "No sponsor yet"}</p>
+              <p className="text-xs uppercase tracking-wide text-foreground/60">
+                Sponsor
+              </p>
+              <p className="mt-1 text-base font-semibold text-foreground">
+                {sponsorProfile?.name || "No sponsor yet"}
+              </p>
             </div>
           </div>
         </div>
@@ -365,35 +462,87 @@ export default function ChildDetailPage() {
         {activeTab === "overview" && (
           <div className="grid gap-6 md:grid-cols-2">
             <div className="rounded-xl border border-border bg-card p-4">
-              <h3 className="mb-3 text-lg font-semibold text-foreground">Background</h3>
-              <p className="text-sm leading-6 text-foreground/80">{formatList(profile.background)}</p>
+              <h3 className="mb-3 text-lg font-semibold text-foreground">
+                Background
+              </h3>
+              <p className="text-sm leading-6 text-foreground/80">
+                {formatList(profile.background)}
+              </p>
             </div>
             <div className="rounded-xl border border-border bg-card p-4">
-              <h3 className="mb-3 text-lg font-semibold text-foreground">Support needs</h3>
+              <h3 className="mb-3 text-lg font-semibold text-foreground">
+                Support needs
+              </h3>
               <ul className="space-y-2 text-sm text-foreground/80">
                 {needsList.length > 0 ? (
-                  needsList.map((need, idx) => <li key={`${need}-${idx}`}>• {need}</li>)
+                  needsList.map((need, idx) => (
+                    <li key={`${need}-${idx}`}>• {need}</li>
+                  ))
                 ) : (
                   <li>No needs provided yet.</li>
                 )}
               </ul>
             </div>
             <div className="rounded-xl border border-border bg-card p-4">
-              <h3 className="mb-3 text-lg font-semibold text-foreground">Family & school</h3>
+              <h3 className="mb-3 text-lg font-semibold text-foreground">
+                Family & school
+              </h3>
               <ul className="space-y-2 text-sm text-foreground/80">
-                <li><span className="font-medium text-foreground">Family status:</span> {profile.familyStatus}</li>
-                <li><span className="font-medium text-foreground">Number of parents:</span> {profile.numberOfParents}</li>
-                <li><span className="font-medium text-foreground">Nationality:</span> {profile.nationality}</li>
-                <li><span className="font-medium text-foreground">Monthly need:</span> {profile.monthlyNeed || "Not provided"}</li>
+                <li>
+                  <span className="font-medium text-foreground">
+                    Family status:
+                  </span>{" "}
+                  {profile.familyStatus}
+                </li>
+                <li>
+                  <span className="font-medium text-foreground">
+                    Number of parents:
+                  </span>{" "}
+                  {profile.numberOfParents}
+                </li>
+                <li>
+                  <span className="font-medium text-foreground">
+                    Nationality:
+                  </span>{" "}
+                  {profile.nationality}
+                </li>
+                <li>
+                  <span className="font-medium text-foreground">
+                    Monthly need:
+                  </span>{" "}
+                  {profile.monthlyNeed || "Not provided"}
+                </li>
               </ul>
             </div>
             <div className="rounded-xl border border-border bg-card p-4">
-              <h3 className="mb-3 text-lg font-semibold text-foreground">Other details</h3>
+              <h3 className="mb-3 text-lg font-semibold text-foreground">
+                Other details
+              </h3>
               <ul className="space-y-2 text-sm text-foreground/80">
-                <li><span className="font-medium text-foreground">Date of birth:</span> {formatDisplayDate(profile.dateOfBirth)}</li>
-                <li><span className="font-medium text-foreground">Age group:</span> {profile.ageGroup}</li>
-                <li><span className="font-medium text-foreground">Given name:</span> {profile.givenName || "Not provided"}</li>
-                <li><span className="font-medium text-foreground">Preferred name:</span> {profile.name || "Not provided"}</li>
+                <li>
+                  <span className="font-medium text-foreground">
+                    Date of birth:
+                  </span>{" "}
+                  {formatDisplayDate(profile.dateOfBirth)}
+                </li>
+                <li>
+                  <span className="font-medium text-foreground">
+                    Age group:
+                  </span>{" "}
+                  {profile.ageGroup}
+                </li>
+                <li>
+                  <span className="font-medium text-foreground">
+                    Given name:
+                  </span>{" "}
+                  {profile.givenName || "Not provided"}
+                </li>
+                <li>
+                  <span className="font-medium text-foreground">
+                    Preferred name:
+                  </span>{" "}
+                  {profile.name || "Not provided"}
+                </li>
               </ul>
             </div>
           </div>
@@ -401,23 +550,76 @@ export default function ChildDetailPage() {
 
         {activeTab === "education" && (
           <div className="space-y-4 rounded-xl border border-border bg-card p-4">
-            <h3 className="text-lg font-semibold text-foreground">Education tracking</h3>
+            <h3 className="text-lg font-semibold text-foreground">
+              Education tracking
+            </h3>
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="rounded-lg bg-muted p-4"><p className="text-xs uppercase tracking-wide text-foreground/60">Current level</p><p className="mt-2 text-base font-semibold text-foreground">{education.currentLevel || "Not provided"}</p></div>
-              <div className="rounded-lg bg-muted p-4"><p className="text-xs uppercase tracking-wide text-foreground/60">Current class</p><p className="mt-2 text-base font-semibold text-foreground">{education.currentClass || "Not provided"}</p></div>
-              <div className="rounded-lg bg-muted p-4"><p className="text-xs uppercase tracking-wide text-foreground/60">School</p><p className="mt-2 text-base font-semibold text-foreground">{education.schoolName || profile.school || "Not provided"}</p></div>
-              <div className="rounded-lg bg-muted p-4"><p className="text-xs uppercase tracking-wide text-foreground/60">Academic year</p><p className="mt-2 text-base font-semibold text-foreground">{education.academicYear || "Not provided"}</p></div>
-              <div className="rounded-lg bg-muted p-4"><p className="text-xs uppercase tracking-wide text-foreground/60">Last term result</p><p className="mt-2 text-base font-semibold text-foreground">{education.lastTermResult || "Not provided"}</p></div>
-              <div className="rounded-lg bg-muted p-4"><p className="text-xs uppercase tracking-wide text-foreground/60">Estimated graduation</p><p className="mt-2 text-base font-semibold text-foreground">{education.estimatedGraduationYear || "Not provided"}</p></div>
+              <div className="rounded-lg bg-muted p-4">
+                <p className="text-xs uppercase tracking-wide text-foreground/60">
+                  Current level
+                </p>
+                <p className="mt-2 text-base font-semibold text-foreground">
+                  {education.currentLevel || "Not provided"}
+                </p>
+              </div>
+              <div className="rounded-lg bg-muted p-4">
+                <p className="text-xs uppercase tracking-wide text-foreground/60">
+                  Current class
+                </p>
+                <p className="mt-2 text-base font-semibold text-foreground">
+                  {education.currentClass || "Not provided"}
+                </p>
+              </div>
+              <div className="rounded-lg bg-muted p-4">
+                <p className="text-xs uppercase tracking-wide text-foreground/60">
+                  School
+                </p>
+                <p className="mt-2 text-base font-semibold text-foreground">
+                  {education.schoolName || profile.school || "Not provided"}
+                </p>
+              </div>
+              <div className="rounded-lg bg-muted p-4">
+                <p className="text-xs uppercase tracking-wide text-foreground/60">
+                  Academic year
+                </p>
+                <p className="mt-2 text-base font-semibold text-foreground">
+                  {education.academicYear || "Not provided"}
+                </p>
+              </div>
+              <div className="rounded-lg bg-muted p-4">
+                <p className="text-xs uppercase tracking-wide text-foreground/60">
+                  Last term result
+                </p>
+                <p className="mt-2 text-base font-semibold text-foreground">
+                  {education.lastTermResult || "Not provided"}
+                </p>
+              </div>
+              <div className="rounded-lg bg-muted p-4">
+                <p className="text-xs uppercase tracking-wide text-foreground/60">
+                  Estimated graduation
+                </p>
+                <p className="mt-2 text-base font-semibold text-foreground">
+                  {education.estimatedGraduationYear || "Not provided"}
+                </p>
+              </div>
             </div>
-            <div className="rounded-lg bg-muted p-4"><p className="text-xs uppercase tracking-wide text-foreground/60">Education notes</p><p className="mt-2 text-sm leading-6 text-foreground/80">{education.educationNotes || "No additional notes"}</p></div>
+            <div className="rounded-lg bg-muted p-4">
+              <p className="text-xs uppercase tracking-wide text-foreground/60">
+                Education notes
+              </p>
+              <p className="mt-2 text-sm leading-6 text-foreground/80">
+                {education.educationNotes || "No additional notes"}
+              </p>
+            </div>
           </div>
         )}
 
         {activeTab === "family" && (
           <div className="grid gap-6 md:grid-cols-2">
             <div className="rounded-xl border border-border bg-card p-4">
-              <h3 className="mb-3 text-lg font-semibold text-foreground">Guardian information</h3>
+              <h3 className="mb-3 text-lg font-semibold text-foreground">
+                Guardian information
+              </h3>
               <p className="text-sm leading-6 text-foreground/80">
                 {profile.guardianName || "Not provided"}
                 <br />
@@ -427,11 +629,28 @@ export default function ChildDetailPage() {
               </p>
             </div>
             <div className="rounded-xl border border-border bg-card p-4">
-              <h3 className="mb-3 text-lg font-semibold text-foreground">Family details</h3>
+              <h3 className="mb-3 text-lg font-semibold text-foreground">
+                Family details
+              </h3>
               <ul className="space-y-2 text-sm text-foreground/80">
-                <li><span className="font-medium text-foreground">Family status:</span> {profile.familyStatus}</li>
-                <li><span className="font-medium text-foreground">Number of parents:</span> {profile.numberOfParents}</li>
-                <li><span className="font-medium text-foreground">Nationality:</span> {profile.nationality}</li>
+                <li>
+                  <span className="font-medium text-foreground">
+                    Family status:
+                  </span>{" "}
+                  {profile.familyStatus}
+                </li>
+                <li>
+                  <span className="font-medium text-foreground">
+                    Number of parents:
+                  </span>{" "}
+                  {profile.numberOfParents}
+                </li>
+                <li>
+                  <span className="font-medium text-foreground">
+                    Nationality:
+                  </span>{" "}
+                  {profile.nationality}
+                </li>
               </ul>
             </div>
           </div>
@@ -439,43 +658,100 @@ export default function ChildDetailPage() {
 
         {activeTab === "sponsor" && (
           <div className="rounded-xl border border-border bg-card p-4">
-            <h3 className="mb-3 text-lg font-semibold text-foreground">Sponsorship details</h3>
+            <h3 className="mb-3 text-lg font-semibold text-foreground">
+              Sponsorship details
+            </h3>
             {sponsorProfile ? (
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="rounded-lg bg-muted p-4">
-                  <p className="text-xs uppercase tracking-wide text-foreground/60">Sponsor</p>
+                  <p className="text-xs uppercase tracking-wide text-foreground/60">
+                    Sponsor
+                  </p>
                   <div className="mt-3 flex items-center gap-3">
                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                      {sponsorProfile?.profile?.fullName?.charAt(0)?.toUpperCase() || "S"}
+                      {sponsorProfile?.profile?.fullName
+                        ?.charAt(0)
+                        ?.toUpperCase() || "S"}
                     </div>
                     <div>
-                      <p className="font-semibold text-foreground">{sponsorProfile?.profile?.fullName}</p>
-                      <p className="text-sm text-foreground/70">{sponsorProfile?.profile?.email}</p>
+                      <p className="font-semibold text-foreground">
+                        {sponsorProfile?.profile?.fullName}
+                      </p>
+                      <p className="text-sm text-foreground/70">
+                        {sponsorProfile?.profile?.email}
+                      </p>
                     </div>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="mt-4"
+                      onClick={() => {
+                        setUnlinkError("");
+                        setIsUnlinkDialogOpen(true);
+                      }}
+                    >
+                      <Unlink className="mr-2 size-4" />
+                      Unlink sponsor
+                    </Button>
                   </div>
                 </div>
                 <div className="rounded-lg bg-muted p-4">
-                  <p className="text-xs uppercase tracking-wide text-foreground/60">Contact</p>
+                  <p className="text-xs uppercase tracking-wide text-foreground/60">
+                    Contact
+                  </p>
                   <ul className="mt-3 space-y-2 text-sm text-foreground/80">
-                    <li><span className="font-medium text-foreground">Phone:</span> {sponsorProfile?.profile?.phone || "Not provided"}</li>
-                    <li><span className="font-medium text-foreground">Address:</span> { [
+                    <li>
+                      <span className="font-medium text-foreground">
+                        Phone:
+                      </span>{" "}
+                      {sponsorProfile?.profile?.phone || "Not provided"}
+                    </li>
+                    <li>
+                      <span className="font-medium text-foreground">
+                        Address:
+                      </span>{" "}
+                      {[
                         (sponsorProfile as any)?.profile?.address,
                         (sponsorProfile as any)?.profile?.city,
                         (sponsorProfile as any)?.profile?.state,
-                      ].filter(Boolean).join(", ") ||  "Not provided"}</li>
-                    <li><span className="font-medium text-foreground">Zip:</span> {sponsorProfile?.profile?.zipCode || "Not provided"}</li>
-                    <li><span className="font-medium text-foreground">Country:</span> {sponsorProfile?.profile?.country || "Not provided"}</li>
-                      
+                      ]
+                        .filter(Boolean)
+                        .join(", ") || "Not provided"}
+                    </li>
+                    <li>
+                      <span className="font-medium text-foreground">Zip:</span>{" "}
+                      {sponsorProfile?.profile?.zipCode || "Not provided"}
+                    </li>
+                    <li>
+                      <span className="font-medium text-foreground">
+                        Country:
+                      </span>{" "}
+                      {sponsorProfile?.profile?.country || "Not provided"}
+                    </li>
                   </ul>
                 </div>
                 <div className="rounded-lg bg-muted p-4">
-                  <p className="text-xs uppercase tracking-wide text-foreground/60">Created on</p>
-                  <p className="mt-3 text-base font-semibold text-foreground">{formatDisplayDate(sponsorProfile.createdAt)}</p>
+                  <p className="text-xs uppercase tracking-wide text-foreground/60">
+                    Created on
+                  </p>
+                  <p className="mt-3 text-base font-semibold text-foreground">
+                    {formatDisplayDate(sponsorProfile.createdAt)}
+                  </p>
                 </div>
                 <div className="rounded-lg bg-muted p-4">
-                  <p className="text-xs uppercase tracking-wide text-foreground/60">Plan</p>
-                  <p className="mt-3 text-base font-semibold text-foreground">{(profile as any).sponsor?.donation?.period || "Monthly"}</p>
-                  <p className="text-sm text-foreground/70">${((profile as any).sponsor?.donation?.amount || 0).toString()} per period</p>
+                  <p className="text-xs uppercase tracking-wide text-foreground/60">
+                    Plan
+                  </p>
+                  <p className="mt-3 text-base font-semibold text-foreground">
+                    {(profile as any).sponsor?.donation?.period || "Monthly"}
+                  </p>
+                  <p className="text-sm text-foreground/70">
+                    $
+                    {(
+                      (profile as any).sponsor?.donation?.amount || 0
+                    ).toString()}{" "}
+                    per period
+                  </p>
                 </div>
               </div>
             ) : (
@@ -486,9 +762,50 @@ export default function ChildDetailPage() {
           </div>
         )}
 
+        <AlertDialog
+          open={isUnlinkDialogOpen}
+          onOpenChange={(open) => {
+            setIsUnlinkDialogOpen(open);
+            if (!open) setUnlinkError("");
+          }}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                Unlink sponsor from this child?
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                The current sponsorship will be cancelled, the child will become
+                available, and all sponsorship and payment history will be
+                preserved.
+              </AlertDialogDescription>
+              {unlinkError ? (
+                <p className="text-sm text-destructive">{unlinkError}</p>
+              ) : null}
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isUnlinking}>
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(event) => {
+                  event.preventDefault();
+                  void handleUnlinkSponsor();
+                }}
+                disabled={isUnlinking}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {isUnlinking ? "Unlinking..." : "Unlink sponsor"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         {activeTab === "history" && (
           <div className="rounded-xl border border-border bg-card p-4">
-            <h3 className="mb-3 text-lg font-semibold text-foreground">Sponsorship history</h3>
+            <h3 className="mb-3 text-lg font-semibold text-foreground">
+              Sponsorship history
+            </h3>
             {historyLoading ? (
               <div className="space-y-3">
                 <div className="h-12 animate-pulse rounded-lg bg-muted" />
@@ -498,29 +815,126 @@ export default function ChildDetailPage() {
               <div className="space-y-3">
                 {history.map((record: any, index: number) => {
                   const donor = record.donor || {};
-                  const sponsorName = donor.profile?.fullName || donor.sponsor?.name || donor.name || "Unknown sponsor";
-                  const amount = Number(donor.donation?.amount ?? 0);
+                  const sponsorName =
+                    donor.profile?.fullName ||
+                    donor.sponsor?.name ||
+                    donor.name ||
+                    "Unknown sponsor";
+                  const amount = Number(
+                    record.amount ?? donor.donation?.amount ?? 0,
+                  );
                   const status = record.status || "Pending";
-                  const startDate = record.startDate ? new Date(record.startDate).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                  }) : "Not provided";
+                  const startDate = record.startDate
+                    ? new Date(record.startDate).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })
+                    : "Not provided";
 
                   return (
-                    <div key={record._id || `${sponsorName}-${index}`} className="rounded-lg border border-border bg-muted/40 p-4">
+                    <div
+                      key={record._id || `${sponsorName}-${index}`}
+                      className="rounded-lg border border-border bg-muted/40 p-4"
+                    >
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div>
-                          <p className="font-semibold text-foreground">{sponsorName}</p>
-                          <p className="text-sm text-foreground/70">{record.frequency || donor.donation?.period || "Monthly"} sponsorship</p>
+                          <p className="font-semibold text-foreground">
+                            {sponsorName}
+                          </p>
+                          <p className="text-sm text-foreground/70">
+                            {record.frequency ||
+                              donor.donation?.period ||
+                              "Monthly"}{" "}
+                            sponsorship
+                          </p>
                         </div>
-                        <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${getStatusBadgeClass(status)}`}>{status}</span>
+                        <span
+                          className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${getStatusBadgeClass(status)}`}
+                        >
+                          {status}
+                        </span>
                       </div>
                       <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                        <div className="rounded-md bg-background p-3"><p className="text-xs uppercase tracking-wide text-foreground/60">Amount</p><p className="mt-2 font-semibold text-foreground">${amount}</p></div>
-                        <div className="rounded-md bg-background p-3"><p className="text-xs uppercase tracking-wide text-foreground/60">Started</p><p className="mt-2 font-semibold text-foreground">{startDate}</p></div>
-                        <div className="rounded-md bg-background p-3"><p className="text-xs uppercase tracking-wide text-foreground/60">Payments</p><p className="mt-2 font-semibold text-foreground">{Array.isArray(record.payments) ? record.payments.length : 0}</p></div>
+                        <div className="rounded-md bg-background p-3">
+                          <p className="text-xs uppercase tracking-wide text-foreground/60">
+                            Amount
+                          </p>
+                          <p className="mt-2 font-semibold text-foreground">
+                            ${amount}
+                          </p>
+                        </div>
+                        <div className="rounded-md bg-background p-3">
+                          <p className="text-xs uppercase tracking-wide text-foreground/60">
+                            Started
+                          </p>
+                          <p className="mt-2 font-semibold text-foreground">
+                            {startDate}
+                          </p>
+                        </div>
+                        <div className="rounded-md bg-background p-3">
+                          <p className="text-xs uppercase tracking-wide text-foreground/60">
+                            Payments
+                          </p>
+                          <p className="mt-2 font-semibold text-foreground">
+                            {Array.isArray(record.payments)
+                              ? record.payments.length
+                              : 0}
+                          </p>
+                        </div>
                       </div>
+                      {Array.isArray(record.payments) &&
+                      record.payments.length > 0 ? (
+                        <div className="mt-4 border-t border-border pt-4">
+                          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-foreground/60">
+                            Payment records
+                          </p>
+                          <div className="space-y-2">
+                            {record.payments.map(
+                              (payment: any, paymentIndex: number) => (
+                                <div
+                                  key={
+                                    payment._id ||
+                                    `${payment.transactionId || "payment"}-${paymentIndex}`
+                                  }
+                                  className="grid gap-2 rounded-md bg-background p-3 text-sm sm:grid-cols-5"
+                                >
+                                  <span>
+                                    {payment.date
+                                      ? formatDisplayDate(payment.date)
+                                      : "Not provided"}
+                                  </span>
+                                  <span>
+                                    {Number(
+                                      payment.amount || 0,
+                                    ).toLocaleString()}{" "}
+                                    {payment.currency || "UGX"}
+                                  </span>
+                                  <span>
+                                    {payment.method || "Not provided"}
+                                  </span>
+                                  <span>
+                                    {payment.transactionId || "No reference"}
+                                  </span>
+                                  <span className="font-medium">
+                                    {payment.status || "Completed"}
+                                  </span>
+                                  {payment.paymentGroupId ? (
+                                    <span className="text-xs text-foreground/60 sm:col-span-5">
+                                      Donation group: {payment.paymentGroupId}
+                                    </span>
+                                  ) : null}
+                                  {payment.notes ? (
+                                    <span className="text-xs text-foreground/60 sm:col-span-5">
+                                      {payment.notes}
+                                    </span>
+                                  ) : null}
+                                </div>
+                              ),
+                            )}
+                          </div>
+                        </div>
+                      ) : null}
                     </div>
                   );
                 })}
@@ -535,19 +949,29 @@ export default function ChildDetailPage() {
 
         {activeTab === "documents" && (
           <div className="rounded-xl border border-border bg-card p-4">
-            <h3 className="mb-3 text-lg font-semibold text-foreground">Child's Report cards </h3>
+            <h3 className="mb-3 text-lg font-semibold text-foreground">
+              Child's Report cards{" "}
+            </h3>
             {reportCards.length > 0 ? (
               <div className="grid gap-3 md:grid-cols-2">
                 {reportCards.map((card: any, index: number) => (
                   <a
-                    key={card.public_id || card.url || `${card.name || "document"}-${index}`}
+                    key={
+                      card.public_id ||
+                      card.url ||
+                      `${card.name || "document"}-${index}`
+                    }
                     href={card.url || "#"}
                     target="_blank"
                     rel="noreferrer"
                     className="rounded-lg border border-border bg-muted p-3 text-sm text-foreground/80 hover:bg-muted/80"
                   >
-                    <p className="font-medium text-foreground">{card.name || "Report card"}</p>
-                    <p className="mt-1 text-xs text-foreground/60">{card.fileType || "Document"}</p>
+                    <p className="font-medium text-foreground">
+                      {card.name || "Report card"}
+                    </p>
+                    <p className="mt-1 text-xs text-foreground/60">
+                      {card.fileType || "Document"}
+                    </p>
                   </a>
                 ))}
               </div>
@@ -580,7 +1004,12 @@ export default function ChildDetailPage() {
                   <Input
                     id="firstName"
                     value={formState.firstName}
-                    onChange={(event) => setFormState({ ...formState, firstName: event.target.value })}
+                    onChange={(event) =>
+                      setFormState({
+                        ...formState,
+                        firstName: event.target.value,
+                      })
+                    }
                   />
                 </div>
                 <div className="space-y-2">
@@ -588,7 +1017,12 @@ export default function ChildDetailPage() {
                   <Input
                     id="secondName"
                     value={formState.secondName}
-                    onChange={(event) => setFormState({ ...formState, secondName: event.target.value })}
+                    onChange={(event) =>
+                      setFormState({
+                        ...formState,
+                        secondName: event.target.value,
+                      })
+                    }
                   />
                 </div>
                 <div className="space-y-2">
@@ -596,7 +1030,12 @@ export default function ChildDetailPage() {
                   <Input
                     id="givenName"
                     value={formState.givenName}
-                    onChange={(event) => setFormState({ ...formState, givenName: event.target.value })}
+                    onChange={(event) =>
+                      setFormState({
+                        ...formState,
+                        givenName: event.target.value,
+                      })
+                    }
                   />
                 </div>
                 <div className="space-y-2">
@@ -604,7 +1043,9 @@ export default function ChildDetailPage() {
                   <Input
                     id="gender"
                     value={formState.gender}
-                    onChange={(event) => setFormState({ ...formState, gender: event.target.value })}
+                    onChange={(event) =>
+                      setFormState({ ...formState, gender: event.target.value })
+                    }
                   />
                 </div>
                 <div className="space-y-2">
@@ -613,7 +1054,12 @@ export default function ChildDetailPage() {
                     id="dateOfBirth"
                     type="date"
                     value={formState.dateOfBirth}
-                    onChange={(event) => setFormState({ ...formState, dateOfBirth: event.target.value })}
+                    onChange={(event) =>
+                      setFormState({
+                        ...formState,
+                        dateOfBirth: event.target.value,
+                      })
+                    }
                   />
                 </div>
                 <div className="space-y-2">
@@ -622,7 +1068,12 @@ export default function ChildDetailPage() {
                     id="age"
                     type="number"
                     value={formState.age}
-                    onChange={(event) => setFormState({ ...formState, age: Number(event.target.value) || 0 })}
+                    onChange={(event) =>
+                      setFormState({
+                        ...formState,
+                        age: Number(event.target.value) || 0,
+                      })
+                    }
                   />
                 </div>
                 <div className="space-y-2">
@@ -630,7 +1081,9 @@ export default function ChildDetailPage() {
                   <Input
                     id="class"
                     value={formState.class}
-                    onChange={(event) => setFormState({ ...formState, class: event.target.value })}
+                    onChange={(event) =>
+                      setFormState({ ...formState, class: event.target.value })
+                    }
                   />
                 </div>
                 <div className="space-y-2">
@@ -638,7 +1091,9 @@ export default function ChildDetailPage() {
                   <Input
                     id="school"
                     value={formState.school}
-                    onChange={(event) => setFormState({ ...formState, school: event.target.value })}
+                    onChange={(event) =>
+                      setFormState({ ...formState, school: event.target.value })
+                    }
                   />
                 </div>
                 <div className="space-y-2 md:col-span-2">
@@ -646,7 +1101,12 @@ export default function ChildDetailPage() {
                   <Input
                     id="location"
                     value={formState.location}
-                    onChange={(event) => setFormState({ ...formState, location: event.target.value })}
+                    onChange={(event) =>
+                      setFormState({
+                        ...formState,
+                        location: event.target.value,
+                      })
+                    }
                   />
                 </div>
                 <div className="space-y-2 md:col-span-2">
@@ -654,7 +1114,12 @@ export default function ChildDetailPage() {
                   <Textarea
                     id="background"
                     value={formState.background}
-                    onChange={(event) => setFormState({ ...formState, background: event.target.value })}
+                    onChange={(event) =>
+                      setFormState({
+                        ...formState,
+                        background: event.target.value,
+                      })
+                    }
                   />
                 </div>
                 <div className="space-y-2 md:col-span-2">
@@ -662,7 +1127,12 @@ export default function ChildDetailPage() {
                   <Input
                     id="needsInput"
                     value={formState.needsInput}
-                    onChange={(event) => setFormState({ ...formState, needsInput: event.target.value })}
+                    onChange={(event) =>
+                      setFormState({
+                        ...formState,
+                        needsInput: event.target.value,
+                      })
+                    }
                   />
                 </div>
                 <div className="space-y-2">
@@ -670,7 +1140,12 @@ export default function ChildDetailPage() {
                   <Input
                     id="monthlyNeed"
                     value={formState.monthlyNeed}
-                    onChange={(event) => setFormState({ ...formState, monthlyNeed: event.target.value })}
+                    onChange={(event) =>
+                      setFormState({
+                        ...formState,
+                        monthlyNeed: event.target.value,
+                      })
+                    }
                   />
                 </div>
                 <div className="space-y-2">
@@ -678,7 +1153,12 @@ export default function ChildDetailPage() {
                   <Input
                     id="guardianName"
                     value={formState.guardianName}
-                    onChange={(event) => setFormState({ ...formState, guardianName: event.target.value })}
+                    onChange={(event) =>
+                      setFormState({
+                        ...formState,
+                        guardianName: event.target.value,
+                      })
+                    }
                   />
                 </div>
                 <div className="space-y-2">
@@ -686,7 +1166,12 @@ export default function ChildDetailPage() {
                   <Input
                     id="guardianContact"
                     value={formState.guardianContact}
-                    onChange={(event) => setFormState({ ...formState, guardianContact: event.target.value })}
+                    onChange={(event) =>
+                      setFormState({
+                        ...formState,
+                        guardianContact: event.target.value,
+                      })
+                    }
                   />
                 </div>
                 <div className="space-y-2">
@@ -694,7 +1179,12 @@ export default function ChildDetailPage() {
                   <Input
                     id="guardianRelation"
                     value={formState.guardianRelation}
-                    onChange={(event) => setFormState({ ...formState, guardianRelation: event.target.value })}
+                    onChange={(event) =>
+                      setFormState({
+                        ...formState,
+                        guardianRelation: event.target.value,
+                      })
+                    }
                   />
                 </div>
                 <div className="space-y-2">
@@ -702,7 +1192,12 @@ export default function ChildDetailPage() {
                   <Input
                     id="sponsorshipStatus"
                     value={formState.sponsorshipStatus}
-                    onChange={(event) => setFormState({ ...formState, sponsorshipStatus: event.target.value })}
+                    onChange={(event) =>
+                      setFormState({
+                        ...formState,
+                        sponsorshipStatus: event.target.value,
+                      })
+                    }
                   />
                 </div>
               </div>
@@ -710,7 +1205,13 @@ export default function ChildDetailPage() {
           )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditOpen(false)} disabled={isSaving}>Cancel</Button>
+            <Button
+              variant="outline"
+              onClick={() => setIsEditOpen(false)}
+              disabled={isSaving}
+            >
+              Cancel
+            </Button>
             <Button onClick={handleEditSave} disabled={isSaving}>
               {isSaving ? "Saving..." : "Save changes"}
             </Button>

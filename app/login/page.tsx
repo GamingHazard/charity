@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth-context';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import Link from 'next/link';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth-context";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import Link from "next/link";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const { login, isAuthenticated } = useAuth();
@@ -19,19 +19,21 @@ export default function LoginPage() {
 
   // Redirect if already authenticated
   if (isAuthenticated) {
-    router.push('/dashboard');
+    router.push("/dashboard");
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setIsLoading(true);
 
     try {
       await login(email, password);
-      router.push('/dashboard');
+      router.push("/dashboard");
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
+      setError(
+        err instanceof Error ? err.message : "Login failed. Please try again.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -50,9 +52,7 @@ export default function LoginPage() {
         <h1 className="text-2xl font-bold text-center text-foreground mb-2">
           Seeds of Love Foundation
         </h1>
-        <p className="text-center text-foreground/60 mb-8">
-          Admin Dashboard
-        </p>
+        <p className="text-center text-foreground/60 mb-8">Admin Dashboard</p>
 
         {error && (
           <div className="mb-6 p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-sm text-destructive">
@@ -66,7 +66,7 @@ export default function LoginPage() {
               Username
             </label>
             <Input
-              type="email"
+              type="text"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="admin"
@@ -96,7 +96,7 @@ export default function LoginPage() {
             disabled={isLoading}
             className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
           >
-            {isLoading ? 'Signing in...' : 'Sign In'}
+            {isLoading ? "Signing in..." : "Sign In"}
           </Button>
         </form>
 
@@ -107,7 +107,10 @@ export default function LoginPage() {
         </div>
 
         <div className="mt-6 flex gap-2">
-          <Link href="/" className="flex-1 text-center text-sm text-primary hover:text-primary/90 underline">
+          <Link
+            href="/"
+            className="flex-1 text-center text-sm text-primary hover:text-primary/90 underline"
+          >
             Back to Home
           </Link>
         </div>

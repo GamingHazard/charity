@@ -39,6 +39,7 @@ import {
   ArrowUpRight,
   Loader,
   Plus,
+  Archive,
 } from "lucide-react";
 import {
   mockSponsorshipRecords,
@@ -79,6 +80,7 @@ type SponsorProfile = {
   };
   paymentMethod?: string;
   profileStatus?: "Complete" | "Incomplete" | string;
+  isArchived?: boolean;
 };
 
 type PaymentForm = {
@@ -152,35 +154,47 @@ function getStatusClasses(status: SponsorshipStatus | string) {
   }
 }
 
-export default function SponsorshipsDashboard() { 
+export default function SponsorshipsDashboard() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { data: sponsorships, isLoading } = useQuery<SponsorProfile[]>({
-    queryKey: ["sponsors", "profiles","all"],
+    queryKey: ["sponsors", "profiles", "all"],
   });
   const { data: childrenData = [] } = useQuery<any[]>({
     queryKey: ["children", "profiles"],
   });
 
-  const [records, setRecords] = useState<SponsorshipRecord[]>(mockSponsorshipRecords);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "Complete" | "Incomplete">(
-    "all",
+  const [records, setRecords] = useState<SponsorshipRecord[]>(
+    mockSponsorshipRecords,
   );
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "Complete" | "Incomplete"
+  >("all");
   const [selectedRecord, setSelectedRecord] =
     useState<SponsorshipRecord | null>(null);
-  const [selectedSponsorProfile, setSelectedSponsorProfile] = useState<any>(null);
-  const [selectedSponsorChildren, setSelectedSponsorChildren] = useState<any[]>([]);
-  const [selectedSponsorSummary, setSelectedSponsorSummary] = useState<any>(null);
+  const [selectedSponsorProfile, setSelectedSponsorProfile] =
+    useState<any>(null);
+  const [selectedSponsorChildren, setSelectedSponsorChildren] = useState<any[]>(
+    [],
+  );
+  const [selectedSponsorSummary, setSelectedSponsorSummary] =
+    useState<any>(null);
   const [loadingSponsorChildren, setLoadingSponsorChildren] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [sponsorSubmitting, setSponsorSubmitting] = useState(false);
+  const [archiveTarget, setArchiveTarget] = useState<SponsorProfile | null>(
+    null,
+  );
+  const [isArchiving, setIsArchiving] = useState(false);
+  const [archiveError, setArchiveError] = useState("");
   const [sponsorFormError, setSponsorFormError] = useState("");
   const [paymentForm, setPaymentForm] = useState(initialPayment);
-  const [sponsorForm, setSponsorForm] = useState<SponsorForm>(initialSponsorForm);
+  const [sponsorForm, setSponsorForm] =
+    useState<SponsorForm>(initialSponsorForm);
 
   const sponsorProfiles = useMemo(
     () => (Array.isArray(sponsorships) ? sponsorships : []),
@@ -226,7 +240,8 @@ export default function SponsorshipsDashboard() {
   };
 
   const openProfileEditor = () => {
-    const profile = selectedSponsorProfile?.profile || selectedSponsorProfile?.sponsor || {};
+    const profile =
+      selectedSponsorProfile?.profile || selectedSponsorProfile?.sponsor || {};
     const location = selectedSponsorProfile?.location || {};
 
     setSponsorForm((current) => ({
@@ -249,29 +264,37 @@ export default function SponsorshipsDashboard() {
     if (!sponsorId) return;
 
     try {
-      const response = await apiRequest("PATCH", `/sponsors/profile/${sponsorId}`, {
-        profile: {
-          fullName: sponsorForm.name.trim(),
-          email: sponsorForm.email.trim(),
-          phone: sponsorForm.phone.trim(),
-          country: sponsorForm.country.trim(),
-          city: sponsorForm.city.trim(),
-          state: sponsorForm.state.trim(),
-          region: sponsorForm.region.trim(),
-          zipCode: sponsorForm.zipCode.trim(),
-          bio: sponsorForm.bio.trim(),
+      const response = await apiRequest(
+        "PATCH",
+        `/sponsors/profile/${sponsorId}`,
+        {
+          profile: {
+            fullName: sponsorForm.name.trim(),
+            email: sponsorForm.email.trim(),
+            phone: sponsorForm.phone.trim(),
+            country: sponsorForm.country.trim(),
+            city: sponsorForm.city.trim(),
+            state: sponsorForm.state.trim(),
+            region: sponsorForm.region.trim(),
+            zipCode: sponsorForm.zipCode.trim(),
+            bio: sponsorForm.bio.trim(),
+          },
         },
-      });
+      );
 
       if (!response.ok) throw new Error("Failed to update sponsor profile");
 
       const result = await response.json();
       setSelectedSponsorProfile(result.sponsor);
       setIsEditProfileOpen(false);
-      await queryClient.invalidateQueries({ queryKey: ["sponsors", "profiles", "all"] });
+      await queryClient.invalidateQueries({
+        queryKey: ["sponsors", "profiles", "all"],
+      });
     } catch (error) {
       console.error("Error updating sponsor profile:", error);
-      setSponsorFormError("Failed to update sponsor profile. Please try again.");
+      setSponsorFormError(
+        "Failed to update sponsor profile. Please try again.",
+      );
     }
   };
 
@@ -342,15 +365,43 @@ export default function SponsorshipsDashboard() {
       await queryClient.invalidateQueries({
         queryKey: ["sponsors", "profiles", "all"],
       });
-      await queryClient.invalidateQueries({ queryKey: ["children", "profiles"] });
+      await queryClient.invalidateQueries({
+        queryKey: ["children", "profiles"],
+      });
 
       setIsCreateDialogOpen(false);
       resetSponsorForm();
     } catch (error) {
       console.error("Error creating sponsor profile:", error);
-      setSponsorFormError("Failed to create sponsor profile. Please try again.");
+      setSponsorFormError(
+        "Failed to create sponsor profile. Please try again.",
+      );
     } finally {
       setSponsorSubmitting(false);
+    }
+  };
+
+  const handleArchiveSponsor = async () => {
+    if (!archiveTarget?._id) return;
+
+    setIsArchiving(true);
+    setArchiveError("");
+    try {
+      await apiRequest("DELETE", `/sponsors/profile/${archiveTarget._id}`);
+      await queryClient.invalidateQueries({
+        queryKey: ["sponsors", "profiles", "all"],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["children", "profiles"],
+      });
+      setArchiveTarget(null);
+    } catch (error) {
+      console.error("Error archiving sponsor profile:", error);
+      setArchiveError(
+        "Unable to archive this sponsor profile. Please try again.",
+      );
+    } finally {
+      setIsArchiving(false);
     }
   };
 
@@ -378,7 +429,9 @@ export default function SponsorshipsDashboard() {
       await queryClient.invalidateQueries({
         queryKey: ["sponsors", "profiles", "all"],
       });
-      await queryClient.invalidateQueries({ queryKey: ["children", "profiles"] });
+      await queryClient.invalidateQueries({
+        queryKey: ["children", "profiles"],
+      });
     } catch (error) {
       console.error("Error updating sponsorship status:", error);
     }
@@ -452,7 +505,9 @@ export default function SponsorshipsDashboard() {
       await queryClient.invalidateQueries({
         queryKey: ["sponsors", "profiles", "all"],
       });
-      await queryClient.invalidateQueries({ queryKey: ["children", "profiles"] });
+      await queryClient.invalidateQueries({
+        queryKey: ["children", "profiles"],
+      });
       setPaymentForm(initialPayment);
     } catch (error) {
       console.error("Error adding payment:", error);
@@ -475,7 +530,11 @@ export default function SponsorshipsDashboard() {
       profile.profile?.fullName || "",
       profile.profile?.email || "",
       profile.profile?.phone || "",
-      [profile.location?.city, profile.location?.state, profile.location?.country]
+      [
+        profile.location?.city,
+        profile.location?.state,
+        profile.location?.country,
+      ]
         .filter(Boolean)
         .join(", "),
       String(profile.donation?.amount || 0),
@@ -688,12 +747,22 @@ export default function SponsorshipsDashboard() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="font-bold text-primary">Sponsor</TableHead>
-                <TableHead className="font-bold text-primary">Contact</TableHead>
-                <TableHead className="font-bold text-primary">Location</TableHead>
-                <TableHead className="font-bold text-primary">Donation amount</TableHead>
+                <TableHead className="font-bold text-primary">
+                  Sponsor
+                </TableHead>
+                <TableHead className="font-bold text-primary">
+                  Contact
+                </TableHead>
+                <TableHead className="font-bold text-primary">
+                  Location
+                </TableHead>
+                <TableHead className="font-bold text-primary">
+                  Donation amount
+                </TableHead>
                 <TableHead className="font-bold text-primary">Period</TableHead>
-                <TableHead className="font-bold text-primary">Profile status</TableHead>
+                <TableHead className="font-bold text-primary">
+                  Profile status
+                </TableHead>
                 <TableHead className="text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
@@ -702,8 +771,12 @@ export default function SponsorshipsDashboard() {
                 <TableRow key={profile._id || index}>
                   <TableCell>
                     <div>
-                      <p className="font-medium text-foreground">{profile.profile?.fullName || "Unnamed sponsor"}</p>
-                      <p className="text-xs text-muted-foreground">{profile.profile?.bio || "No bio provided"}</p>
+                      <p className="font-medium text-foreground">
+                        {profile.profile?.fullName || "Unnamed sponsor"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {profile.profile?.bio || "No bio provided"}
+                      </p>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -713,25 +786,46 @@ export default function SponsorshipsDashboard() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    {[profile.location?.city, profile.location?.state, profile.location?.country]
+                    {[
+                      profile.location?.city,
+                      profile.location?.state,
+                      profile.location?.country,
+                    ]
                       .filter(Boolean)
                       .join(", ") || "No location"}
                   </TableCell>
-                  <TableCell>${Number(profile.donation?.amount || 0)}</TableCell>
-                  <TableCell>{profile.donation?.period || "Not provided"}</TableCell>
                   <TableCell>
-                    <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${getStatusClasses(profile.profileStatus || "Incomplete")}`}>
+                    ${Number(profile.donation?.amount || 0)}
+                  </TableCell>
+                  <TableCell>
+                    {profile.donation?.period || "Not provided"}
+                  </TableCell>
+                  <TableCell>
+                    <span
+                      className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${getStatusClasses(profile.profileStatus || "Incomplete")}`}
+                    >
                       {profile.profileStatus || "Incomplete"}
                     </span>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => openDetail(profile)}
-                    >
-                      View
-                    </Button>
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => openDetail(profile)}
+                      >
+                        View
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => setArchiveTarget(profile)}
+                      >
+                        <Archive className="mr-1 size-4" />
+                        Archive
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -739,6 +833,49 @@ export default function SponsorshipsDashboard() {
           </Table>
         )}
       </Card>
+
+      <Dialog
+        open={Boolean(archiveTarget)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setArchiveTarget(null);
+            setArchiveError("");
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Archive sponsor profile?</DialogTitle>
+            <DialogDescription>
+              This will release the sponsor&apos;s active children and hide the
+              profile from active lists. Sponsorship and payment history will be
+              preserved.
+            </DialogDescription>
+            {archiveError ? (
+              <p className="text-sm text-destructive">{archiveError}</p>
+            ) : null}
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline" disabled={isArchiving}>
+                Cancel
+              </Button>
+            </DialogClose>
+            <Button
+              variant="destructive"
+              onClick={handleArchiveSponsor}
+              disabled={isArchiving}
+            >
+              {isArchiving ? (
+                <Loader className="mr-2 size-4 animate-spin" />
+              ) : (
+                <Archive className="mr-2 size-4" />
+              )}
+              {isArchiving ? "Archiving..." : "Archive profile"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto">
@@ -765,7 +902,10 @@ export default function SponsorshipsDashboard() {
                     id="sponsorName"
                     value={sponsorForm.name}
                     onChange={(event) =>
-                      setSponsorForm({ ...sponsorForm, name: event.target.value })
+                      setSponsorForm({
+                        ...sponsorForm,
+                        name: event.target.value,
+                      })
                     }
                     placeholder="Sponsor full name"
                   />
@@ -777,7 +917,10 @@ export default function SponsorshipsDashboard() {
                     type="email"
                     value={sponsorForm.email}
                     onChange={(event) =>
-                      setSponsorForm({ ...sponsorForm, email: event.target.value })
+                      setSponsorForm({
+                        ...sponsorForm,
+                        email: event.target.value,
+                      })
                     }
                     placeholder="sponsor@example.com"
                   />
@@ -791,7 +934,10 @@ export default function SponsorshipsDashboard() {
                     id="sponsorPhone"
                     value={sponsorForm.phone}
                     onChange={(event) =>
-                      setSponsorForm({ ...sponsorForm, phone: event.target.value })
+                      setSponsorForm({
+                        ...sponsorForm,
+                        phone: event.target.value,
+                      })
                     }
                     placeholder="(555) 123-4567"
                   />
@@ -802,7 +948,10 @@ export default function SponsorshipsDashboard() {
                     id="sponsorCountry"
                     value={sponsorForm.country}
                     onChange={(event) =>
-                      setSponsorForm({ ...sponsorForm, country: event.target.value })
+                      setSponsorForm({
+                        ...sponsorForm,
+                        country: event.target.value,
+                      })
                     }
                     placeholder="Country"
                   />
@@ -833,9 +982,7 @@ export default function SponsorshipsDashboard() {
 
             <div className="space-y-4">
               <div>
-                <p className="text-sm font-medium text-foreground">
-                  Location
-                </p>
+                <p className="text-sm font-medium text-foreground">Location</p>
               </div>
 
               <div className="space-y-4">
@@ -845,7 +992,10 @@ export default function SponsorshipsDashboard() {
                     id="sponsorAddress"
                     value={sponsorForm.address}
                     onChange={(event) =>
-                      setSponsorForm({ ...sponsorForm, address: event.target.value })
+                      setSponsorForm({
+                        ...sponsorForm,
+                        address: event.target.value,
+                      })
                     }
                     placeholder="Street address"
                   />
@@ -857,7 +1007,10 @@ export default function SponsorshipsDashboard() {
                       id="sponsorCity"
                       value={sponsorForm.city}
                       onChange={(event) =>
-                        setSponsorForm({ ...sponsorForm, city: event.target.value })
+                        setSponsorForm({
+                          ...sponsorForm,
+                          city: event.target.value,
+                        })
                       }
                       placeholder="City"
                     />
@@ -868,7 +1021,10 @@ export default function SponsorshipsDashboard() {
                       id="sponsorState"
                       value={sponsorForm.state}
                       onChange={(event) =>
-                        setSponsorForm({ ...sponsorForm, state: event.target.value })
+                        setSponsorForm({
+                          ...sponsorForm,
+                          state: event.target.value,
+                        })
                       }
                       placeholder="State"
                     />
@@ -881,7 +1037,10 @@ export default function SponsorshipsDashboard() {
                       id="sponsorRegion"
                       value={sponsorForm.region}
                       onChange={(event) =>
-                        setSponsorForm({ ...sponsorForm, region: event.target.value })
+                        setSponsorForm({
+                          ...sponsorForm,
+                          region: event.target.value,
+                        })
                       }
                       placeholder="Region"
                     />
@@ -892,7 +1051,10 @@ export default function SponsorshipsDashboard() {
                       id="sponsorZipCode"
                       value={sponsorForm.zipCode}
                       onChange={(event) =>
-                        setSponsorForm({ ...sponsorForm, zipCode: event.target.value })
+                        setSponsorForm({
+                          ...sponsorForm,
+                          zipCode: event.target.value,
+                        })
                       }
                       placeholder="ZIP code"
                     />
@@ -904,7 +1066,10 @@ export default function SponsorshipsDashboard() {
                     id="sponsorBio"
                     value={sponsorForm.bio}
                     onChange={(event) =>
-                      setSponsorForm({ ...sponsorForm, bio: event.target.value })
+                      setSponsorForm({
+                        ...sponsorForm,
+                        bio: event.target.value,
+                      })
                     }
                     placeholder="Tell us about the sponsor"
                     className="min-h-24 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
@@ -928,7 +1093,10 @@ export default function SponsorshipsDashboard() {
                     type="number"
                     value={sponsorForm.amount}
                     onChange={(event) =>
-                      setSponsorForm({ ...sponsorForm, amount: event.target.value })
+                      setSponsorForm({
+                        ...sponsorForm,
+                        amount: event.target.value,
+                      })
                     }
                     placeholder="150"
                   />
@@ -961,7 +1129,10 @@ export default function SponsorshipsDashboard() {
                   type="date"
                   value={sponsorForm.startDate}
                   onChange={(event) =>
-                    setSponsorForm({ ...sponsorForm, startDate: event.target.value })
+                    setSponsorForm({
+                      ...sponsorForm,
+                      startDate: event.target.value,
+                    })
                   }
                 />
               </div>
@@ -1047,21 +1218,41 @@ export default function SponsorshipsDashboard() {
           <DialogHeader>
             <DialogTitle>Complete sponsor profile</DialogTitle>
             <DialogDescription>
-              Add or correct the sponsor information without changing sponsorship payments.
+              Add or correct the sponsor information without changing
+              sponsorship payments.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-2 md:grid-cols-2">
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="editSponsorName">Full name</Label>
-              <Input id="editSponsorName" value={sponsorForm.name} onChange={(event) => setSponsorForm({ ...sponsorForm, name: event.target.value })} />
+              <Input
+                id="editSponsorName"
+                value={sponsorForm.name}
+                onChange={(event) =>
+                  setSponsorForm({ ...sponsorForm, name: event.target.value })
+                }
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="editSponsorEmail">Email</Label>
-              <Input id="editSponsorEmail" type="email" value={sponsorForm.email} onChange={(event) => setSponsorForm({ ...sponsorForm, email: event.target.value })} />
+              <Input
+                id="editSponsorEmail"
+                type="email"
+                value={sponsorForm.email}
+                onChange={(event) =>
+                  setSponsorForm({ ...sponsorForm, email: event.target.value })
+                }
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="editSponsorPhone">Phone</Label>
-              <Input id="editSponsorPhone" value={sponsorForm.phone} onChange={(event) => setSponsorForm({ ...sponsorForm, phone: event.target.value })} />
+              <Input
+                id="editSponsorPhone"
+                value={sponsorForm.phone}
+                onChange={(event) =>
+                  setSponsorForm({ ...sponsorForm, phone: event.target.value })
+                }
+              />
             </div>
             {[
               ["country", "Country of origin"],
@@ -1075,7 +1266,12 @@ export default function SponsorshipsDashboard() {
                 <Input
                   id={`editSponsor${field}`}
                   value={sponsorForm[field as keyof SponsorForm] as string}
-                  onChange={(event) => setSponsorForm({ ...sponsorForm, [field]: event.target.value })}
+                  onChange={(event) =>
+                    setSponsorForm({
+                      ...sponsorForm,
+                      [field]: event.target.value,
+                    })
+                  }
                 />
               </div>
             ))}
@@ -1084,14 +1280,25 @@ export default function SponsorshipsDashboard() {
               <textarea
                 id="editSponsorBio"
                 value={sponsorForm.bio}
-                onChange={(event) => setSponsorForm({ ...sponsorForm, bio: event.target.value })}
+                onChange={(event) =>
+                  setSponsorForm({ ...sponsorForm, bio: event.target.value })
+                }
                 className="min-h-24 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
               />
             </div>
-            {sponsorFormError ? <p className="text-sm text-red-500 md:col-span-2">{sponsorFormError}</p> : null}
+            {sponsorFormError ? (
+              <p className="text-sm text-red-500 md:col-span-2">
+                {sponsorFormError}
+              </p>
+            ) : null}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditProfileOpen(false)}>Cancel</Button>
+            <Button
+              variant="outline"
+              onClick={() => setIsEditProfileOpen(false)}
+            >
+              Cancel
+            </Button>
             <Button onClick={handleUpdateProfile}>Save profile</Button>
           </DialogFooter>
         </DialogContent>
@@ -1142,17 +1349,26 @@ export default function SponsorshipsDashboard() {
                         Complete profile
                       </Button>
                       <p className="text-lg font-semibold text-foreground">
-                        {selectedSponsorProfile?.sponsor?.name || selectedSponsorProfile?.name || selectedRecord.donor?.sponsor?.name}
+                        {selectedSponsorProfile?.sponsor?.name ||
+                          selectedSponsorProfile?.name ||
+                          selectedRecord.donor?.sponsor?.name}
                       </p>
                       <a
                         href={`mailto:${selectedSponsorProfile?.sponsor?.email || selectedSponsorProfile?.email || selectedRecord.donor?.sponsor?.email}`}
                         className="text-sm text-accent underline"
                       >
-                        {selectedSponsorProfile?.sponsor?.email || selectedSponsorProfile?.email || selectedRecord.donor?.sponsor?.email}
+                        {selectedSponsorProfile?.sponsor?.email ||
+                          selectedSponsorProfile?.email ||
+                          selectedRecord.donor?.sponsor?.email}
                       </a>{" "}
-                      - {selectedSponsorProfile?.sponsor?.phone || selectedSponsorProfile?.phone || selectedRecord.donor?.sponsor?.phone}
+                      -{" "}
+                      {selectedSponsorProfile?.sponsor?.phone ||
+                        selectedSponsorProfile?.phone ||
+                        selectedRecord.donor?.sponsor?.phone}
                       <p className="text-sm text-foreground/70">
-                        {selectedSponsorProfile?.location?.city || selectedRecord.donor?.phone || "Location not provided"}
+                        {selectedSponsorProfile?.location?.city ||
+                          selectedRecord.donor?.phone ||
+                          "Location not provided"}
                       </p>
                     </div>
                     <div className="grid gap-3 sm:grid-cols-2">
@@ -1183,7 +1399,10 @@ export default function SponsorshipsDashboard() {
                           Sponsor relationship
                         </p>
                         <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
-                          {(selectedSponsorSummary?.totalChildren ?? selectedSponsorChildren.length) || 0} children
+                          {(selectedSponsorSummary?.totalChildren ??
+                            selectedSponsorChildren.length) ||
+                            0}{" "}
+                          children
                         </span>
                       </div>
 
@@ -1194,7 +1413,9 @@ export default function SponsorshipsDashboard() {
                           </p>
                           <p className="mt-2 text-lg font-semibold text-foreground">
                             {selectedSponsorSummary?.activeChildren ??
-                              selectedSponsorChildren.filter((entry) => entry.status === "Active").length}
+                              selectedSponsorChildren.filter(
+                                (entry) => entry.status === "Active",
+                              ).length}
                           </p>
                         </div>
                         <div className="rounded-md bg-slate-100 p-3">
@@ -1202,7 +1423,8 @@ export default function SponsorshipsDashboard() {
                             Pledged
                           </p>
                           <p className="mt-2 text-lg font-semibold text-foreground">
-                            ${selectedSponsorSummary?.totalPledged ??
+                            $
+                            {selectedSponsorSummary?.totalPledged ??
                               selectedSponsorChildren.reduce(
                                 (sum, entry) => sum + (entry.amount || 0),
                                 0,
@@ -1214,7 +1436,8 @@ export default function SponsorshipsDashboard() {
                             Paid
                           </p>
                           <p className="mt-2 text-lg font-semibold text-foreground">
-                            ${selectedSponsorSummary?.totalPaid ??
+                            $
+                            {selectedSponsorSummary?.totalPaid ??
                               selectedSponsorChildren.reduce(
                                 (sum, entry) => sum + (entry.totalPaid || 0),
                                 0,
@@ -1248,7 +1471,8 @@ export default function SponsorshipsDashboard() {
                                     {childName}
                                   </p>
                                   <p className="text-xs text-muted-foreground">
-                                    {entry.status} • ${entry.amount || 0} • {lastPayment}
+                                    {entry.status} • ${entry.amount || 0} •{" "}
+                                    {lastPayment}
                                   </p>
                                 </div>
                                 <span

@@ -42,9 +42,9 @@ import {
 import { SponsorshipProfile } from "@/lib/mock-data";
 import { uploadImageToCloudinary } from "@/lib/cloudinary-upload";
 import { apiRequest } from "@/lib/query-client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-const initialFormState:any = {
+const initialFormState: any = {
   _id: "",
   name: "",
   firstName: "",
@@ -167,12 +167,21 @@ function formatDisplayDate(value?: string | Date | null) {
   });
 }
 
-function estimateGraduationYear(currentLevel: string, currentClass: string = "") {
+function estimateGraduationYear(
+  currentLevel: string,
+  currentClass: string = "",
+) {
   const raw = `${currentLevel} ${currentClass}`.toLowerCase();
 
   if (raw.includes("primary")) return String(new Date().getFullYear() + 5);
-  if (raw.includes("secondary") || raw.includes("senior")) return String(new Date().getFullYear() + 4);
-  if (raw.includes("college") || raw.includes("university") || raw.includes("tertiary")) return String(new Date().getFullYear() + 4);
+  if (raw.includes("secondary") || raw.includes("senior"))
+    return String(new Date().getFullYear() + 4);
+  if (
+    raw.includes("college") ||
+    raw.includes("university") ||
+    raw.includes("tertiary")
+  )
+    return String(new Date().getFullYear() + 4);
   if (raw.includes("vocational")) return String(new Date().getFullYear() + 2);
 
   return String(new Date().getFullYear() + 3);
@@ -180,6 +189,7 @@ function estimateGraduationYear(currentLevel: string, currentClass: string = "")
 
 export default function ChildrenDashboard() {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const {
     data: Profiles,
@@ -238,7 +248,8 @@ export default function ChildrenDashboard() {
 
   const filteredChildren = useMemo(() => {
     return children.filter((child) => {
-      const fullName = `${child.firstName || ""} ${child.secondName || ""}`.trim();
+      const fullName =
+        `${child.firstName || ""} ${child.secondName || ""}`.trim();
 
       const matchesSearch = [fullName, child.name, child.school, child.location]
         .join(" ")
@@ -259,7 +270,8 @@ export default function ChildrenDashboard() {
       .map((record: any) => {
         // /sponsors/profiles/all returns sponsor documents; older responses
         // may still be nested under donor.sponsor.
-        const sponsor = record?.profile || record?.sponsor || record?.donor?.sponsor || {};
+        const sponsor =
+          record?.profile || record?.sponsor || record?.donor?.sponsor || {};
         const option = {
           _id: String(record?._id || record?.donor?._id || ""),
           name: sponsor.fullName || sponsor.name || "",
@@ -404,10 +416,12 @@ export default function ChildrenDashboard() {
         : child.needs,
       monthlyNeed: child.monthlyNeed,
       education: {
-        isStudying: child.education?.isStudying ?? Boolean(child.education?.currentLevel),
+        isStudying:
+          child.education?.isStudying ?? Boolean(child.education?.currentLevel),
         currentLevel: child.education?.currentLevel || "",
         schoolName: child.education?.schoolName || child.school || "",
-        classGrade: child.education?.classGrade || child.education?.currentClass || "",
+        classGrade:
+          child.education?.classGrade || child.education?.currentClass || "",
         currentClass: child.education?.currentClass || "",
         academicYear: child.education?.academicYear || "",
         expectedGraduationYear:
@@ -443,7 +457,10 @@ export default function ChildrenDashboard() {
       setLoadingHistory(true);
 
       try {
-        const response = await apiRequest("GET", `/sponsors/child/${viewingChild._id}`);
+        const response = await apiRequest(
+          "GET",
+          `/sponsors/child/${viewingChild._id}`,
+        );
         if (!response.ok) {
           throw new Error("Failed to load child sponsorship history");
         }
@@ -510,7 +527,10 @@ export default function ChildrenDashboard() {
           address: assigningChild.location || "",
         },
         donation: {
-          amount: Number(String(assigningChild.monthlyNeed || "").replace(/[^0-9.]/g, "")) || 0,
+          amount:
+            Number(
+              String(assigningChild.monthlyNeed || "").replace(/[^0-9.]/g, ""),
+            ) || 0,
           period: "Monthly",
           remindByEmail: true,
         },
@@ -537,6 +557,12 @@ export default function ChildrenDashboard() {
       setViewingChild((current) =>
         current && current._id === assigningChild._id ? updatedChild : current,
       );
+      await queryClient.invalidateQueries({
+        queryKey: ["children", "profiles"],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["sponsors", "profiles", "all"],
+      });
 
       setAssigningChild(null);
       setIsAssignDialogOpen(false);
@@ -592,7 +618,10 @@ export default function ChildrenDashboard() {
     }
 
     if (wizardStep === 4 && formState.education.isStudying) {
-      if (!formState.education.schoolName.trim() || !formState.education.classGrade) {
+      if (
+        !formState.education.schoolName.trim() ||
+        !formState.education.classGrade
+      ) {
         setFormError("Please provide the school and class or grade.");
         return false;
       }
@@ -677,7 +706,11 @@ export default function ChildrenDashboard() {
       }
       data = await res.json();
 
-      if (!editingChild && data.profile?._id && assignmentForm.selectedSponsorId) {
+      if (
+        !editingChild &&
+        data.profile?._id &&
+        assignmentForm.selectedSponsorId
+      ) {
         const selectedSponsor = sponsorOptions.find(
           (option: any) => option._id === assignmentForm.selectedSponsorId,
         );
@@ -687,15 +720,24 @@ export default function ChildrenDashboard() {
               childId: data.profile._id,
               child: data.profile._id,
               sponsorId: selectedSponsor._id,
-              sponsor: { name: selectedSponsor.name, email: selectedSponsor.email, phone: selectedSponsor.phone },
+              sponsor: {
+                name: selectedSponsor.name,
+                email: selectedSponsor.email,
+                phone: selectedSponsor.phone,
+              },
               donation: { amount: 0, period: "Monthly", remindByEmail: true },
               paymentMethod: "zelle",
               startDate: assignmentForm.startDate,
               status: "Active",
             });
           } catch (assignmentError) {
-            console.error("Child profile created but sponsor assignment failed:", assignmentError);
-            setFormError("Profile created, but sponsor assignment failed. You can assign the sponsor from the child list.");
+            console.error(
+              "Child profile created but sponsor assignment failed:",
+              assignmentError,
+            );
+            setFormError(
+              "Profile created, but sponsor assignment failed. You can assign the sponsor from the child list.",
+            );
           }
         }
       }
@@ -855,8 +897,6 @@ export default function ChildrenDashboard() {
               />
             </div>
 
-
-            
             <div className="space-y-2">
               <Label htmlFor="nationality">Nationality</Label>
               <Input
@@ -940,7 +980,10 @@ export default function ChildrenDashboard() {
                 placeholder="Phone number"
                 value={formState.guardianContact}
                 onChange={(event) =>
-                  setFormState({ ...formState, guardianContact: event.target.value })
+                  setFormState({
+                    ...formState,
+                    guardianContact: event.target.value,
+                  })
                 }
               />
             </div>
@@ -949,7 +992,11 @@ export default function ChildrenDashboard() {
               <Select
                 value={formState.guardianRelation}
                 onValueChange={(value) =>
-                  setFormState({ ...formState, guardianRelation: value as typeof formState.guardianRelation })
+                  setFormState({
+                    ...formState,
+                    guardianRelation:
+                      value as typeof formState.guardianRelation,
+                  })
                 }
               >
                 <SelectTrigger className="bg-white" id="guardianRelation">
@@ -1073,7 +1120,9 @@ export default function ChildrenDashboard() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="estimatedGraduationYear">Estimated graduation year</Label>
+              <Label htmlFor="estimatedGraduationYear">
+                Estimated graduation year
+              </Label>
               <Input
                 className="bg-white"
                 id="estimatedGraduationYear"
@@ -1192,11 +1241,14 @@ export default function ChildrenDashboard() {
                               {card.name || "Report card"}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              {new Date(card.uploadedAt).toLocaleDateString("en-US", {
-                                year: "numeric",
-                                month: "short",
-                                day: "numeric",
-                              })}
+                              {new Date(card.uploadedAt).toLocaleDateString(
+                                "en-US",
+                                {
+                                  year: "numeric",
+                                  month: "short",
+                                  day: "numeric",
+                                },
+                              )}
                             </p>
                           </div>
                           <button
@@ -1230,7 +1282,11 @@ export default function ChildrenDashboard() {
                       }}
                     />
                     <label htmlFor="reportCardInput" className="flex-1">
-                      <Button asChild variant="secondary" className="w-full cursor-pointer">
+                      <Button
+                        asChild
+                        variant="secondary"
+                        className="w-full cursor-pointer"
+                      >
                         <span>
                           <Upload size={16} className="mr-2" />
                           Upload report card
@@ -1309,57 +1365,448 @@ export default function ChildrenDashboard() {
       case 1:
         return (
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2"><Label htmlFor="firstName">First name</Label><Input id="firstName" value={formState.firstName} onChange={(event) => setFormState({ ...formState, firstName: event.target.value })} /></div>
-            <div className="space-y-2"><Label htmlFor="secondName">Second name</Label><Input id="secondName" value={formState.secondName} onChange={(event) => setFormState({ ...formState, secondName: event.target.value })} /></div>
-            <div className="space-y-2"><Label htmlFor="givenName">Preferred name</Label><Input id="givenName" value={formState.givenName} onChange={(event) => setFormState({ ...formState, givenName: event.target.value })} /></div>
-            <div className="space-y-2"><Label htmlFor="gender">Gender</Label><Select value={formState.gender} onValueChange={(value) => setFormState({ ...formState, gender: value as "Female" | "Male" })}><SelectTrigger id="gender"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Female">Female</SelectItem><SelectItem value="Male">Male</SelectItem></SelectContent></Select></div>
-            <div className="space-y-2"><Label htmlFor="dateOfBirth">Date of birth</Label><Input id="dateOfBirth" type="date" value={formState.dateOfBirth} onChange={(event) => setFormState({ ...formState, dateOfBirth: event.target.value })} /></div>
-            <div className="space-y-2"><Label htmlFor="age">Age</Label><Input id="age" type="number" min={0} value={formState.age} onChange={(event) => setFormState({ ...formState, age: Number(event.target.value) || 0 })} /></div>
-            <div className="space-y-2"><Label htmlFor="ageGroup">Age group</Label><Select value={formState.ageGroup} onValueChange={(value) => setFormState({ ...formState, ageGroup: value as typeof formState.ageGroup })}><SelectTrigger id="ageGroup"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="0-5">0-5</SelectItem><SelectItem value="6-12">6-12</SelectItem><SelectItem value="13-18">13-18</SelectItem></SelectContent></Select></div>
-            <div className="space-y-2"><Label htmlFor="nationality">Nationality</Label><Input id="nationality" value={formState.nationality} onChange={(event) => setFormState({ ...formState, nationality: event.target.value })} /></div>
+            <div className="space-y-2">
+              <Label htmlFor="firstName">First name</Label>
+              <Input
+                id="firstName"
+                value={formState.firstName}
+                onChange={(event) =>
+                  setFormState({ ...formState, firstName: event.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="secondName">Second name</Label>
+              <Input
+                id="secondName"
+                value={formState.secondName}
+                onChange={(event) =>
+                  setFormState({ ...formState, secondName: event.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="givenName">Preferred name</Label>
+              <Input
+                id="givenName"
+                value={formState.givenName}
+                onChange={(event) =>
+                  setFormState({ ...formState, givenName: event.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="gender">Gender</Label>
+              <Select
+                value={formState.gender}
+                onValueChange={(value) =>
+                  setFormState({
+                    ...formState,
+                    gender: value as "Female" | "Male",
+                  })
+                }
+              >
+                <SelectTrigger id="gender">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Female">Female</SelectItem>
+                  <SelectItem value="Male">Male</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="dateOfBirth">Date of birth</Label>
+              <Input
+                id="dateOfBirth"
+                type="date"
+                value={formState.dateOfBirth}
+                onChange={(event) =>
+                  setFormState({
+                    ...formState,
+                    dateOfBirth: event.target.value,
+                  })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="age">Age</Label>
+              <Input
+                id="age"
+                type="number"
+                min={0}
+                value={formState.age}
+                onChange={(event) =>
+                  setFormState({
+                    ...formState,
+                    age: Number(event.target.value) || 0,
+                  })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="ageGroup">Age group</Label>
+              <Select
+                value={formState.ageGroup}
+                onValueChange={(value) =>
+                  setFormState({
+                    ...formState,
+                    ageGroup: value as typeof formState.ageGroup,
+                  })
+                }
+              >
+                <SelectTrigger id="ageGroup">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0-5">0-5</SelectItem>
+                  <SelectItem value="6-12">6-12</SelectItem>
+                  <SelectItem value="13-18">13-18</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="nationality">Nationality</Label>
+              <Input
+                id="nationality"
+                value={formState.nationality}
+                onChange={(event) =>
+                  setFormState({
+                    ...formState,
+                    nationality: event.target.value,
+                  })
+                }
+              />
+            </div>
           </div>
         );
       case 2:
         return (
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2"><Label htmlFor="familyStatus">Family status</Label><Select value={formState.familyStatus} onValueChange={(value) => setFormState({ ...formState, familyStatus: value as typeof formState.familyStatus })}><SelectTrigger id="familyStatus"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Single Parent">Single Parent</SelectItem><SelectItem value="Total Orphans">Total Orphans</SelectItem></SelectContent></Select></div>
-            <div className="space-y-2"><Label htmlFor="numberOfParents">Number of parents</Label><Select value={String(formState.numberOfParents)} onValueChange={(value) => setFormState({ ...formState, numberOfParents: Number(value) as 0 | 1 | 2 })}><SelectTrigger id="numberOfParents"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="0">0</SelectItem><SelectItem value="1">1</SelectItem><SelectItem value="2">2</SelectItem></SelectContent></Select></div>
-            <div className="space-y-2 md:col-span-2"><Label htmlFor="guardianName">Guardian name</Label><Input id="guardianName" value={formState.guardianName} onChange={(event) => setFormState({ ...formState, guardianName: event.target.value })} /></div>
-            <div className="space-y-2"><Label htmlFor="guardianContact">Guardian contact</Label><Input id="guardianContact" value={formState.guardianContact} onChange={(event) => setFormState({ ...formState, guardianContact: event.target.value })} /></div>
-            <div className="space-y-2"><Label htmlFor="guardianRelation">Guardian relationship</Label><Select value={formState.guardianRelation} onValueChange={(value) => setFormState({ ...formState, guardianRelation: value as typeof formState.guardianRelation })}><SelectTrigger id="guardianRelation"><SelectValue /></SelectTrigger><SelectContent>{["caretaker", "mom", "dad", "sibling", "uncle", "aunt", "grandparent"].map((value) => <SelectItem key={value} value={value}>{value}</SelectItem>)}</SelectContent></Select></div>
+            <div className="space-y-2">
+              <Label htmlFor="familyStatus">Family status</Label>
+              <Select
+                value={formState.familyStatus}
+                onValueChange={(value) =>
+                  setFormState({
+                    ...formState,
+                    familyStatus: value as typeof formState.familyStatus,
+                  })
+                }
+              >
+                <SelectTrigger id="familyStatus">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Single Parent">Single Parent</SelectItem>
+                  <SelectItem value="Total Orphans">Total Orphans</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="numberOfParents">Number of parents</Label>
+              <Select
+                value={String(formState.numberOfParents)}
+                onValueChange={(value) =>
+                  setFormState({
+                    ...formState,
+                    numberOfParents: Number(value) as 0 | 1 | 2,
+                  })
+                }
+              >
+                <SelectTrigger id="numberOfParents">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">0</SelectItem>
+                  <SelectItem value="1">1</SelectItem>
+                  <SelectItem value="2">2</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="guardianName">Guardian name</Label>
+              <Input
+                id="guardianName"
+                value={formState.guardianName}
+                onChange={(event) =>
+                  setFormState({
+                    ...formState,
+                    guardianName: event.target.value,
+                  })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="guardianContact">Guardian contact</Label>
+              <Input
+                id="guardianContact"
+                value={formState.guardianContact}
+                onChange={(event) =>
+                  setFormState({
+                    ...formState,
+                    guardianContact: event.target.value,
+                  })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="guardianRelation">Guardian relationship</Label>
+              <Select
+                value={formState.guardianRelation}
+                onValueChange={(value) =>
+                  setFormState({
+                    ...formState,
+                    guardianRelation:
+                      value as typeof formState.guardianRelation,
+                  })
+                }
+              >
+                <SelectTrigger id="guardianRelation">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[
+                    "caretaker",
+                    "mom",
+                    "dad",
+                    "sibling",
+                    "uncle",
+                    "aunt",
+                    "grandparent",
+                  ].map((value) => (
+                    <SelectItem key={value} value={value}>
+                      {value}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         );
       case 3:
         return (
           <div className="grid gap-4">
-            <div className="space-y-2"><Label htmlFor="background">Bio</Label><Textarea id="background" value={formState.background} onChange={(event) => setFormState({ ...formState, background: event.target.value })} /></div>
-            <div className="space-y-2"><Label htmlFor="needsInput">Support needs</Label><Input id="needsInput" placeholder="Education, nutrition, health" value={formState.needsInput} onChange={(event) => setFormState({ ...formState, needsInput: event.target.value })} /></div>
-            <div className="grid gap-4 md:grid-cols-2"><div className="space-y-2"><Label htmlFor="location">Location</Label><Input id="location" value={formState.location} onChange={(event) => setFormState({ ...formState, location: event.target.value })} /></div><div className="space-y-2"><Label htmlFor="monthlyNeed">Monthly support</Label><Input id="monthlyNeed" value={formState.monthlyNeed} onChange={(event) => setFormState({ ...formState, monthlyNeed: event.target.value })} /></div></div>
+            <div className="space-y-2">
+              <Label htmlFor="background">Bio</Label>
+              <Textarea
+                id="background"
+                value={formState.background}
+                onChange={(event) =>
+                  setFormState({ ...formState, background: event.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="needsInput">Support needs</Label>
+              <Input
+                id="needsInput"
+                placeholder="Education, nutrition, health"
+                value={formState.needsInput}
+                onChange={(event) =>
+                  setFormState({ ...formState, needsInput: event.target.value })
+                }
+              />
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="location">Location</Label>
+                <Input
+                  id="location"
+                  value={formState.location}
+                  onChange={(event) =>
+                    setFormState({ ...formState, location: event.target.value })
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="monthlyNeed">Monthly support</Label>
+                <Input
+                  id="monthlyNeed"
+                  value={formState.monthlyNeed}
+                  onChange={(event) =>
+                    setFormState({
+                      ...formState,
+                      monthlyNeed: event.target.value,
+                    })
+                  }
+                />
+              </div>
+            </div>
           </div>
         );
       case 4:
         return (
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="flex items-center justify-between rounded-md border p-3 md:col-span-2"><Label htmlFor="isStudying">Is studying</Label><Switch id="isStudying" checked={formState.education.isStudying} onCheckedChange={(checked) => setFormState({ ...formState, education: { ...formState.education, isStudying: checked } })} /></div>
-            <div className="space-y-2"><Label htmlFor="schoolName">Name of school</Label><Input id="schoolName" value={formState.education.schoolName} onChange={(event) => setFormState({ ...formState, school: event.target.value, education: { ...formState.education, schoolName: event.target.value } })} /></div>
-            <div className="space-y-2"><Label htmlFor="classGrade">Class / grade</Label><Select value={formState.education.classGrade} onValueChange={(value) => setFormState({ ...formState, class: value, education: { ...formState.education, classGrade: value, currentClass: value } })}><SelectTrigger id="classGrade"><SelectValue placeholder="Select class or grade" /></SelectTrigger><SelectContent>{["Baby", "Top", "P-1", "P-2", "P-3", "P-4", "P-5", "P-6", "P-7", "S-1", "S-2", "S-3", "S-4", "S-5", "S-6", "Vocational school", "University"].map((value) => <SelectItem key={value} value={value}>{value}</SelectItem>)}</SelectContent></Select></div>
-            <div className="space-y-2"><Label htmlFor="expectedGraduationYear">Expected graduation year</Label><Input id="expectedGraduationYear" type="number" min={new Date().getFullYear()} value={formState.education.expectedGraduationYear} onChange={(event) => setFormState({ ...formState, education: { ...formState.education, expectedGraduationYear: event.target.value } })} /></div>
+            <div className="flex items-center justify-between rounded-md border p-3 md:col-span-2">
+              <Label htmlFor="isStudying">Is studying</Label>
+              <Switch
+                id="isStudying"
+                checked={formState.education.isStudying}
+                onCheckedChange={(checked) =>
+                  setFormState({
+                    ...formState,
+                    education: { ...formState.education, isStudying: checked },
+                  })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="schoolName">Name of school</Label>
+              <Input
+                id="schoolName"
+                value={formState.education.schoolName}
+                onChange={(event) =>
+                  setFormState({
+                    ...formState,
+                    school: event.target.value,
+                    education: {
+                      ...formState.education,
+                      schoolName: event.target.value,
+                    },
+                  })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="classGrade">Class / grade</Label>
+              <Select
+                value={formState.education.classGrade}
+                onValueChange={(value) =>
+                  setFormState({
+                    ...formState,
+                    class: value,
+                    education: {
+                      ...formState.education,
+                      classGrade: value,
+                      currentClass: value,
+                    },
+                  })
+                }
+              >
+                <SelectTrigger id="classGrade">
+                  <SelectValue placeholder="Select class or grade" />
+                </SelectTrigger>
+                <SelectContent>
+                  {[
+                    "Baby",
+                    "Top",
+                    "P-1",
+                    "P-2",
+                    "P-3",
+                    "P-4",
+                    "P-5",
+                    "P-6",
+                    "P-7",
+                    "S-1",
+                    "S-2",
+                    "S-3",
+                    "S-4",
+                    "S-5",
+                    "S-6",
+                    "Vocational school",
+                    "University",
+                  ].map((value) => (
+                    <SelectItem key={value} value={value}>
+                      {value}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="expectedGraduationYear">
+                Expected graduation year
+              </Label>
+              <Input
+                id="expectedGraduationYear"
+                type="number"
+                min={new Date().getFullYear()}
+                value={formState.education.expectedGraduationYear}
+                onChange={(event) =>
+                  setFormState({
+                    ...formState,
+                    education: {
+                      ...formState.education,
+                      expectedGraduationYear: event.target.value,
+                    },
+                  })
+                }
+              />
+            </div>
           </div>
         );
       case 5:
         return (
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2 md:col-span-2"><Label htmlFor="existingSponsor">Assign existing sponsor</Label><Select value={assignmentForm.selectedSponsorId} onValueChange={(value) => setAssignmentForm({ ...assignmentForm, selectedSponsorId: value })}><SelectTrigger id="existingSponsor"><SelectValue placeholder="Optional" /></SelectTrigger><SelectContent>{sponsorOptions.map((option: any) => <SelectItem key={option._id} value={option._id}>{option.name} ({option.email})</SelectItem>)}</SelectContent></Select></div>
-            <div className="space-y-2"><Label htmlFor="wizardStartDate">Start date</Label><Input id="wizardStartDate" type="date" value={assignmentForm.startDate} onChange={(event) => setAssignmentForm({ ...assignmentForm, startDate: event.target.value })} /></div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="existingSponsor">Assign existing sponsor</Label>
+              <Select
+                value={assignmentForm.selectedSponsorId}
+                onValueChange={(value) =>
+                  setAssignmentForm({
+                    ...assignmentForm,
+                    selectedSponsorId: value,
+                  })
+                }
+              >
+                <SelectTrigger id="existingSponsor">
+                  <SelectValue placeholder="Optional" />
+                </SelectTrigger>
+                <SelectContent>
+                  {sponsorOptions.map((option: any) => (
+                    <SelectItem key={option._id} value={option._id}>
+                      {option.name} ({option.email})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="wizardStartDate">Start date</Label>
+              <Input
+                id="wizardStartDate"
+                type="date"
+                value={assignmentForm.startDate}
+                onChange={(event) =>
+                  setAssignmentForm({
+                    ...assignmentForm,
+                    startDate: event.target.value,
+                  })
+                }
+              />
+            </div>
           </div>
         );
       default:
         return (
           <div className="space-y-4">
             <Label>Profile image</Label>
-            {(imagePreview || formState.image.url) && <div className="relative h-48 w-48 overflow-hidden rounded-lg border"><img src={imagePreview || formState.image.url} alt="Preview" className="h-full w-full object-cover" /></div>}
-            <input className="hidden" id="wizardImageInput" type="file" accept="image/*" onChange={handleImageInputChange} disabled={isUploadingImage} />
-            <label htmlFor="wizardImageInput"><Button asChild type="button" disabled={isUploadingImage}><span><Upload size={16} className="mr-2" />{isUploadingImage ? "Uploading..." : "Upload image"}</span></Button></label>
+            {(imagePreview || formState.image.url) && (
+              <div className="relative h-48 w-48 overflow-hidden rounded-lg border">
+                <img
+                  src={imagePreview || formState.image.url}
+                  alt="Preview"
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            )}
+            <input
+              className="hidden"
+              id="wizardImageInput"
+              type="file"
+              accept="image/*"
+              onChange={handleImageInputChange}
+              disabled={isUploadingImage}
+            />
+            <label htmlFor="wizardImageInput">
+              <Button asChild type="button" disabled={isUploadingImage}>
+                <span>
+                  <Upload size={16} className="mr-2" />
+                  {isUploadingImage ? "Uploading..." : "Upload image"}
+                </span>
+              </Button>
+            </label>
           </div>
         );
     }
@@ -1471,11 +1918,21 @@ export default function ChildrenDashboard() {
                     </DropdownMenuItem>
 
                     <DropdownMenuItem
-                      onClick={() => openAssignSponsor(child)}
+                      onClick={() =>
+                        !child.sponsor &&
+                        child.sponsorshipStatus !== "Sponsored" &&
+                        openAssignSponsor(child)
+                      }
+                      disabled={
+                        Boolean(child.sponsor) ||
+                        child.sponsorshipStatus === "Sponsored"
+                      }
                       className="cursor-pointer"
                     >
                       <Plus size={14} className="mr-2" />
-                      Assign sponsor
+                      {child.sponsor || child.sponsorshipStatus === "Sponsored"
+                        ? "Already sponsored"
+                        : "Assign sponsor"}
                     </DropdownMenuItem>
 
                     <DropdownMenuItem
@@ -1556,13 +2013,17 @@ export default function ChildrenDashboard() {
 
             {sponsorOptions.length > 0 ? (
               <div className="space-y-2">
-                <Label htmlFor="existingSponsor">Choose an existing sponsor</Label>
+                <Label htmlFor="existingSponsor">
+                  Choose an existing sponsor
+                </Label>
                 <Select
                   value={assignmentForm.selectedSponsorId}
-                  onValueChange={(value) => setAssignmentForm((current) => ({
-                    ...current,
-                    selectedSponsorId: value,
-                  }))}
+                  onValueChange={(value) =>
+                    setAssignmentForm((current) => ({
+                      ...current,
+                      selectedSponsorId: value,
+                    }))
+                  }
                 >
                   <SelectTrigger id="existingSponsor" className="bg-white">
                     <SelectValue placeholder="Select a sponsor" />
@@ -1612,8 +2073,6 @@ export default function ChildrenDashboard() {
         </DialogContent>
       </Dialog>
 
-      
-
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-4xl overflow-auto h-140">
           <DialogHeader>
@@ -1628,19 +2087,28 @@ export default function ChildrenDashboard() {
                   Step {wizardStep} of 6
                 </p>
                 <p>
-                  {[
-                    "Profile",
-                    "Family",
-                    "Bio",
-                    "Education",
-                    "Sponsor assignment",
-                    "Image upload",
-                  ][wizardStep - 1]}
+                  {
+                    [
+                      "Profile",
+                      "Family",
+                      "Bio",
+                      "Education",
+                      "Sponsor assignment",
+                      "Image upload",
+                    ][wizardStep - 1]
+                  }
                 </p>
               </div>
               <div className="flex items-center gap-2 text-foreground/70">
                 {Array.from({ length: 6 }).map((_, index) => (
-                  <span key={index} className={wizardStep >= index + 1 ? "h-2 w-2 rounded-full bg-primary" : "h-2 w-2 rounded-full bg-slate-300"} />
+                  <span
+                    key={index}
+                    className={
+                      wizardStep >= index + 1
+                        ? "h-2 w-2 rounded-full bg-primary"
+                        : "h-2 w-2 rounded-full bg-slate-300"
+                    }
+                  />
                 ))}
               </div>
             </div>
@@ -1795,7 +2263,9 @@ export default function ChildrenDashboard() {
                     <button
                       key={tab.key}
                       type="button"
-                      onClick={() => setActiveProfileTab(tab.key as typeof activeProfileTab)}
+                      onClick={() =>
+                        setActiveProfileTab(tab.key as typeof activeProfileTab)
+                      }
                       className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                         activeProfileTab === tab.key
                           ? "bg-primary text-primary-foreground"
@@ -1834,19 +2304,27 @@ export default function ChildrenDashboard() {
                     </h3>
                     <ul className="space-y-2 text-sm text-foreground/80">
                       <li>
-                        <span className="font-medium text-foreground">Family status:</span>{" "}
+                        <span className="font-medium text-foreground">
+                          Family status:
+                        </span>{" "}
                         {viewingChild.familyStatus}
                       </li>
                       <li>
-                        <span className="font-medium text-foreground">Number of parents:</span>{" "}
+                        <span className="font-medium text-foreground">
+                          Number of parents:
+                        </span>{" "}
                         {viewingChild.numberOfParents}
                       </li>
                       <li>
-                        <span className="font-medium text-foreground">Nationality:</span>{" "}
+                        <span className="font-medium text-foreground">
+                          Nationality:
+                        </span>{" "}
                         {viewingChild.nationality}
                       </li>
                       <li>
-                        <span className="font-medium text-foreground">Monthly need:</span>{" "}
+                        <span className="font-medium text-foreground">
+                          Monthly need:
+                        </span>{" "}
                         {viewingChild.monthlyNeed || "Not provided"}
                       </li>
                     </ul>
@@ -1858,19 +2336,27 @@ export default function ChildrenDashboard() {
                     </h3>
                     <ul className="space-y-2 text-sm text-foreground/80">
                       <li>
-                        <span className="font-medium text-foreground">Date of birth:</span>{" "}
+                        <span className="font-medium text-foreground">
+                          Date of birth:
+                        </span>{" "}
                         {formatDisplayDate(viewingChild.dateOfBirth)}
                       </li>
                       <li>
-                        <span className="font-medium text-foreground">Age group:</span>{" "}
+                        <span className="font-medium text-foreground">
+                          Age group:
+                        </span>{" "}
                         {viewingChild.ageGroup || "Not provided"}
                       </li>
                       <li>
-                        <span className="font-medium text-foreground">Given name:</span>{" "}
+                        <span className="font-medium text-foreground">
+                          Given name:
+                        </span>{" "}
                         {viewingChild.givenName || "Not provided"}
                       </li>
                       <li>
-                        <span className="font-medium text-foreground">Preferred name:</span>{" "}
+                        <span className="font-medium text-foreground">
+                          Preferred name:
+                        </span>{" "}
                         {viewingChild.name || "Not provided"}
                       </li>
                     </ul>
@@ -1880,55 +2366,79 @@ export default function ChildrenDashboard() {
 
               {activeProfileTab === "education" && (
                 <div className="space-y-4 rounded-xl border border-border bg-card p-4">
-                  <h3 className="text-lg font-semibold text-foreground">Education tracking</h3>
+                  <h3 className="text-lg font-semibold text-foreground">
+                    Education tracking
+                  </h3>
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="rounded-lg bg-muted p-4">
-                      <p className="text-xs uppercase tracking-wide text-foreground/60">Current level</p>
+                      <p className="text-xs uppercase tracking-wide text-foreground/60">
+                        Current level
+                      </p>
                       <p className="mt-2 text-base font-semibold text-foreground">
                         {viewingChild.education?.currentLevel || "Not provided"}
                       </p>
                     </div>
                     <div className="rounded-lg bg-muted p-4">
-                      <p className="text-xs uppercase tracking-wide text-foreground/60">Current class</p>
+                      <p className="text-xs uppercase tracking-wide text-foreground/60">
+                        Current class
+                      </p>
                       <p className="mt-2 text-base font-semibold text-foreground">
                         {viewingChild.education?.currentClass || "Not provided"}
                       </p>
                     </div>
                     <div className="rounded-lg bg-muted p-4">
-                      <p className="text-xs uppercase tracking-wide text-foreground/60">School</p>
+                      <p className="text-xs uppercase tracking-wide text-foreground/60">
+                        School
+                      </p>
                       <p className="mt-2 text-base font-semibold text-foreground">
-                        {viewingChild.education?.schoolName || viewingChild.school || "Not provided"}
+                        {viewingChild.education?.schoolName ||
+                          viewingChild.school ||
+                          "Not provided"}
                       </p>
                     </div>
                     <div className="rounded-lg bg-muted p-4">
-                      <p className="text-xs uppercase tracking-wide text-foreground/60">Academic year</p>
+                      <p className="text-xs uppercase tracking-wide text-foreground/60">
+                        Academic year
+                      </p>
                       <p className="mt-2 text-base font-semibold text-foreground">
                         {viewingChild.education?.academicYear || "Not provided"}
                       </p>
                     </div>
                     <div className="rounded-lg bg-muted p-4">
-                      <p className="text-xs uppercase tracking-wide text-foreground/60">Last term result</p>
+                      <p className="text-xs uppercase tracking-wide text-foreground/60">
+                        Last term result
+                      </p>
                       <p className="mt-2 text-base font-semibold text-foreground">
-                        {viewingChild.education?.lastTermResult || "Not provided"}
+                        {viewingChild.education?.lastTermResult ||
+                          "Not provided"}
                       </p>
                     </div>
                     <div className="rounded-lg bg-muted p-4">
-                      <p className="text-xs uppercase tracking-wide text-foreground/60">Estimated graduation year</p>
+                      <p className="text-xs uppercase tracking-wide text-foreground/60">
+                        Estimated graduation year
+                      </p>
                       <p className="mt-2 text-base font-semibold text-foreground">
-                        {viewingChild.education?.estimatedGraduationYear || "Not provided"}
+                        {viewingChild.education?.estimatedGraduationYear ||
+                          "Not provided"}
                       </p>
                     </div>
                   </div>
                   <div className="rounded-lg bg-muted p-4">
-                    <p className="text-xs uppercase tracking-wide text-foreground/60">Graduation target</p>
+                    <p className="text-xs uppercase tracking-wide text-foreground/60">
+                      Graduation target
+                    </p>
                     <p className="mt-2 text-base font-semibold text-foreground">
-                      {viewingChild.education?.graduationTarget || "Not provided"}
+                      {viewingChild.education?.graduationTarget ||
+                        "Not provided"}
                     </p>
                   </div>
                   <div className="rounded-lg bg-muted p-4">
-                    <p className="text-xs uppercase tracking-wide text-foreground/60">Education notes</p>
+                    <p className="text-xs uppercase tracking-wide text-foreground/60">
+                      Education notes
+                    </p>
                     <p className="mt-2 text-sm leading-6 text-foreground/80">
-                      {viewingChild.education?.educationNotes || "No additional notes"}
+                      {viewingChild.education?.educationNotes ||
+                        "No additional notes"}
                     </p>
                   </div>
                 </div>
@@ -1945,7 +2455,8 @@ export default function ChildrenDashboard() {
                       <br />
                       {viewingChild.guardianContact || "Contact not provided"}
                       <br />
-                      {viewingChild.guardianRelation || "Relationship not provided"}
+                      {viewingChild.guardianRelation ||
+                        "Relationship not provided"}
                     </p>
                   </div>
 
@@ -1954,9 +2465,24 @@ export default function ChildrenDashboard() {
                       Family details
                     </h3>
                     <ul className="space-y-2 text-sm text-foreground/80">
-                      <li><span className="font-medium text-foreground">Family status:</span> {viewingChild.familyStatus}</li>
-                      <li><span className="font-medium text-foreground">Number of parents:</span> {viewingChild.numberOfParents}</li>
-                      <li><span className="font-medium text-foreground">Nationality:</span> {viewingChild.nationality}</li>
+                      <li>
+                        <span className="font-medium text-foreground">
+                          Family status:
+                        </span>{" "}
+                        {viewingChild.familyStatus}
+                      </li>
+                      <li>
+                        <span className="font-medium text-foreground">
+                          Number of parents:
+                        </span>{" "}
+                        {viewingChild.numberOfParents}
+                      </li>
+                      <li>
+                        <span className="font-medium text-foreground">
+                          Nationality:
+                        </span>{" "}
+                        {viewingChild.nationality}
+                      </li>
                     </ul>
                   </div>
                 </div>
@@ -1971,45 +2497,85 @@ export default function ChildrenDashboard() {
                   {getSponsorProfile(viewingChild) ? (
                     <div className="grid gap-4 md:grid-cols-2">
                       <div className="rounded-lg bg-muted p-4">
-                        <p className="text-xs uppercase tracking-wide text-foreground/60">Sponsor</p>
+                        <p className="text-xs uppercase tracking-wide text-foreground/60">
+                          Sponsor
+                        </p>
                         <div className="mt-3 flex items-center gap-3">
                           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                            {getSponsorProfile(viewingChild)?.name?.charAt(0)?.toUpperCase() || "S"}
+                            {getSponsorProfile(viewingChild)
+                              ?.name?.charAt(0)
+                              ?.toUpperCase() || "S"}
                           </div>
                           <div>
-                            <p className="font-semibold text-foreground">{getSponsorProfile(viewingChild)?.name}</p>
-                            <p className="text-sm text-foreground/70">{getSponsorProfile(viewingChild)?.email}</p>
+                            <p className="font-semibold text-foreground">
+                              {getSponsorProfile(viewingChild)?.name}
+                            </p>
+                            <p className="text-sm text-foreground/70">
+                              {getSponsorProfile(viewingChild)?.email}
+                            </p>
                           </div>
                         </div>
                       </div>
 
                       <div className="rounded-lg bg-muted p-4">
-                        <p className="text-xs uppercase tracking-wide text-foreground/60">Contact</p>
+                        <p className="text-xs uppercase tracking-wide text-foreground/60">
+                          Contact
+                        </p>
                         <ul className="mt-3 space-y-2 text-sm text-foreground/80">
-                          <li><span className="font-medium text-foreground">Phone:</span> {getSponsorProfile(viewingChild)?.phone || "Not provided"}</li>
-                          <li><span className="font-medium text-foreground">Address:</span> {((viewingChild as any).sponsor?.location && typeof (viewingChild as any).sponsor.location === "object") ? [
-                              (viewingChild as any).sponsor.location.address,
-                              (viewingChild as any).sponsor.location.city,
-                              (viewingChild as any).sponsor.location.state,
-                              (viewingChild as any).sponsor.location.zipCode,
-                            ].filter(Boolean).join(", ") || "Not provided" : "Not provided"}</li>
+                          <li>
+                            <span className="font-medium text-foreground">
+                              Phone:
+                            </span>{" "}
+                            {getSponsorProfile(viewingChild)?.phone ||
+                              "Not provided"}
+                          </li>
+                          <li>
+                            <span className="font-medium text-foreground">
+                              Address:
+                            </span>{" "}
+                            {(viewingChild as any).sponsor?.location &&
+                            typeof (viewingChild as any).sponsor.location ===
+                              "object"
+                              ? [
+                                  (viewingChild as any).sponsor.location
+                                    .address,
+                                  (viewingChild as any).sponsor.location.city,
+                                  (viewingChild as any).sponsor.location.state,
+                                  (viewingChild as any).sponsor.location
+                                    .zipCode,
+                                ]
+                                  .filter(Boolean)
+                                  .join(", ") || "Not provided"
+                              : "Not provided"}
+                          </li>
                         </ul>
                       </div>
 
                       <div className="rounded-lg bg-muted p-4">
-                        <p className="text-xs uppercase tracking-wide text-foreground/60">Assigned on</p>
+                        <p className="text-xs uppercase tracking-wide text-foreground/60">
+                          Assigned on
+                        </p>
                         <p className="mt-3 text-base font-semibold text-foreground">
-                          {formatDisplayDate((viewingChild as any).sponsor?.startDate)}
+                          {formatDisplayDate(
+                            (viewingChild as any).sponsor?.startDate,
+                          )}
                         </p>
                       </div>
 
                       <div className="rounded-lg bg-muted p-4">
-                        <p className="text-xs uppercase tracking-wide text-foreground/60">Sponsorship plan</p>
+                        <p className="text-xs uppercase tracking-wide text-foreground/60">
+                          Sponsorship plan
+                        </p>
                         <p className="mt-3 text-base font-semibold text-foreground">
-                          {(viewingChild as any).sponsor?.donation?.period || "Monthly"}
+                          {(viewingChild as any).sponsor?.donation?.period ||
+                            "Monthly"}
                         </p>
                         <p className="text-sm text-foreground/70">
-                          ${((viewingChild as any).sponsor?.donation?.amount || 0).toString()} per period
+                          $
+                          {(
+                            (viewingChild as any).sponsor?.donation?.amount || 0
+                          ).toString()}{" "}
+                          per period
                         </p>
                       </div>
                     </div>
@@ -2023,7 +2589,9 @@ export default function ChildrenDashboard() {
 
               {activeProfileTab === "history" && (
                 <div className="rounded-xl border border-border bg-card p-4">
-                  <h3 className="mb-3 text-lg font-semibold text-foreground">Sponsorship history</h3>
+                  <h3 className="mb-3 text-lg font-semibold text-foreground">
+                    Sponsorship history
+                  </h3>
 
                   {loadingHistory ? (
                     <div className="space-y-3">
@@ -2039,15 +2607,22 @@ export default function ChildrenDashboard() {
                           donor.sponsor?.name ||
                           donor.name ||
                           "Unknown sponsor";
-                        const amount =
-                          Number(record.amount ?? record.donation?.amount ?? donor.donation?.amount ?? 0);
+                        const amount = Number(
+                          record.amount ??
+                            record.donation?.amount ??
+                            donor.donation?.amount ??
+                            0,
+                        );
                         const status = record.status || "Pending";
                         const startDate = record.startDate
-                          ? new Date(record.startDate).toLocaleDateString("en-US", {
-                              year: "numeric",
-                              month: "short",
-                              day: "numeric",
-                            })
+                          ? new Date(record.startDate).toLocaleDateString(
+                              "en-US",
+                              {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                              },
+                            )
                           : "Not provided";
 
                         return (
@@ -2057,9 +2632,14 @@ export default function ChildrenDashboard() {
                           >
                             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                               <div>
-                                <p className="font-semibold text-foreground">{sponsorName}</p>
+                                <p className="font-semibold text-foreground">
+                                  {sponsorName}
+                                </p>
                                 <p className="text-sm text-foreground/70">
-                                  {record.frequency || donor.donation?.period || "Monthly"} sponsorship
+                                  {record.frequency ||
+                                    donor.donation?.period ||
+                                    "Monthly"}{" "}
+                                  sponsorship
                                 </p>
                               </div>
                               <span
@@ -2071,17 +2651,29 @@ export default function ChildrenDashboard() {
 
                             <div className="mt-4 grid gap-3 sm:grid-cols-3">
                               <div className="rounded-md bg-background p-3">
-                                <p className="text-xs uppercase tracking-wide text-foreground/60">Amount</p>
-                                <p className="mt-2 font-semibold text-foreground">${amount}</p>
-                              </div>
-                              <div className="rounded-md bg-background p-3">
-                                <p className="text-xs uppercase tracking-wide text-foreground/60">Started</p>
-                                <p className="mt-2 font-semibold text-foreground">{startDate}</p>
-                              </div>
-                              <div className="rounded-md bg-background p-3">
-                                <p className="text-xs uppercase tracking-wide text-foreground/60">Payments</p>
+                                <p className="text-xs uppercase tracking-wide text-foreground/60">
+                                  Amount
+                                </p>
                                 <p className="mt-2 font-semibold text-foreground">
-                                  {Array.isArray(record.payments) ? record.payments.length : 0}
+                                  ${amount}
+                                </p>
+                              </div>
+                              <div className="rounded-md bg-background p-3">
+                                <p className="text-xs uppercase tracking-wide text-foreground/60">
+                                  Started
+                                </p>
+                                <p className="mt-2 font-semibold text-foreground">
+                                  {startDate}
+                                </p>
+                              </div>
+                              <div className="rounded-md bg-background p-3">
+                                <p className="text-xs uppercase tracking-wide text-foreground/60">
+                                  Payments
+                                </p>
+                                <p className="mt-2 font-semibold text-foreground">
+                                  {Array.isArray(record.payments)
+                                    ? record.payments.length
+                                    : 0}
                                 </p>
                               </div>
                             </div>
@@ -2099,18 +2691,26 @@ export default function ChildrenDashboard() {
 
               {activeProfileTab === "documents" && (
                 <div className="rounded-xl border border-border bg-card p-4">
-                  <h3 className="mb-3 text-lg font-semibold text-foreground">Documents</h3>
+                  <h3 className="mb-3 text-lg font-semibold text-foreground">
+                    Documents
+                  </h3>
                   {(viewingChild.reportCards || []).length > 0 ? (
                     <div className="grid gap-3 md:grid-cols-2">
                       {(viewingChild.reportCards || []).map((card, index) => (
                         <a
-                          key={card.public_id || card.url || `${card.name || "document"}-${index}`}
+                          key={
+                            card.public_id ||
+                            card.url ||
+                            `${card.name || "document"}-${index}`
+                          }
                           href={card.url || "#"}
                           target="_blank"
                           rel="noreferrer"
                           className="rounded-lg border border-border bg-muted p-3 text-sm text-foreground/80 hover:bg-muted/80"
                         >
-                          <p className="font-medium text-foreground">{card.name || "Report card"}</p>
+                          <p className="font-medium text-foreground">
+                            {card.name || "Report card"}
+                          </p>
                           <p className="mt-1 text-xs text-foreground/60">
                             {card.fileType || "Document"}
                           </p>
