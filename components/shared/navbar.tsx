@@ -4,14 +4,13 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation"; // Import for path detection
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/lib/auth-context";
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeBtn, setActiveBtn] = useState("");
   const pathname = usePathname(); // Get current route
-  const { isAuthenticated } = useAuth();
+  const dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL || "http://localhost:3001";
 
   // Update active button based on current path
   useEffect(() => {
@@ -103,8 +102,7 @@ export function Navbar() {
                 {link.label}
               </Link>
             ))}
-            {isAuthenticated && (
-              <Link href="/dashboard" className="inline-block">
+            <a href={dashboardUrl} className="inline-block">
                 <Button
                   style={{ fontFamily: "Quicksand" }}
                   className={`transition-all mr-2 ${
@@ -115,8 +113,7 @@ export function Navbar() {
                 >
                   Dashboard
                 </Button>
-              </Link>
-            )}
+            </a>
             <Link href="/donate" className="inline-block">
               <Button
                 style={{ fontFamily: "Quicksand" }}
@@ -189,9 +186,8 @@ export function Navbar() {
                 {link.label}
               </Link>
             ))}
-            {isAuthenticated && (
-              <Link
-                href="/dashboard"
+            <a
+                href={dashboardUrl}
                 className="w-full block"
                 onClick={() => setIsMenuOpen(false)}
               >
@@ -205,8 +201,7 @@ export function Navbar() {
                 >
                   Dashboard
                 </Button>
-              </Link>
-            )}
+            </a>
             <Link
               href="/donate"
               className="w-full block"
