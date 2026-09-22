@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Heart, TrendingUp, Target } from "lucide-react";
-import type { SponsorshipProfile } from "@/lib/mock-data";
+import type { SponsorshipProfile } from "@/lib/child-profile";
 
 interface ImpactMetricsProps {
   profile: SponsorshipProfile;

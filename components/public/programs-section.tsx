@@ -3,32 +3,15 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useData } from "@/lib/data-context";
 import { useState } from "react";
-import { Arrow } from "@radix-ui/react-context-menu";
 import { ArrowRight } from "lucide-react";
 import {
   AnimatedElement,
   AnimatedContainer,
 } from "@/components/motion/animated-elements";
 
-const programEmojis: { [key: string]: string } = {
-  "Education Initiatives": "📚",
-  "Nutrition Program": "🍎",
-  "Teacher Training": "👨‍🏫",
-  "Community Health": "⚕️",
-};
-
 export function ProgramsSection() {
-  const { programs } = useData();
-
   const [activetab, setActiveTab] = useState("mission");
-
-  const displayPrograms = programs.slice(0, 4).map((p) => ({
-    title: p.title,
-    description: p.description,
-    emoji: programEmojis[p.title] || "🌱",
-  }));
 
   return (
     <AnimatedElement variant="fadeInUp">

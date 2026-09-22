@@ -7,6 +7,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Image from "next/image";
+import { apiRequest } from "@/lib/query-client";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Contact() {
   const [formData, setFormData] = useState({
@@ -15,6 +17,8 @@ export default function Contact() {
     subject: "",
     message: "",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -23,10 +27,25 @@ export default function Contact() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
-    setFormData({ name: "", email: "", subject: "", message: "" });
+    setIsSubmitting(true);
+    try {
+      await apiRequest("POST", "/messages/contact", formData);
+      setFormData({ name: "", email: "", subject: "", message: "" });
+      toast({
+        title: "Message sent",
+        description: "Thank you. We received your message and will get back to you soon.",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Unable to send message",
+        description: error instanceof Error ? error.message : "Please try again later.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -143,9 +162,10 @@ export default function Contact() {
 
               <Button
                 type="submit"
+                disabled={isSubmitting}
                 className="w-full bg-accent hover:bg-accent/90 text-accent-foreground py-3 text-lg font-semibold"
               >
-                Send Message
+                {isSubmitting ? "Sending..." : "Send Message"}
               </Button>
             </form>
           </Card>

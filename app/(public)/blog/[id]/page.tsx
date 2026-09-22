@@ -7,7 +7,6 @@ import { notFound } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import * as React from "react";
 import { useEffect, useState } from "react";
-import { mockBlogs } from "@/lib/mock-data";
 import { BlogDetailPageSkeleton } from "@/components/blog/blog-skeleton-loaders";
 
 export default function BlogDetailPage({
@@ -48,7 +47,6 @@ export default function BlogDetailPage({
     notFound();
   }
 
-  // const post: any = mockBlogs.find((p) => p._id === id);
 
   return (
     <main className="min-h-screen flex flex-col bg-background">

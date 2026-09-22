@@ -4,11 +4,15 @@ import { Navbar } from '@/components/shared/navbar';
 import { Footer } from '@/components/shared/footer';
 import { Card } from '@/components/ui/card';
 import Image from 'next/image';
-import { mockBlogs } from '@/lib/mock-data';
 import { Eye, MessageCircle, Share2, User } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 
  
 export default function Programs() {
+  const { data: posts = [], isLoading, isError } = useQuery<any[]>({
+    queryKey: ['blogs', 'all'],
+  });
+
   return (
     <main className="min-h-screen flex flex-col bg-background">
       <Navbar />
@@ -59,8 +63,15 @@ export default function Programs() {
           </p>
         </div>
 
+        {isLoading ? (
+          <p className="py-12 text-center text-muted-foreground">Loading programs...</p>
+        ) : isError ? (
+          <p className="py-12 text-center text-muted-foreground">Unable to load programs right now.</p>
+        ) : posts.length === 0 ? (
+          <p className="py-12 text-center text-muted-foreground">No programs are available yet.</p>
+        ) : (
         <div className="grid md:grid-cols-3 gap-8">
-          {mockBlogs.map((post) => (
+          {posts.map((post) => (
             <Card  style={{fontFamily:'Quicksand'}} key={post._id} className="  bg-card cursor-pointer p-0 h-auto border-border hover:shadow-lg transition-shadow">
               <img
                 src={`${post.image.url}`}
@@ -101,6 +112,7 @@ export default function Programs() {
             </Card>
           ))}
         </div>
+        )}
       </section>
 
       <Footer />

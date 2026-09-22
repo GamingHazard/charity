@@ -1,13 +1,9 @@
 "use client";
 
-import { useData } from "@/lib/data-context";
-import { Apple, AppleIcon,DropletIcon,GraduationCap,StethoscopeIcon  } from "lucide-react";
-import { title } from "process";
+import { Apple, DropletIcon, GraduationCap, StethoscopeIcon } from "lucide-react";
 import { AnimatedElement, AnimatedContainer } from "@/components/motion/animated-elements";
 import ScrollReveal from "@/lib/fontAnimation";
 export function ImpactMetrics() {
-  const { programs, donations } = useData();
-
   const metrics = [
     
     {title: 'Medical help', description: 'A good health care system is essential for any society', icon:StethoscopeIcon , color:'green'},

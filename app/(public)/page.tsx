@@ -28,10 +28,8 @@ import {
   Send,
 } from "lucide-react";
 import Link from "next/link";
-// import { mockEvents } from '@/lib/mock-data';
 import ScrollStack, { ScrollStackItem } from "@/lib/scrollStackJs";
 import StackCards from "@/components/public/scroll-stack";
-import { mockEvents } from "@/lib/mock-data";
 import {
   AnimatedElement,
   AnimatedContainer,
@@ -44,11 +42,16 @@ import "@splidejs/react-splide/css";
 import { useState, useEffect } from "react";
 import PayButton from "@/lib/flutterWavePayment";
 import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/query-client";
 export default function Home() {
   const [amount, setAmount] = useState("10");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [companyName, setCompanyName] = useState("");
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [newsletterSubmitting, setNewsletterSubmitting] = useState(false);
+  const [newsletterStatus, setNewsletterStatus] = useState<"idle" | "success" | "error">("idle");
+  const [newsletterMessage, setNewsletterMessage] = useState("");
   const [posts, setPosts] = useState([]);
   const [events, setEvents] = useState([]);
   const [gallery, setGallery] = useState([]);
@@ -111,6 +114,35 @@ export default function Home() {
     email: email,
     companyName: companyName,
     amount: amount,
+  };
+
+  const handleNewsletterSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    const trimmedEmail = newsletterEmail.trim();
+    if (!trimmedEmail) {
+      setNewsletterStatus("error");
+      setNewsletterMessage("Please enter your email address.");
+      return;
+    }
+
+    try {
+      setNewsletterSubmitting(true);
+      const response = await apiRequest("POST", "/newsletter/subscribe", {
+        email: trimmedEmail,
+        name: "Website Visitor",
+      });
+      const data = await response.json();
+
+      setNewsletterStatus("success");
+      setNewsletterMessage(data.message || "Thank you for subscribing!");
+      setNewsletterEmail("");
+    } catch (error) {
+      setNewsletterStatus("error");
+      setNewsletterMessage(error instanceof Error ? error.message : "Unable to subscribe right now.");
+    } finally {
+      setNewsletterSubmitting(false);
+    }
   };
 
   const quickdonations = [
@@ -731,205 +763,207 @@ export default function Home() {
       )}
 
       {/* Footer */}
-      <footer className=" hidden mt-5 sm:flex shadow-lg relative  justify-center items-center flex-1 bg-pink-400">
-        <img src="/footer-bg.jpg" className="  w-full h-full" />
-        <div className="max-w-6xl gap-5 border-b border-muted text-white justify-evenly h-96 flex-1 flex items-center absolute     mx-auto">
-          <div className="text-white    gap-4 h-full w-1/3">
-            <span className="  items-center w-full ">
+      <footer className="hidden sm:flex shadow-lg relative overflow-hidden bg-pink-400">
+        <img
+          src="/footer-bg.jpg"
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover opacity-90"
+        />
+
+        <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col px-4 py-8 lg:px-6">
+          <div className="grid gap-6 border-b border-white/20 pb-8 md:grid-cols-2 xl:grid-cols-3">
+            <div className="min-w-0 text-white">
               <Link
                 style={{ fontFamily: "Quicksand" }}
                 href="/"
-                className={`flex items-center gap-2   mb-5 cursor-pointer  transition-colors `}
+                className="mb-5 flex cursor-pointer items-center gap-2 transition-colors"
               >
-                <img src="/logo.png" className="w-12 h-12" />
+                <img src="/logo.png" className="h-12 w-12" alt="Seeds of Love logo" />
                 <span className="hidden text-center sm:inline-block text-xm">
-                  <p className="font-extrabold text-lg text-primary">
-                    ENSIGO OF LOVE
-                  </p>
+                  <p className="text-lg font-extrabold text-primary">ENSIGO OF LOVE</p>
                   <p className="text-xs">We Rise By Lifting Others</p>
                 </span>
               </Link>
+
               <p
                 style={{ fontFamily: "Quicksand" }}
-                className="text-sm mt-4  text-muted"
+                className="mt-4 text-sm text-muted"
               >
                 Empowering communities through education, nutrition, and
                 sustainable development. One seed at a time.
               </p>
-            </span>
 
-            <span
-              style={{ fontFamily: "Quicksand" }}
-              className="flex items-center gap-3 mt-5"
-            >
-              {socialMediaLinks.map((social, i) => (
-                <Link
+              <span
+                style={{ fontFamily: "Quicksand" }}
+                className="mt-5 flex flex-wrap items-center gap-3"
+              >
+                {socialMediaLinks.map((social, i) => (
+                  <Link
+                    style={{ fontFamily: "Quicksand" }}
+                    key={i}
+                    href={social.url}
+                    target="_blank"
+                    className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-primary text-white transition-colors hover:bg-green-800 hover:text-white"
+                  >
+                    {social.icon ? (
+                      <social.icon size={18} />
+                    ) : (
+                      <span className="text-sm font-bold">𝕏</span>
+                    )}
+                  </Link>
+                ))}
+              </span>
+            </div>
+
+            <div className="min-w-0 text-white">
+              <span className="w-full items-center">
+                <h2
                   style={{ fontFamily: "Quicksand" }}
-                  key={i}
-                  href={social.url}
-                  target="_blank"
-                  className="w-10 h-10 rounded-full border-2 border-white flex items-center justify-center text-white bg-primary hover:bg-green-800  hover:text-white"
+                  className="text-xl font-bold text-white"
                 >
-                  {social.icon ? (
-                    <social.icon size={18} />
-                  ) : (
-                    <span className="text-sm font-bold">𝕏</span>
-                  )}
-                </Link>
-              ))}
-            </span>
+                  Quick Links
+                </h2>
+                <ul className="mt-4 space-y-3 text-sm text-muted">
+                  <li>
+                    <Link
+                      style={{ fontFamily: "Quicksand" }}
+                      href="/about"
+                      className="text-lg transition-colors hover:text-primary"
+                    >
+                      About Us
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      style={{ fontFamily: "Quicksand" }}
+                      href="/gallery"
+                      className="text-lg transition-colors hover:text-primary"
+                    >
+                      Our Gallery
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      style={{ fontFamily: "Quicksand" }}
+                      href="/blog"
+                      className="text-lg transition-colors hover:text-primary"
+                    >
+                      Our News
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      style={{ fontFamily: "Quicksand" }}
+                      href="/contact"
+                      className="text-lg transition-colors hover:text-primary"
+                    >
+                      Contact
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      style={{ fontFamily: "Quicksand" }}
+                      href="/donate"
+                      className="text-lg transition-colors hover:text-primary"
+                    >
+                      Donate
+                    </Link>
+                  </li>
+                </ul>
+              </span>
+            </div>
+
+            <div className="min-w-0 text-white">
+              <span className="w-full font-bold text-accent">
+                <h2
+                  style={{ fontFamily: "Quicksand" }}
+                  className="font-bold text-white"
+                >
+                  Contact us
+                </h2>
+                <ul className="mt-4 space-y-4 text-sm text-muted">
+                  <li className="flex items-start gap-2">
+                    <MapPin className="mt-1 shrink-0 text-primary" size={16} />
+                    <p style={{ fontFamily: "Quicksand" }}>
+                      Gayaza Rd, Kumukaaga, <br />
+                      Opposite kumbuzi, <br /> Kyadondo East,
+                      <br />
+                      Wakiso District, Uganda
+                    </p>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <PhoneCall className="text-primary" size={16} />
+                    <span style={{ fontFamily: "Quicksand" }}>
+                      (+256) 705-300-671 / 705-181-487
+                    </span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Mail className="text-primary" size={16} />
+                    <span style={{ fontFamily: "Quicksand" }}>
+                      ensigooflove@gmail.com
+                    </span>
+                  </li>
+                </ul>
+              </span>
+            </div>
           </div>
 
-          <div className="text-white    gap-4 h-full w-1/3">
-            <span className="  items-center w-full ">
-              <h2
+          <div className="mt-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:justify-center lg:justify-start">
+              <Link
                 style={{ fontFamily: "Quicksand" }}
-                className="text-white text-xl font-bold"
+                href="/privacy-policy"
+                className="cursor-pointer text-sm text-muted transition-colors hover:text-primary"
               >
-                Quick Links
-              </h2>
-              <ul className="text-sm mt-4 text-justify text-muted">
-                <li>
-                  <Link
-                    style={{ fontFamily: "Quicksand" }}
-                    href="/about"
-                    className="hover:text-primary text-lg  mt-5 transition-colors"
-                  >
-                    About Us
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    style={{ fontFamily: "Quicksand" }}
-                    href="/gallery"
-                    className="hover:text-primary text-lg  mt-5 transition-colors"
-                  >
-                    Our Gallery
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    style={{ fontFamily: "Quicksand" }}
-                    href="/blog"
-                    className="hover:text-primary text-lg  mt-5 transition-colors"
-                  >
-                    Our News
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    style={{ fontFamily: "Quicksand" }}
-                    href="/contact"
-                    className="hover:text-primary text-lg  mt-5 transition-colors"
-                  >
-                    Contact
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    style={{ fontFamily: "Quicksand" }}
-                    href="/contact"
-                    className="hover:text-primary text-lg  mt-5 transition-colors"
-                  >
-                    Contact
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    style={{ fontFamily: "Quicksand" }}
-                    href="/donate"
-                    className="hover:text-primary text-lg  mt-5 transition-colors"
-                  >
-                    Donate
-                  </Link>
-                </li>
-              </ul>
-            </span>
+                Privacy Policy
+              </Link>
+              <Link
+                style={{ fontFamily: "Quicksand" }}
+                href="/terms-of-service"
+                className="cursor-pointer text-sm text-muted transition-colors hover:text-primary"
+              >
+                Terms of Service
+              </Link>
+            </div>
+
+            <div className="mx-auto w-full max-w-xl">
+              <form onSubmit={handleNewsletterSubmit} className="flex w-full flex-col gap-3 rounded-full border border-white/20 bg-white/5 p-2 sm:flex-row">
+                <Input
+                  type="email"
+                  required
+                  value={newsletterEmail}
+                  onChange={(event) => setNewsletterEmail(event.target.value)}
+                  style={{ fontFamily: "Quicksand" }}
+                  placeholder="Subscribe to our newsletter"
+                  className="h-12 flex-1 rounded-full border-0 bg-transparent p-5 text-sm text-white placeholder:text-white/60 focus-visible:ring-0"
+                />
+                <Button
+                  type="submit"
+                  disabled={newsletterSubmitting}
+                  style={{ fontFamily: "Quicksand" }}
+                  className="h-12 rounded-full bg-primary px-6 text-lg font-bold text-white transition-colors hover:bg-green-800"
+                >
+                  {newsletterSubmitting ? "Sending..." : <Send size={18} />}
+                </Button>
+              </form>
+              {newsletterMessage && (
+                <p className={`mt-2 text-xs ${newsletterStatus === "success" ? "text-emerald-200" : "text-red-200"}`}>
+                  {newsletterMessage}
+                </p>
+              )}
+            </div>
           </div>
 
-          <div className="text-white    gap-4 h-full w-1/3">
-            <span className="  items-center w-full font-bold text-accent">
-              <h2
-                style={{ fontFamily: "Quicksand" }}
-                className="text-white font-bold"
-              >
-                Contact us
-              </h2>
-              <ul className="text-sm mt-4 text-justify text-muted">
-                <li className="flex mt-5 items-center gap-2">
-                  <span className="text-primary"></span>
-                  <p className="flex" style={{ fontFamily: "Quicksand" }}>
-                    <MapPin
-                      className="mr-2 text-primary
-                    
-                    <span><span>"
-                    />
-                    Gayaza Rd, Kumukaaga, <br />
-                    Opposite kumbuzi, <br /> Kyadondo East,
-                    <br />
-                    Wakiso District, Uganda
-                  </p>
-                </li>
-                <li className="flex mt-5 items-center gap-2">
-                  <span className="text-primary">
-                    <PhoneCall />{" "}
-                  </span>
-                  <span style={{ fontFamily: "Quicksand" }}>
-                    (+256) 705-300-671 / 705-181-487
-                  </span>
-                </li>
-                <li className="flex mt-5 items-center gap-2">
-                  <span className="text-primary">
-                    <Mail />
-                  </span>
-                  <span style={{ fontFamily: "Quicksand" }}>
-                    ensigooflove@gmail.com
-                  </span>
-                </li>
-              </ul>
+          <div className="mt-6 flex flex-col items-center justify-center gap-3 text-center text-sm text-muted sm:flex-row sm:justify-between">
+            <span>
+              &copy; {new Date().getFullYear()} Seeds of Love. All rights reserved.
             </span>
           </div>
         </div>
-        <span className="absolute border flex border-border rounded-full p-2 gap-2 bottom-40 right-100">
-          <Input
-            style={{ fontFamily: "Quicksand" }}
-            placeholder="Subscribe to our newsletter"
-            className="bg-transparent rounded-full  border-0 p-5 text-sm text-white w-80"
-          />
-          <Button
-            style={{ fontFamily: "Quicksand" }}
-            className="bg-primary hover:bg-green-800 text-white px-8 text-lg cursor-pointer font-bold rounded-full p-5"
-          >
-            <Send size={18} />
-          </Button>
-        </span>
 
-        <span className="text-sm text-muted w-1/4 mt-5 text-center   flex   justify-evenly absolute bottom-10 left-5">
-          <Link
-            style={{ fontFamily: "Quicksand" }}
-            href="/privacy-policy"
-            className="cursor-pointer  hover:text-primary transition-colors"
-          >
-            Privacy Policy
-          </Link>
-          <Link
-            style={{ fontFamily: "Quicksand" }}
-            href="/terms-of-service"
-            className="cursor-pointer hover:text-primary transition-colors"
-          >
-            Terms of Service
-          </Link>
-        </span>
-
-        <span
-          style={{ fontFamily: "Quicksand" }}
-          className="text-sm text-muted mt-5 text-center w-full absolute bottom-10"
-        >
-          &copy; {new Date().getFullYear()} Seeds of Love. All rights reserved.
-        </span>
         <span
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          className="w-10 h-10 absolute bottom-5 cursor-pointer border-2 border-white hover:bg-accent right-10 rounded-full bg-primary flex items-center justify-center"
+          className="absolute bottom-5 right-5 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-primary hover:bg-accent"
         >
           <ArrowUp size={18} className="text-white" />
         </span>

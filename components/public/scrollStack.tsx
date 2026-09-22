@@ -1,6 +1,5 @@
 // import ScrollStack, { ScrollStackItem } from './ScrollStack'
 import ScrollStack, { ScrollStackItem } from '../../lib/scrollStackJs'
-import { mockEvents } from '@/lib/mock-data'
 
 <ScrollStack>
   <ScrollStackItem>

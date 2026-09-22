@@ -6,7 +6,6 @@ import { BlogCard } from "@/components/public/blog-card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
-import { mockBlogs } from "@/lib/mock-data";
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
