@@ -5,6 +5,10 @@ import { notFound } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import SponsorDetailsContent from "@/components/public/sponsor-details-content";
+import {
+  CHILDREN_PROFILES_QUERY_KEY,
+  type SponsorshipProfile,
+} from "@/lib/child-profile";
 
 const SponsorDetailsPageSkeleton = () => (
   <main className="min-h-screen flex flex-col bg-background">
@@ -41,7 +45,7 @@ export default function SponsorDetailsPage({
     data: profile,
     isLoading: isProfileLoading,
     error: profileError,
-  } = useQuery<any>({
+  } = useQuery<SponsorshipProfile>({
     queryKey: ["children", "profile", id],
   });
 
@@ -49,8 +53,8 @@ export default function SponsorDetailsPage({
     data: profiles,
     isLoading: isProfilesLoading,
     error: profilesError,
-  } = useQuery<any[]>({
-    queryKey: ["children", "profiles"],
+  } = useQuery<SponsorshipProfile[]>({
+    queryKey: CHILDREN_PROFILES_QUERY_KEY,
   });
 
   if (isProfileLoading || isProfilesLoading) {

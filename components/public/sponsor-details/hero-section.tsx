@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import type { SponsorshipProfile } from "@/lib/mock-data";
+import type { SponsorshipProfile } from "@/lib/child-profile";
 import { motion } from "framer-motion";
 import { use, useEffect } from "react";
 

@@ -12,17 +12,20 @@ import {
   AnimatedElement,
   AnimatedContainer,
 } from "@/components/motion/animated-elements";
-import { mockSponsorshipProfiles } from "@/lib/mock-data";
 import SponsorshipCard from "@/components/public/sponsorship-card";
 import { useQuery } from "@tanstack/react-query";
+import {
+  CHILDREN_PROFILES_QUERY_KEY,
+  type SponsorshipProfile,
+} from "@/lib/child-profile";
 
 const ageGroups = ["All", "0-5", "6-12", "13-18"] as const;
 const familyStatuses = ["All", "Total Orphans", "Single Parent"] as const;
 const PROFILES_PER_PAGE = 6;
 
 export default function SponsorBrowsePage() {
-  const { data: Profiles, isLoading } = useQuery({
-    queryKey: ["children", "profiles"],
+  const { data: Profiles, isLoading } = useQuery<SponsorshipProfile[]>({
+    queryKey: CHILDREN_PROFILES_QUERY_KEY,
   });
 
   const [selectedAgeGroup, setSelectedAgeGroup] =
@@ -30,7 +33,7 @@ export default function SponsorBrowsePage() {
   const [selectedFamilyStatus, setSelectedFamilyStatus] =
     useState<(typeof familyStatuses)[number]>("All");
 
-  const [profiles, setProfiles] = useState<any[]>([]);
+  const [profiles, setProfiles] = useState<SponsorshipProfile[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
 
   const filteredProfiles = useMemo(() => {
@@ -55,11 +58,9 @@ export default function SponsorBrowsePage() {
 
   useEffect(() => {
     if (Profiles) {
-      const sponsoredProfiles = (Profiles as any[]).filter(
-        (profile: any) =>
-          profile.sponsorshipStatus === "Available" && profile.sponsor === null,
+      setProfiles(
+        Profiles.filter((profile) => profile.sponsorshipStatus !== "Sponsored"),
       );
-      setProfiles(sponsoredProfiles as any);
     }
   }, [Profiles]);
 

@@ -22,7 +22,7 @@ import {
   PaymentData,
   PaymentMethodData,
 } from "@/lib/sponsorship-form-types";
-import type { SponsorshipProfile } from "@/lib/mock-data";
+import type { SponsorshipProfile } from "@/lib/child-profile";
 import { saveSponsorshipSubmission } from "@/lib/sponsorship-storage";
 import SponsorshipFormHeader from "./sponsorship-form-header";
 import Step1SponsorBio from "./sponsorship-form-steps/step-1-sponsor-bio";

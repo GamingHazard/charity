@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import type { SponsorshipProfile } from "@/lib/mock-data";
+import type { SponsorshipProfile } from "@/lib/child-profile";
 import type { SponsorshipFormSubmission } from "@/lib/sponsorship-form-types";
 import { formatSubmissionDate } from "@/lib/sponsorship-storage";
 

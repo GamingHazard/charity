@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { SponsorshipProfile } from "@/lib/mock-data";
+import type { SponsorshipProfile } from "@/lib/child-profile";
 import SponsorshipFormModal from "@/components/public/sponsorship-form-modal";
 import HeroSection from "@/components/public/sponsor-details/hero-section";
 import ProfileSection from "@/components/public/sponsor-details/profile-section";
@@ -31,7 +31,7 @@ export default function SponsorDetailsContent({
 }: SponsorDetailsContentProps) {
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<
-    "overview" | "education" | "family" | "support" | "documents"
+    "overview" | "education" | "family"
   >("overview");
 
   const needsList = Array.isArray(profile.needs)
@@ -41,14 +41,10 @@ export default function SponsorDetailsContent({
       : [];
 
   const education = profile.education || {};
-  const reportCards = profile.reportCards || [];
-
   const tabs = [
     { key: "overview", label: "Overview" },
     { key: "education", label: "Education" },
     { key: "family", label: "Family" },
-    { key: "support", label: "Sponsor" },
-    { key: "documents", label: "Documents" },
   ] as const;
 
   const renderOverview = () => (
@@ -148,24 +144,10 @@ export default function SponsorDetailsContent({
             { label: "Current Class", value: education.currentClass || "Not provided", icon: <Book size={16} /> },
             { label: "School", value: education.schoolName || profile.school || "Not provided", icon: <Book size={16} /> },
             { label: "Academic Year", value: education.academicYear || "Not provided", icon: <Calendar size={16} /> },
-            { label: "Last Term Result", value: education.lastTermResult || "Not provided", icon: <Sparkles size={16} /> },
-            { label: "Estimated Graduation", value: education.estimatedGraduationYear || "Not provided", icon: <Calendar size={16} /> },
+            { label: "Expected Graduation", value: education.expectedGraduationYear || "Not provided", icon: <Calendar size={16} /> },
           ]}
           columns={2}
         />
-      </ProfileSection>
-
-      <ProfileSection title="Academic notes" icon={<Sparkles size={20} />} delay={0.2}>
-        <div className="space-y-3">
-          <p className="text-base leading-relaxed text-gray-700">
-            {education.educationNotes || "No education notes provided yet."}
-          </p>
-          <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
-            {education.estimatedGraduationYear
-              ? `Estimated graduation year: ${education.estimatedGraduationYear}`
-              : "Graduation estimate will be added once the school level is recorded."}
-          </div>
-        </div>
       </ProfileSection>
     </div>
   );
@@ -193,55 +175,6 @@ export default function SponsorDetailsContent({
           ]}
           columns={1}
         />
-      </ProfileSection>
-    </div>
-  );
-
-  const renderSupport = () => (
-    <div className="space-y-6">
-      <ProfileSection title="Sponsor information" icon={<Banknote size={20} />} delay={0.1}>
-        <div className="rounded-lg border border-green-200/50 bg-linear-to-r from-green-50 to-emerald-50 p-5">
-          <p className="text-sm text-gray-700 leading-relaxed">
-            Your monthly sponsorship provides essential support for <span className="font-semibold text-green-700">{profile.firstName}</span>'s education, nutrition, healthcare, and personal development.
-          </p>
-        </div>
-      </ProfileSection>
-
-      <ProfileSection title="Support details" icon={<Banknote size={20} />} delay={0.2}>
-        <ProfileFieldGroup
-          fields={[
-            { label: "Monthly Support Need", value: profile.monthlyNeed, icon: <Banknote size={16} /> },
-            { label: "Status", value: profile.sponsorshipStatus, icon: <Heart size={16} /> },
-            { label: "School", value: profile.school, icon: <Book size={16} /> },
-            { label: "Location", value: profile.location, icon: <MapPin size={16} /> },
-          ]}
-          columns={2}
-        />
-      </ProfileSection>
-    </div>
-  );
-
-  const renderDocuments = () => (
-    <div className="space-y-6">
-      <ProfileSection title="Report cards" icon={<Book size={20} />} delay={0.1}>
-        {reportCards.length > 0 ? (
-          <div className="grid gap-4 md:grid-cols-2">
-            {reportCards.map((card, index) => (
-              <a
-                key={card.public_id || card.url || `${card.name || "document"}-${index}`}
-                href={card.url || "#"}
-                target="_blank"
-                rel="noreferrer"
-                className="rounded-lg border border-border bg-muted p-4 text-sm text-gray-700 transition-colors hover:bg-muted/80"
-              >
-                <p className="font-semibold text-gray-900">{card.name || "Report card"}</p>
-                <p className="mt-1 text-xs text-gray-500">{card.fileType || "Document"}</p>
-              </a>
-            ))}
-          </div>
-        ) : (
-          <p className="text-gray-700">No report cards have been uploaded yet.</p>
-        )}
       </ProfileSection>
     </div>
   );
@@ -274,8 +207,6 @@ export default function SponsorDetailsContent({
               {activeTab === "overview" && renderOverview()}
               {activeTab === "education" && renderEducation()}
               {activeTab === "family" && renderFamily()}
-              {activeTab === "support" && renderSupport()}
-              {activeTab === "documents" && renderDocuments()}
             </div>
           </div>
         </section>

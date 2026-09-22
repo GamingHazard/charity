@@ -10,7 +10,6 @@ export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeBtn, setActiveBtn] = useState("");
   const pathname = usePathname(); // Get current route
-  const dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL || "http://localhost:3001";
 
   // Update active button based on current path
   useEffect(() => {
@@ -102,18 +101,6 @@ export function Navbar() {
                 {link.label}
               </Link>
             ))}
-            <a href={dashboardUrl} className="inline-block">
-                <Button
-                  style={{ fontFamily: "Quicksand" }}
-                  className={`transition-all mr-2 ${
-                    isScrolled
-                      ? "bg-secondary hover:bg-secondary/90 text-secondary-foreground"
-                      : "bg-white/20 hover:bg-white/30 text-white backdrop-blur-sm border border-white/30"
-                  }`}
-                >
-                  Dashboard
-                </Button>
-            </a>
             <Link href="/donate" className="inline-block">
               <Button
                 style={{ fontFamily: "Quicksand" }}
@@ -186,22 +173,6 @@ export function Navbar() {
                 {link.label}
               </Link>
             ))}
-            <a
-                href={dashboardUrl}
-                className="w-full block"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <Button
-                  style={{ fontFamily: "Quicksand" }}
-                  className={`w-full mt-2 transition-all ${
-                    isScrolled
-                      ? "bg-secondary hover:bg-secondary/90 text-secondary-foreground"
-                      : "bg-white/20 hover:bg-white/30 text-white backdrop-blur-sm border border-white/30"
-                  }`}
-                >
-                  Dashboard
-                </Button>
-            </a>
             <Link
               href="/donate"
               className="w-full block"

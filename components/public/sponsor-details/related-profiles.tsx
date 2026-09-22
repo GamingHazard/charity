@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Heart } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
-import type { SponsorshipProfile } from "@/lib/mock-data";
+import { getChildDisplayName, type SponsorshipProfile } from "@/lib/child-profile";
 
 interface RelatedProfilesProps {
   profiles: SponsorshipProfile[];
@@ -113,7 +113,7 @@ export default function RelatedProfiles({
                 <div className="relative h-64 sm:h-72 overflow-hidden bg-gray-100">
                   <motion.img
                     src={profile.image.url}
-                    alt={profile.name}
+                    alt={getChildDisplayName(profile)}
                     className="w-full h-full object-cover"
                     whileHover={{ scale: 1.1 }}
                     transition={{ duration: 0.4 }}
